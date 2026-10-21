@@ -255,6 +255,79 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           // Speakers + Contributors
           _buildLeadSpeakerSection(),
           _buildContributorSection(),
+          _buildPeriodParentSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodParentSection() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final bool isPeriodParent = widget.eventContext.metadata.isPeriodParent;
+
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.account_tree_outlined,
+                    size: 18, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.postPeriodParentSection,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.postPeriodParentIntro,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  secondary: Icon(
+                    isPeriodParent ? Icons.flag : Icons.flag_outlined,
+                    color: isPeriodParent
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  title: Text(l10n.postPeriodParentTitle),
+                  subtitle: Text(l10n.postPeriodParentSubtitle),
+                  value: isPeriodParent,
+                  onChanged: (value) {
+                    setState(
+                        () => widget.eventContext.applyIsPeriodParent(value));
+                    widget.onRequiredFieldChange('');
+                  },
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -3837,6 +3837,22 @@
   "@postTitleAddAttendeesTooLong": {
     "description": "Shown when the post title has no room for a shortened attendee name"
   },
+  "postPeriodParentSection": "Related posts",
+  "@postPeriodParentSection": {
+    "description": "Header of the card on the new post Header tab that holds the period parent switch"
+  },
+  "postPeriodParentIntro": "A period parent groups meeting posts for a term or season.",
+  "@postPeriodParentIntro": {
+    "description": "Explanation above the period parent switch when creating a post"
+  },
+  "postPeriodParentTitle": "Period parent",
+  "@postPeriodParentTitle": {
+    "description": "Switch label that marks a post as a period parent"
+  },
+  "postPeriodParentSubtitle": "Allow other posts to attach under this one",
+  "@postPeriodParentSubtitle": {
+    "description": "Subtitle under the period parent switch"
+  },
   "permalinkGoHome": "Home",
   "@permalinkGoHome": {
     "description": "App bar control that opens the main section when a shared link is the first page"

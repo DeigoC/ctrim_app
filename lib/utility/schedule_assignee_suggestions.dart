@@ -19,8 +19,9 @@ class ScheduleAssigneeSuggestion {
 /// One-tap reuse of whole-event people on a matching line.
 ///
 /// A suggestion is an All event role — declared standing, or a long line the
-/// timeline already lifts into that band — that shares a ministry, or that
-/// also has no ministry when this line has none. It needs at least one person.
+/// timeline already lifts into that band — with at least one person. When both
+/// lines have ministries they must share one; when either has none, any such
+/// role counts. A line that does not [EventProgram.requiresPeople] gets none.
 /// An earlier timed slot is not a source. The lists are not linked: applying
 /// copies people in, and later edits stay put.
 class ScheduleAssigneeSuggestions {
@@ -30,6 +31,7 @@ class ScheduleAssigneeSuggestions {
     required Map<String, dynamic> role,
     required List<Map<String, dynamic>> roles,
   }) {
+    if (!EventProgram.requiresPeople(role)) return const [];
     final targetTags = EventProgram.tagIDsOf(role).toSet();
     final targetId = role['id'];
     final targetUids = _uidsOf(role).toSet();
@@ -79,12 +81,12 @@ class ScheduleAssigneeSuggestions {
     return result;
   }
 
-  /// Shared ministry, or both lines have none.
+  /// Shared ministry, or either line has none.
   static bool _matchesMinistries(
     final Set<String> targetTags,
     final List<String> otherTags,
   ) {
-    if (targetTags.isEmpty) return otherTags.isEmpty;
+    if (targetTags.isEmpty || otherTags.isEmpty) return true;
     return otherTags.any(targetTags.contains);
   }
 

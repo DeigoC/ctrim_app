@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
 import '../../../utility/app_context.dart';
+import '../../../utility/bulk_post_dates.dart';
 import '../../../utility/notifications/broadcast_audience.dart';
 import '../../../utility/dialog_manager.dart';
 import '../../../utility/event_context.dart';
@@ -46,7 +47,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
   late final TabController _tabController;
   late final TextEditingController _tecTitle, _tecSubtitle;
   late final List<String> _subtitles;
-  int? _defaultDayOfWeek;
+  late List<int> _defaultDaysOfWeek;
   late List<Map<String, dynamic>> _headMediaPool, _bodyMediaPool;
   late PostTemplateCategory _category;
   late final PostTemplateCategory _initialCategory;
@@ -60,7 +61,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
   late final String _initialTitle;
   late final String _initialSubtitle;
   late final List<String> _initialSubtitles;
-  late final int? _initialDefaultDayOfWeek;
+  late final List<int> _initialDefaultDaysOfWeek;
   late final List<String> _initialHeadPoolSrcs;
   late final List<String> _initialBodyPoolSrcs;
   late final List<String> _initialTagIDs;
@@ -92,7 +93,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     _tecSubtitle =
         TextEditingController(text: widget.eventContext.head.subtitle);
     _subtitles = List<String>.from(widget.oldTemplate.subtitles);
-    _defaultDayOfWeek = widget.oldTemplate.defaultDayOfWeek;
+    _defaultDaysOfWeek = List<int>.from(widget.oldTemplate.defaultDaysOfWeek);
     _headMediaPool = widget.oldTemplate.headMediaPool
         .map((e) => Map<String, dynamic>.from(e))
         .toList();
@@ -103,7 +104,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     _initialTitle = _tecTitle.text;
     _initialSubtitle = _tecSubtitle.text;
     _initialSubtitles = List<String>.from(_subtitles);
-    _initialDefaultDayOfWeek = _defaultDayOfWeek;
+    _initialDefaultDaysOfWeek = List<int>.from(_defaultDaysOfWeek);
     _initialHeadPoolSrcs =
         _headMediaPool.map((e) => (e['src'] as String?) ?? '').toList();
     _initialBodyPoolSrcs =
@@ -136,7 +137,9 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     if (widget.eventContext.canSaveTheEditing) return true;
     if (_tecTitle.text.trim() != _initialTitle.trim()) return true;
     if (_tecSubtitle.text.trim() != _initialSubtitle.trim()) return true;
-    if (_defaultDayOfWeek != _initialDefaultDayOfWeek) return true;
+    if (_defaultDaysOfWeek.join(',') != _initialDefaultDaysOfWeek.join(',')) {
+      return true;
+    }
     if (!_sameStringLists(_subtitles, _initialSubtitles)) return true;
     if (!_sameStringLists(
       _headMediaPool.map((e) => (e['src'] as String?) ?? '').toList(),
@@ -599,7 +602,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
                 const Icon(Icons.calendar_today_outlined, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Default Day of Week',
+                  'Default days of week',
                   style: Theme.of(context)
                       .textTheme
                       .titleMedium
@@ -609,20 +612,27 @@ class _EditTemplatePageState extends State<EditTemplatePage>
             ),
             const SizedBox(height: 8),
             Text(
-              'Set which day of the week this template is typically used for. Required for bulk post creation.',
+              _defaultDaysOfWeek.isEmpty
+                  ? 'Choose the days this template is usually used on. Required for bulk post creation.'
+                  : '${everyDaysOfWeekLabel(_defaultDaysOfWeek)}. Bulk creation makes a post on each of these days.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: List.generate(7, (i) {
                 final day = i + 1;
-                final selected = _defaultDayOfWeek == day;
+                final selected = _defaultDaysOfWeek.contains(day);
                 return FilterChip(
                   label: Text(dayNames[i]),
                   selected: selected,
                   onSelected: (_) => setState(() {
-                    _defaultDayOfWeek = selected ? null : day;
+                    _defaultDaysOfWeek = PostTemplate.normalizeDaysOfWeek(
+                      selected
+                          ? _defaultDaysOfWeek.where((d) => d != day)
+                          : [..._defaultDaysOfWeek, day],
+                    );
                   }),
                 );
               }),
@@ -1218,7 +1228,9 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       'BodyMediaPool': _bodyMediaPool,
       'Roles': SchedulePreset.rolesToJson(true, first.roles),
       'SchedulePresets': _presets.map((p) => p.toJson(true)).toList(),
-      'DefaultDayOfWeek': _defaultDayOfWeek,
+      'DefaultDaysOfWeek': _defaultDaysOfWeek,
+      'DefaultDayOfWeek':
+          _defaultDaysOfWeek.isEmpty ? null : _defaultDaysOfWeek.first,
       'Logs': widget.oldTemplate.toJson(true)['Logs'],
     };
     final PostTemplate updatedTemplate =

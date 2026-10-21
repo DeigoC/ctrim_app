@@ -23,7 +23,7 @@ Creating a post usually starts from a **template**, then fills in the date and d
 6. Open the new post and check it looks right on the bulletin.  
 
 !!! tip "Bulk create"
-    For a recurring series, bulk create can make many dated posts from one template without sending a push for every date. Cover that in a separate short guide when you have screenshots.
+    For a recurring series, bulk create can make many dated posts from one template without sending a push for every date. Choose one or more days of the week (for example Tuesday and Thursday) and a number of weeks — up to 30 posts in one go. Cover that in a separate short guide when you have screenshots.
 
 ## Next
 

@@ -75,7 +75,7 @@ Anything happening **at the same time** appears side by side. On a narrow phone 
 
 Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with who is assigned. Mark a role **Whole event** when you add it, so those jobs do not need a padded start and finish just to leave the running order. Each time can be cleared. Leave both empty and the role reads as Whole event. Set only a start when you know when people should arrive and the duty runs on to the end of the post — that reads as from 09:00. Add a finish only when the duty itself stops at a set time. Longer jobs that were saved before this still appear in the band.
 
-On a later item that shares a ministry, **Use Technical Media** adds the people already set for the whole event. The same offer appears when neither line has a ministry: an untagged whole-event team can be applied to other items that also have no ministry. An earlier timed item, such as opening worship, is not offered. You can still add or remove someone afterwards. Changing the whole-event team does not change items you have already filled.
+On a later item that shares a ministry, **Use Technical Media** adds the people already set for the whole event. When either line has no ministry, the offer still appears: an item with no ministry can take any whole-event team, and a whole-event team with no ministry can be applied to any item. Items with different ministries are not matched, and an item marked as not needing a named person never gets the offer. An earlier timed item, such as opening worship, is not offered. You can still add or remove someone afterwards. Changing the whole-event team does not change items you have already filled.
 
 Choosing people for an item that already has one or more ministries opens the list filtered to those ministries and that post’s location. You can still change those filters.
 
@@ -143,7 +143,7 @@ When **choosing a template** to create a post, **Cell Groups** and **Services** 
 
 When **creating or editing a template**, leaders set its **category** (Services or Cell Groups) and can set a **default broadcast audience**: whether new posts from that template should pre-select **All {location} updates** (using the location on the template’s Schedule tab). Organisers can still change notify settings when publishing each post.
 
-**Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date. When the template has several schedule presets, each date can use a different one, or **Apply schedule to all**. Programme slots for a ministry on those future dates show on Personal → **Ministry Schedule**, so departments can see what they are down for without those posts filling the bulletin.
+**Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date. Pick one or more days of the week (the template’s default days are ticked to start with) and how many weeks to cover; you get a post on every chosen day in each of those weeks, up to 30 posts at a time. Starting from an existing post, the dates begin the day after it, so the rest of that week is included. When the template has several schedule presets, each date can use a different one, or **Apply schedule to all**. Programme slots for a ministry on those future dates show on Personal → **Ministry Schedule**, so departments can see what they are down for without those posts filling the bulletin.
 
 On an existing post, the author or a contributor can **Apply schedule preset** from the edit menu to replace the running order (and start/finish times) with a preset from **any** template. Attendance and expected people stay. Save the post to keep the change; people added or removed from roles are notified the same way as a normal schedule edit.
 
@@ -152,7 +152,7 @@ On an existing post, the author or a contributor can **Apply schedule preset** f
 Posts can form a family:
 
 - **Related** tab — parent, sibling, and child posts for a series or meeting group  
-- **Period parent** — mark a post as a container for a term or season, then attach individual meeting posts underneath  
+- **Period parent** — mark a post as a container for a term or season, then attach individual meeting posts underneath. You can switch this on while creating the post (the **Related posts** card on the Header tab) or later from **Title & details**  
 
 Organisers create or attach related posts from the post’s edit actions.
 

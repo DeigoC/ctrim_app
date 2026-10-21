@@ -104,11 +104,14 @@ void main() {
         roles: [...roles, hosts, welcome],
       );
 
-      expect(suggestions.map((s) => s.sourceTitle), ['Hosts']);
-      expect(suggestions.single.uids, ['lee']);
+      expect(
+        suggestions.map((s) => s.sourceTitle),
+        ['Hosts', 'Technical Media'],
+      );
+      expect(suggestions.first.uids, ['lee']);
     });
 
-    test('an untagged item does not suggest a tagged whole-event line', () {
+    test('an untagged item suggests a tagged whole-event line', () {
       final welcome = role(
         id: 7,
         title: 'Welcome',
@@ -120,10 +123,11 @@ void main() {
         roles: [...roles, welcome],
       );
 
-      expect(suggestions, isEmpty);
+      expect(suggestions.map((s) => s.sourceTitle), ['Technical Media']);
+      expect(suggestions.single.uids, ['jane', 'sam']);
     });
 
-    test('a tagged item does not suggest an untagged whole-event line', () {
+    test('a tagged item also suggests an untagged whole-event line', () {
       final hosts = role(
         id: 6,
         title: 'Hosts',
@@ -136,7 +140,45 @@ void main() {
         roles: [...roles, hosts],
       );
 
+      expect(
+        suggestions.map((s) => s.sourceTitle),
+        ['Hosts', 'Technical Media'],
+      );
+    });
+
+    test('a tagged item does not suggest a line with another ministry', () {
+      final worshipTeam = role(
+        id: 5,
+        title: 'Worship team',
+        uids: ['ada', 'ben'],
+        tagIDs: ['worship'],
+        standing: true,
+      );
+
+      final suggestions = ScheduleAssigneeSuggestions.forRole(
+        role: video,
+        roles: [...roles, worshipTeam],
+      );
+
       expect(suggestions.map((s) => s.sourceTitle), ['Technical Media']);
+    });
+
+    test('a line that does not need people gets no suggestions', () {
+      final shared = {
+        ...role(
+          id: 8,
+          title: 'Tidy up',
+          start: DateTime(2026, 6, 14, 12, 30),
+        ),
+        'requiresPeople': false,
+      };
+
+      final suggestions = ScheduleAssigneeSuggestions.forRole(
+        role: shared,
+        roles: [...roles, shared],
+      );
+
+      expect(suggestions, isEmpty);
     });
 
     test('does not suggest itself or a line with no shared ministry', () {

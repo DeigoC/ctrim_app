@@ -1,35 +1,76 @@
 DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
-/// Next calendar date for [dayOfWeek] (1 = Mon … 7 = Sun), including [now]
-/// when that weekday matches.
-DateTime nextDateForDayOfWeek({
-  required int dayOfWeek,
+/// Most posts one bulk run may create.
+const int maxBulkPosts = 30;
+
+/// Longest bulk run, whatever the number of days.
+const int maxBulkWeeks = 12;
+
+const List<String> _dayNames = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+/// Soonest calendar date on any of [daysOfWeek] (1 = Mon … 7 = Sun),
+/// including [now] when that weekday matches. Null when no day is given.
+DateTime? nextDateForDaysOfWeek({
+  required Iterable<int> daysOfWeek,
   DateTime? now,
 }) {
   final reference = _dateOnly(now ?? DateTime.now());
-  final daysUntil = (dayOfWeek - reference.weekday + 7) % 7;
-  return reference.add(Duration(days: daysUntil));
+  DateTime? soonest;
+  for (final day in daysOfWeek) {
+    final daysUntil = (day - reference.weekday + 7) % 7;
+    final candidate = reference.add(Duration(days: daysUntil));
+    if (soonest == null || candidate.isBefore(soonest)) soonest = candidate;
+  }
+  return soonest;
 }
 
-/// Weekly post dates for bulk creation.
+/// Post dates for bulk creation: every one of [daysOfWeek] in each of the next
+/// [weeks] weeks, in date order (`weeks × days` dates).
 ///
-/// When [anchorDate] is set (e.g. the source post's event date), the first
-/// generated date is the next [dayOfWeek] on or after one week later.
-/// Otherwise dates start from the next [dayOfWeek] after [now] (default today).
+/// The run starts the day after [anchorDate] (the source post's event date)
+/// when set, otherwise the day after [now] (default today).
 List<DateTime> computeBulkPostDates({
-  required int dayOfWeek,
+  required Iterable<int> daysOfWeek,
   required int weeks,
   DateTime? anchorDate,
   DateTime? now,
 }) {
-  final DateTime base;
-  if (anchorDate != null) {
-    base = _dateOnly(anchorDate).add(const Duration(days: 7));
-  } else {
-    final reference = now ?? DateTime.now();
-    base = _dateOnly(reference).add(const Duration(days: 1));
-  }
-  final daysUntil = (dayOfWeek - base.weekday + 7) % 7;
-  final firstDate = base.add(Duration(days: daysUntil));
-  return List.generate(weeks, (i) => firstDate.add(Duration(days: 7 * i)));
+  final days = daysOfWeek.toSet();
+  if (days.isEmpty || weeks <= 0) return const [];
+  final start = _dateOnly(anchorDate ?? now ?? DateTime.now())
+      .add(const Duration(days: 1));
+  return [
+    for (var offset = 0; offset < weeks * 7; offset++)
+      if (days.contains(start.add(Duration(days: offset)).weekday))
+        start.add(Duration(days: offset)),
+  ];
+}
+
+/// Most weeks a run can cover with [dayCount] days and stay within
+/// [maxBulkPosts].
+int maxBulkWeeksFor(final int dayCount) {
+  if (dayCount <= 0) return maxBulkWeeks;
+  final byPosts = maxBulkPosts ~/ dayCount;
+  return byPosts < maxBulkWeeks ? byPosts : maxBulkWeeks;
+}
+
+/// "Every Tuesday", "Every Tuesday & Thursday", "Every Monday, Wednesday &
+/// Friday", or "Every day". Empty when no valid day is given.
+String everyDaysOfWeekLabel(final Iterable<int> daysOfWeek) {
+  final days = daysOfWeek.where((d) => d >= 1 && d <= 7).toSet().toList()
+    ..sort();
+  if (days.isEmpty) return '';
+  if (days.length == 7) return 'Every day';
+  final names = [for (final day in days) _dayNames[day - 1]];
+  if (names.length == 1) return 'Every ${names.single}';
+  return 'Every ${names.sublist(0, names.length - 1).join(', ')} '
+      '& ${names.last}';
 }

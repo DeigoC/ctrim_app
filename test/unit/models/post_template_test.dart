@@ -135,6 +135,71 @@ void main() {
         expect(period.toJson(true)['IsPeriodParent'], true);
       });
 
+      test('reads a legacy DefaultDayOfWeek as one day', () {
+        final map = baseLocalMap();
+        map['DefaultDayOfWeek'] = 3;
+        final template = PostTemplate.fromMap(true, 'tpl-legacy-day', map);
+
+        expect(template.defaultDaysOfWeek, [3]);
+        expect(template.defaultDayOfWeek, 3);
+      });
+
+      test('treats an out-of-range DefaultDayOfWeek as unset', () {
+        final template =
+            PostTemplate.fromMap(true, 'tpl-day-zero', baseLocalMap());
+        expect(template.defaultDaysOfWeek, isEmpty);
+        expect(template.defaultDayOfWeek, isNull);
+      });
+
+      test('reads DefaultDaysOfWeek sorted and unique', () {
+        final map = baseLocalMap();
+        map['DefaultDaysOfWeek'] = [4, 2, 4, 9];
+        map['DefaultDayOfWeek'] = 2;
+        final template = PostTemplate.fromMap(true, 'tpl-days', map);
+
+        expect(template.defaultDaysOfWeek, [2, 4]);
+        expect(template.defaultDayOfWeek, 2);
+      });
+
+      test('falls back to DefaultDayOfWeek when an older app changed it', () {
+        final changed = baseLocalMap();
+        changed['DefaultDaysOfWeek'] = [2, 4];
+        changed['DefaultDayOfWeek'] = 6;
+        expect(
+          PostTemplate.fromMap(true, 'tpl-stale', changed).defaultDaysOfWeek,
+          [6],
+        );
+
+        final cleared = baseLocalMap();
+        cleared['DefaultDaysOfWeek'] = [2, 4];
+        cleared['DefaultDayOfWeek'] = null;
+        expect(
+          PostTemplate.fromMap(true, 'tpl-cleared', cleared).defaultDaysOfWeek,
+          isEmpty,
+        );
+      });
+
+      test('writes both day fields', () {
+        final template =
+            PostTemplate.fromMap(true, 'tpl-write', baseLocalMap());
+        template.setDefaultDaysOfWeek([7, 3]);
+
+        final json = template.toJson(true);
+        expect(json['DefaultDaysOfWeek'], [3, 7]);
+        expect(json['DefaultDayOfWeek'], 3);
+        expect(
+          PostTemplate.fromMap(true, 'tpl-write', json).defaultDaysOfWeek,
+          [3, 7],
+        );
+      });
+
+      test('defaultDaysOfWeek getter is unmodifiable', () {
+        final map = baseLocalMap();
+        map['DefaultDayOfWeek'] = 1;
+        final template = PostTemplate.fromMap(true, 'tpl-unmod-days', map);
+        expect(() => template.defaultDaysOfWeek.add(2), throwsUnsupportedError);
+      });
+
       test('defaults Category to service when missing', () {
         final template =
             PostTemplate.fromMap(true, 'tpl-plain', baseLocalMap());

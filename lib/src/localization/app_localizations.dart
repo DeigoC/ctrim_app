@@ -5152,6 +5152,30 @@ abstract class AppLocalizations {
   /// **'Title is already too long to add names'**
   String get postTitleAddAttendeesTooLong;
 
+  /// Header of the card on the new post Header tab that holds the period parent switch
+  ///
+  /// In en, this message translates to:
+  /// **'Related posts'**
+  String get postPeriodParentSection;
+
+  /// Explanation above the period parent switch when creating a post
+  ///
+  /// In en, this message translates to:
+  /// **'A period parent groups meeting posts for a term or season.'**
+  String get postPeriodParentIntro;
+
+  /// Switch label that marks a post as a period parent
+  ///
+  /// In en, this message translates to:
+  /// **'Period parent'**
+  String get postPeriodParentTitle;
+
+  /// Subtitle under the period parent switch
+  ///
+  /// In en, this message translates to:
+  /// **'Allow other posts to attach under this one'**
+  String get postPeriodParentSubtitle;
+
   /// App bar control that opens the main section when a shared link is the first page
   ///
   /// In en, this message translates to:

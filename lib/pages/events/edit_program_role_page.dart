@@ -770,6 +770,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
         'uids': _selectedUsers,
         'tagIDs': _tagIDsToSave(),
         'standing': _standing,
+        'requiresPeople': _requiresPeople,
         'start': _start,
       },
       roles: widget.eventContext.program.roles,

@@ -2956,6 +2956,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Title is already too long to add names';
 
   @override
+  String get postPeriodParentSection => 'Related posts';
+
+  @override
+  String get postPeriodParentIntro =>
+      'A period parent groups meeting posts for a term or season.';
+
+  @override
+  String get postPeriodParentTitle => 'Period parent';
+
+  @override
+  String get postPeriodParentSubtitle =>
+      'Allow other posts to attach under this one';
+
+  @override
   String get permalinkGoHome => 'Home';
 
   @override

@@ -26,13 +26,13 @@ Future<bool> startPostFromTemplate({
   final appContext = Provider.of<AppContext>(context, listen: false);
 
   final shouldPickDate = template.startTime != null ||
-      template.defaultDayOfWeek != null ||
+      template.defaultDaysOfWeek.isNotEmpty ||
       template.schedulePresets.any((preset) => preset.startTime != null);
   DateTime? selectedDate;
   if (shouldPickDate) {
     selectedDate = await _selectDate(
       context,
-      preferredDayOfWeek: template.defaultDayOfWeek,
+      preferredDaysOfWeek: template.defaultDaysOfWeek,
     );
     if (selectedDate == null || !context.mounted) return false;
   }
@@ -79,14 +79,13 @@ Future<bool> startPostFromTemplate({
 
 Future<DateTime?> _selectDate(
   final BuildContext context, {
-  final int? preferredDayOfWeek,
+  final List<int> preferredDaysOfWeek = const [],
 }) async {
   final now = DateTime.now();
   final firstDate = now.subtract(const Duration(days: 30));
   final lastDate = now.add(const Duration(days: 60));
-  var initialDate = preferredDayOfWeek != null
-      ? nextDateForDayOfWeek(dayOfWeek: preferredDayOfWeek, now: now)
-      : now;
+  var initialDate =
+      nextDateForDaysOfWeek(daysOfWeek: preferredDaysOfWeek, now: now) ?? now;
   if (initialDate.isBefore(firstDate)) initialDate = firstDate;
   if (initialDate.isAfter(lastDate)) initialDate = lastDate;
   return showDatePicker(

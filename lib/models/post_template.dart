@@ -211,7 +211,7 @@ class PostTemplate {
   late List<Map<String, dynamic>> _roles;
   late List<SchedulePreset> _schedulePresets;
   bool _allDay = false, _online = false;
-  int? _defaultDayOfWeek;
+  List<int> _defaultDaysOfWeek = [];
 
   PostTemplate.fromMap(
       final bool forLocal, final String id, final Map<String, dynamic> data) {
@@ -273,9 +273,8 @@ class PostTemplate {
     _bodyMediaPool = data['BodyMediaPool'] != null
         ? _parseMedia(asStringKeyedMapList(data['BodyMediaPool']))
         : <Map<String, dynamic>>[];
-    _defaultDayOfWeek = data['DefaultDayOfWeek'] != null
-        ? data['DefaultDayOfWeek'] as int?
-        : null;
+    _defaultDaysOfWeek = _parseDefaultDaysOfWeek(
+        data['DefaultDaysOfWeek'], data['DefaultDayOfWeek']);
     _logs = _parseLogs(forLocal, data['Logs']);
   }
 
@@ -305,7 +304,8 @@ class PostTemplate {
       'Media': _media,
       'HeadMediaPool': _headMediaPool,
       'BodyMediaPool': _bodyMediaPool,
-      'DefaultDayOfWeek': _defaultDayOfWeek,
+      'DefaultDaysOfWeek': List<int>.from(_defaultDaysOfWeek),
+      'DefaultDayOfWeek': defaultDayOfWeek,
       'StartTime': SchedulePreset._dateTimeToJson(forLocal, _startTime),
       'FinishTime': SchedulePreset._dateTimeToJson(forLocal, _finishTime),
       'Roles': SchedulePreset.rolesToJson(forLocal, _roles),
@@ -333,7 +333,13 @@ class PostTemplate {
   DateTime? get finishTime => _schedulePresets.isEmpty
       ? _finishTime
       : _schedulePresets.first.finishTime;
-  int? get defaultDayOfWeek => _defaultDayOfWeek;
+
+  /// Weekdays this template usually runs on (1 = Mon … 7 = Sun), sorted.
+  List<int> get defaultDaysOfWeek => UnmodifiableListView(_defaultDaysOfWeek);
+
+  /// First of [defaultDaysOfWeek]; older app versions only read this one.
+  int? get defaultDayOfWeek =>
+      _defaultDaysOfWeek.isEmpty ? null : _defaultDaysOfWeek.first;
 
   List<Map<String, dynamic>> get headMedia => _headMedia;
   List<Map<String, dynamic>> get media => _media;
@@ -429,7 +435,31 @@ class PostTemplate {
     }
   }
 
-  void setDefaultDayOfWeek(final int? day) => _defaultDayOfWeek = day;
+  void setDefaultDaysOfWeek(final Iterable<int> days) =>
+      _defaultDaysOfWeek = normalizeDaysOfWeek(days);
+
+  /// Saves merge fields, so an older app that only knows [legacyDay] can change
+  /// it and leave [rawDays] behind. The list counts only while its first day
+  /// still matches [legacyDay].
+  static List<int> _parseDefaultDaysOfWeek(
+      final dynamic rawDays, final dynamic legacyDay) {
+    final legacy = normalizeDaysOfWeek([legacyDay]);
+    if (rawDays is! List) return legacy;
+    final days = normalizeDaysOfWeek(rawDays);
+    final firstDay = days.isEmpty ? null : days.first;
+    final legacyFirst = legacy.isEmpty ? null : legacy.first;
+    return firstDay == legacyFirst ? days : legacy;
+  }
+
+  /// Unique weekdays in 1–7, sorted Monday first. Other values are dropped.
+  static List<int> normalizeDaysOfWeek(final Iterable<dynamic> days) {
+    final result = <int>{
+      for (final day in days)
+        if (day is num && day.toInt() >= 1 && day.toInt() <= 7) day.toInt(),
+    }.toList()
+      ..sort();
+    return result;
+  }
 
   // subtitle list management
   void addSubtitle(final String subtitle) {
