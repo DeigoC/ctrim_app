@@ -160,7 +160,7 @@ abstract class AppLocalizations {
   /// **'Serving'**
   String get volunteersFilterServing;
 
-  /// Active filter summary when the serving-only toggle is off
+  /// Legacy label for the unfiltered (all members) people list; Serving off is now the default
   ///
   /// In en, this message translates to:
   /// **'Everyone'**

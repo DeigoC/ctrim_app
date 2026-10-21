@@ -141,7 +141,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   void _toggleDay(int day) {
     _selectedDays = PostTemplate.normalizeDaysOfWeek(
       _selectedDays.contains(day)
-          ? _selectedDays.where((d) => d != day)
+          ? _selectedDays.where((d) => d != day).toList()
           : [..._selectedDays, day],
     );
     if (_selectedWeeks > _maxWeeks) _selectedWeeks = _maxWeeks;

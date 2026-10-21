@@ -630,7 +630,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
                   onSelected: (_) => setState(() {
                     _defaultDaysOfWeek = PostTemplate.normalizeDaysOfWeek(
                       selected
-                          ? _defaultDaysOfWeek.where((d) => d != day)
+                          ? _defaultDaysOfWeek.where((d) => d != day).toList()
                           : [..._defaultDaysOfWeek, day],
                     );
                   }),
