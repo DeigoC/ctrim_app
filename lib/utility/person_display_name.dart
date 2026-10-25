@@ -15,9 +15,28 @@ class PersonDisplayName {
     required User? user,
     required bool guest,
   }) {
+    return forViewer(
+      storedName: storedName,
+      user: user,
+      guest: guest,
+      emptyFallback: 'Lead speaker',
+    );
+  }
+
+  /// Name for a person on guest-visible lists (attendance, interest, expected).
+  ///
+  /// Prefers the live profile and [User.nameForViewer] so **Full Surname for
+  /// Guests** is honoured. Without a profile, guests get an abbreviated form
+  /// of the stored name; signed-in viewers keep the stored full name.
+  static String forViewer({
+    required String? storedName,
+    required User? user,
+    required bool guest,
+    String emptyFallback = '',
+  }) {
     if (user != null) return user.nameForViewer(guest: guest);
     final stored = storedName?.trim() ?? '';
-    if (stored.isEmpty) return 'Lead speaker';
+    if (stored.isEmpty) return emptyFallback;
     if (!guest) return stored;
     return abbreviateStoredPersonalName(stored);
   }

@@ -745,9 +745,9 @@ class _ViewEventPageState extends State<ViewEventPage>
         _eventContext.metadata.contributorUIDs.contains(_currentUID);
     final bool isLeader = appContext.currentUser.isLeader;
 
-    // Guests browse About / Schedule / Media / Related without a People tab
-    // (that tab only prompted sign-in). Signed-in people keep interest + lists.
-    _showPeopleTab = !appContext.isCurrentUserGuest;
+    // People tab is for everyone: guests see attendance with shortened names;
+    // signed-in people can also mark interest and manage lists when allowed.
+    _showPeopleTab = true;
     _showScheduleTab = _eventContext.head.eventDate != null || isAuthor;
     _showMediaTab =
         _eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor;
