@@ -50,7 +50,7 @@
   },
   "volunteersFilterEveryone": "Everyone",
   "@volunteersFilterEveryone": {
-    "description": "Legacy label for the unfiltered (all members) people list; Serving off is now the default"
+    "description": "Show chip for the full Who's Who list. Selecting it turns Serving and Placeholders off."
   },
   "volunteersSearchHint": "Search people...",
   "@volunteersSearchHint": {
@@ -1540,6 +1540,24 @@
   "@selectUsersUnselectAll": {
     "description": "Unselect every person currently matching the active tag filter on the people picker"
   },
+  "selectUsersSelectSurname": "Select {surname}",
+  "@selectUsersSelectSurname": {
+    "description": "Select every visible person who shares this surname on the people picker",
+    "placeholders": {
+      "surname": {
+        "type": "String"
+      }
+    }
+  },
+  "selectUsersUnselectSurname": "Unselect {surname}",
+  "@selectUsersUnselectSurname": {
+    "description": "Clear every visible person who shares this surname on the people picker",
+    "placeholders": {
+      "surname": {
+        "type": "String"
+      }
+    }
+  },
   "selectCatalogSelected": "{count} selected",
   "@selectCatalogSelected": {
     "description": "Selected count on a catalog tag/group picker page",
@@ -1753,7 +1771,23 @@
   },
   "volunteersFilterShowSection": "Show",
   "@volunteersFilterShowSection": {
-    "description": "Section label for serving / placeholder toggles in people filters"
+    "description": "Section label for Everyone, Serving, and Placeholders chips in people filters"
+  },
+  "volunteersFilterAudienceHintEveryone": "Everyone at this location, including people who only follow updates.",
+  "@volunteersFilterAudienceHintEveryone": {
+    "description": "Hint under Who's Who Show chips when Everyone is selected"
+  },
+  "volunteersFilterAudienceHintPlaceholders": "Names added before that person has signed in.",
+  "@volunteersFilterAudienceHintPlaceholders": {
+    "description": "Hint under Who's Who Show chips when only Placeholders is selected"
+  },
+  "volunteersFilterAudienceHintBoth": "Serving members and placeholders. People who only follow updates stay off this list.",
+  "@volunteersFilterAudienceHintBoth": {
+    "description": "Hint under Who's Who Show chips when Serving and Placeholders are both selected"
+  },
+  "volunteersEmptyServingAndPlaceholders": "No serving members or placeholders to show",
+  "@volunteersEmptyServingAndPlaceholders": {
+    "description": "Empty state when Serving and Placeholders are both on and nobody matches"
   },
   "volunteersFilterLocationSection": "Location",
   "@volunteersFilterLocationSection": {

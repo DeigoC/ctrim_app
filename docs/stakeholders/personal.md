@@ -84,7 +84,7 @@ The app keeps a personal list of those posts on your profile. When you open My P
 **Who's Who**, **Ministry Schedule**, and **View Ministries** sit together, separate from account shortcuts.
 
 - **View Ministries** — what each ministry is for. Open to guests and signed-in people. Tap a ministry to read its short description and, when one has been added, its main image. Choose a church location to see who leads that ministry there, who is in it, photos from that site (open one to swipe through them), and the ministry's schedule for the past three months and the next three months. Area admins edit it from the same page (add, reorder, hide from guests, set the image URL) and, for each location, choose the heads and add or remove photos. Ministries hidden from guests do not appear in this list for guests.
-- **Who's Who** — searchable list of people for signed-in people; opens with **all members** at your location. Turn **Serving** on in Refine & sort to narrow to leaders, ministries, and cell-group leaders. When a location has a cover photo, that photo sits at the top of the list and scrolls away with the names while Who's Who is filtered to that place.
+- **Who's Who** — searchable list of people for signed-in people; opens with **Everyone** at your location. In Refine & sort, **Show** is **Everyone**, **Serving**, and **Placeholders**. Serving and Placeholders can both be on, and the list is then those two groups. When a location has a cover photo, that photo sits at the top of the list and scrolls away with the names while Who's Who is filtered to that place.
 
 **Admin / Leader tools** stay for catalogues that are still editor lists:
 

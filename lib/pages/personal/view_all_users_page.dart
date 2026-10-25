@@ -883,6 +883,85 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     );
   }
 
+  void _setDirectoryShow({
+    required bool servingOnly,
+    required bool placeholdersOnly,
+  }) {
+    _servingOnly = servingOnly;
+    _placeholdersOnly = placeholdersOnly;
+    if (placeholdersOnly && !servingOnly) {
+      _selectedRoles = {};
+      _selectedTagIDs = {};
+    }
+  }
+
+  String _directoryShowHint(AppLocalizations l10n) {
+    if (_servingOnly && _placeholdersOnly) {
+      return l10n.volunteersFilterAudienceHintBoth;
+    }
+    if (_placeholdersOnly) return l10n.volunteersFilterAudienceHintPlaceholders;
+    if (_servingOnly) return l10n.volunteersFilterServingSubtitle;
+    return l10n.volunteersFilterAudienceHintEveryone;
+  }
+
+  Widget _buildShowFilterControls({
+    required AppLocalizations l10n,
+    required bool showPlaceholdersOption,
+    required void Function(VoidCallback update) refreshSheet,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: Text(l10n.volunteersFilterEveryone),
+                selected: !_servingOnly && !_placeholdersOnly,
+                onSelected: (selected) {
+                  if (!selected) return;
+                  refreshSheet(() => _setDirectoryShow(
+                        servingOnly: false,
+                        placeholdersOnly: false,
+                      ));
+                },
+              ),
+              FilterChip(
+                label: Text(l10n.volunteersFilterServing),
+                selected: _servingOnly,
+                onSelected: (selected) => refreshSheet(() => _setDirectoryShow(
+                      servingOnly: selected,
+                      placeholdersOnly: _placeholdersOnly,
+                    )),
+              ),
+              if (showPlaceholdersOption)
+                FilterChip(
+                  label: Text(l10n.volunteersShowPlaceholders),
+                  selected: _placeholdersOnly,
+                  onSelected: (selected) => refreshSheet(
+                    () => _setDirectoryShow(
+                      servingOnly: _servingOnly,
+                      placeholdersOnly: selected,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _directoryShowHint(l10n),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _filterSectionLabel(String label) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -968,27 +1047,11 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   ),
                 ),
                 _filterSectionLabel(l10n.volunteersFilterShowSection),
-                SwitchListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                  title: Text(l10n.volunteersFilterServing),
-                  subtitle: Text(l10n.volunteersFilterServingSubtitle),
-                  value: _servingOnly,
-                  onChanged: (value) =>
-                      refreshSheet(() => _servingOnly = value),
+                _buildShowFilterControls(
+                  l10n: l10n,
+                  showPlaceholdersOption: showPlaceholdersOption,
+                  refreshSheet: refreshSheet,
                 ),
-                if (showPlaceholdersOption)
-                  SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    title: Text(l10n.volunteersShowPlaceholders),
-                    value: _placeholdersOnly,
-                    onChanged: (value) => refreshSheet(() {
-                      _placeholdersOnly = value;
-                      if (value) {
-                        _selectedRoles = {};
-                        _selectedTagIDs = {};
-                      }
-                    }),
-                  ),
                 if (canEdit)
                   SwitchListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1026,7 +1089,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ],
                   ),
                 ),
-                if (!_placeholdersOnly) ...[
+                if (!_placeholdersOnly || _servingOnly) ...[
                   _filterSectionLabel(l10n.volunteersFilterRolesSection),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -1080,7 +1143,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ),
                   ),
                 ],
-                if (activeTags.isNotEmpty && !_placeholdersOnly) ...[
+                if (activeTags.isNotEmpty &&
+                    (!_placeholdersOnly || _servingOnly)) ...[
                   _filterSectionLabel(l10n.volunteersFilterTeamsSection),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -1142,18 +1206,26 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final ledMemberIds = _ledMemberIds(appContext);
     Iterable<User> users = allUsers;
 
+    // Placeholders alone uses placeholders-only visibility. Both chips leave
+    // that off so serving members stay, then matchesShowFilter keeps both groups.
+    final placeholdersOnlyMode = _placeholdersOnly && !_servingOnly;
     users = users.where((user) => isVisibleInVolunteerDirectory(
           user: user,
           viewer: currentUser,
-          placeholdersOnly: _placeholdersOnly,
+          placeholdersOnly: placeholdersOnlyMode,
           showInactive: _showInactive,
           leadsCellGroupContainingUser: ledMemberIds.contains(user.id),
         ));
 
-    if (!_placeholdersOnly && _servingOnly) {
-      users = users.where((user) => VolunteerRoleHelpers.userServes(
+    if (_servingOnly || _placeholdersOnly) {
+      users = users.where((user) => PeopleDirectoryQuery.matchesShowFilter(
             user: user,
-            cellGroupLeaders: cellGroupLeaders,
+            servingOnly: _servingOnly,
+            placeholdersOnly: _placeholdersOnly,
+            userServes: VolunteerRoleHelpers.userServes(
+              user: user,
+              cellGroupLeaders: cellGroupLeaders,
+            ),
           ));
     }
 
@@ -1161,14 +1233,14 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       users = users.where((user) => user.location == _locationFilter);
     }
 
-    if (_selectedTagIDs.isNotEmpty && !_placeholdersOnly) {
+    if (_selectedTagIDs.isNotEmpty && !placeholdersOnlyMode) {
       users = users.where((user) => UserTagHelpers.userMatchesTagFilter(
             user: user,
             selectedTagIDs: _selectedTagIDs,
           ));
     }
 
-    if (_selectedRoles.isNotEmpty && !_placeholdersOnly) {
+    if (_selectedRoles.isNotEmpty && !placeholdersOnlyMode) {
       users = users.where((user) => VolunteerRoleHelpers.userMatchesRoleFilter(
             user: user,
             selected: _selectedRoles,
@@ -1221,6 +1293,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   String _emptyMessage(AppLocalizations l10n) {
     if (_searchQuery.isNotEmpty) {
       return l10n.volunteersEmptySearch(_searchQuery);
+    }
+    if (_placeholdersOnly && _servingOnly) {
+      return l10n.volunteersEmptyServingAndPlaceholders;
     }
     if (_placeholdersOnly) {
       return l10n.volunteersEmptyPlaceholders;

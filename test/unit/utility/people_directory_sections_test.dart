@@ -40,5 +40,55 @@ void main() {
       expect(sections[3].letter, 'D');
       expect(sections[3].users.map((e) => e.id), ['d']);
     });
+
+    test('bySurname clusters a shared surname and leaves singles loose', () {
+      final users = [
+        u(id: 'amy', forname: 'Amy', surname: 'Adams'),
+        u(id: 'ben', forname: 'Ben', surname: 'Campbell'),
+        u(id: 'cara', forname: 'Cara', surname: 'campbell'),
+        u(id: 'dan', forname: 'Dan', surname: 'Young'),
+      ];
+
+      final blocks = PeopleDirectorySections.bySurname(users);
+
+      expect(blocks, hasLength(3));
+      expect(blocks[0].canSelectTogether, isFalse);
+      expect(blocks[0].users.map((e) => e.id), ['amy']);
+      expect(blocks[1].canSelectTogether, isTrue);
+      expect(blocks[1].surnameLabel, 'Campbell');
+      expect(blocks[1].users.map((e) => e.id), ['ben', 'cara']);
+      expect(blocks[2].canSelectTogether, isFalse);
+      expect(blocks[2].users.map((e) => e.id), ['dan']);
+    });
+
+    test('bySurname does not treat a blank or unique surname as a family', () {
+      final users = [
+        u(id: 'a', forname: 'Ann', surname: ''),
+        u(id: 'b', forname: 'Bob', surname: ' '),
+        u(id: 'c', forname: 'Cara', surname: 'Campbell'),
+        u(id: 'd', forname: 'Dee', surname: 'Campbell-Smith'),
+      ];
+
+      final blocks = PeopleDirectorySections.bySurname(users);
+
+      expect(blocks, hasLength(1));
+      expect(blocks.single.canSelectTogether, isFalse);
+      expect(blocks.single.users.map((e) => e.id), ['a', 'b', 'c', 'd']);
+    });
+
+    test('bySurname keeps people between two families in order', () {
+      final users = [
+        u(id: 'a1', surname: 'Adams'),
+        u(id: 'a2', surname: 'Adams'),
+        u(id: 'b', surname: 'Baker'),
+        u(id: 'c1', surname: 'Cole'),
+        u(id: 'c2', surname: 'Cole'),
+      ];
+
+      final blocks = PeopleDirectorySections.bySurname(users);
+
+      expect(blocks.map((block) => block.surnameLabel), [ 'Adams', null, 'Cole']);
+      expect(blocks[1].users.map((e) => e.id), ['b']);
+    });
   });
 }

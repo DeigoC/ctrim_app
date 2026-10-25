@@ -151,4 +151,131 @@ void main() {
       expect(matches.map((u) => u.id), ['8']);
     });
   });
+
+  group('PeopleDirectoryQuery.matchesShowFilter', () {
+    final member = User(id: '1', forname: 'Ann', surname: 'Member');
+    final server =
+        User(id: '2', forname: 'Ben', surname: 'Server', isLeader: true);
+    final placeholder = User(
+      id: '3',
+      forname: 'Cara',
+      surname: 'Place',
+      isPlaceholder: true,
+    );
+    final servingPlaceholder = User(
+      id: '4',
+      forname: 'Dan',
+      surname: 'Both',
+      isPlaceholder: true,
+      isLeader: true,
+    );
+
+    bool shown(
+      User user, {
+      required bool servingOnly,
+      required bool placeholdersOnly,
+      required bool userServes,
+    }) {
+      return PeopleDirectoryQuery.matchesShowFilter(
+        user: user,
+        servingOnly: servingOnly,
+        placeholdersOnly: placeholdersOnly,
+        userServes: userServes,
+      );
+    }
+
+    test('everyone keeps members, serving people, and placeholders', () {
+      for (final user in [member, server, placeholder, servingPlaceholder]) {
+        expect(
+          shown(user,
+              servingOnly: false, placeholdersOnly: false, userServes: false),
+          isTrue,
+        );
+      }
+    });
+
+    test('serving alone keeps people who serve', () {
+      expect(
+        shown(server,
+            servingOnly: true, placeholdersOnly: false, userServes: true),
+        isTrue,
+      );
+      expect(
+        shown(
+          servingPlaceholder,
+          servingOnly: true,
+          placeholdersOnly: false,
+          userServes: true,
+        ),
+        isTrue,
+      );
+      expect(
+        shown(member,
+            servingOnly: true, placeholdersOnly: false, userServes: false),
+        isFalse,
+      );
+      expect(
+        shown(
+          placeholder,
+          servingOnly: true,
+          placeholdersOnly: false,
+          userServes: false,
+        ),
+        isFalse,
+      );
+    });
+
+    test('placeholders alone keeps placeholder profiles', () {
+      expect(
+        shown(
+          placeholder,
+          servingOnly: false,
+          placeholdersOnly: true,
+          userServes: false,
+        ),
+        isTrue,
+      );
+      expect(
+        shown(member,
+            servingOnly: false, placeholdersOnly: true, userServes: false),
+        isFalse,
+      );
+      expect(
+        shown(server,
+            servingOnly: false, placeholdersOnly: true, userServes: true),
+        isFalse,
+      );
+    });
+
+    test('serving and placeholders together keep both groups', () {
+      expect(
+        shown(server,
+            servingOnly: true, placeholdersOnly: true, userServes: true),
+        isTrue,
+      );
+      expect(
+        shown(
+          placeholder,
+          servingOnly: true,
+          placeholdersOnly: true,
+          userServes: false,
+        ),
+        isTrue,
+      );
+      expect(
+        shown(
+          servingPlaceholder,
+          servingOnly: true,
+          placeholdersOnly: true,
+          userServes: true,
+        ),
+        isTrue,
+      );
+      expect(
+        shown(member,
+            servingOnly: true, placeholdersOnly: true, userServes: false),
+        isFalse,
+      );
+    });
+  });
 }

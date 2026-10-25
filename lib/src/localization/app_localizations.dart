@@ -160,7 +160,7 @@ abstract class AppLocalizations {
   /// **'Serving'**
   String get volunteersFilterServing;
 
-  /// Legacy label for the unfiltered (all members) people list; Serving off is now the default
+  /// Show chip for the full Who's Who list. Selecting it turns Serving and Placeholders off.
   ///
   /// In en, this message translates to:
   /// **'Everyone'**
@@ -2242,11 +2242,35 @@ abstract class AppLocalizations {
   /// **'Location, sort, role, ministry, or who is shown'**
   String get volunteersFilterSheetSubtitle;
 
-  /// Section label for serving / placeholder toggles in people filters
+  /// Section label for Everyone, Serving, and Placeholders chips in people filters
   ///
   /// In en, this message translates to:
   /// **'Show'**
   String get volunteersFilterShowSection;
+
+  /// Hint under Who's Who Show chips when Everyone is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone at this location, including people who only follow updates.'**
+  String get volunteersFilterAudienceHintEveryone;
+
+  /// Hint under Who's Who Show chips when only Placeholders is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Names added before that person has signed in.'**
+  String get volunteersFilterAudienceHintPlaceholders;
+
+  /// Hint under Who's Who Show chips when Serving and Placeholders are both selected
+  ///
+  /// In en, this message translates to:
+  /// **'Serving members and placeholders. People who only follow updates stay off this list.'**
+  String get volunteersFilterAudienceHintBoth;
+
+  /// Empty state when Serving and Placeholders are both on and nobody matches
+  ///
+  /// In en, this message translates to:
+  /// **'No serving members or placeholders to show'**
+  String get volunteersEmptyServingAndPlaceholders;
 
   /// Section label for location chips in the people directory filter sheet
   ///

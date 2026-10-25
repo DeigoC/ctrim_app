@@ -88,7 +88,7 @@ Save under `assets/images/`.
 
 | Done | Filename | What to show |
 |------|----------|--------------|
-| [ ] | `people-01-directory-filters.png` | Who's Who with Serving and location filters (cover photo at the top when that location has one) |
+| [ ] | `people-01-directory-filters.png` | Who's Who Refine & sort, with the Show chips (Everyone, Serving, Placeholders) and a location (cover photo at the top when that location has one) |
 | [ ] | `people-02-register-form.png` | Register / add person form |
 | [ ] | `people-03-placeholder-picker.png` | People picker: Placeholders in the Refine sheet, or Create placeholder |
 | [ ] | `people-register-list.gif` *(optional)* | Register someone → they appear in the list |

@@ -381,6 +381,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                         horizontalPadding: horizontalPadding,
                         isWide: isWide,
                         l10n: l10n,
+                        appContext: appContext,
                       ),
               ),
             ],
@@ -442,12 +443,15 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     required double horizontalPadding,
     required bool isWide,
     required AppLocalizations l10n,
+    required AppContext appContext,
   }) {
     final sections = _useLetterSections
         ? PeopleDirectorySections.bySurnameLetter(users)
         : [
             PeopleDirectorySection(letter: '', users: users),
           ];
+    // Speakers are capped. A family tick would silently stop at that cap.
+    final groupSurnames = widget.maxSelection == null;
 
     return CustomScrollView(
       slivers: [
@@ -459,48 +463,176 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                 horizontalPadding: horizontalPadding,
               ),
             ),
-          if (isWide)
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                0,
-                horizontalPadding,
-                0,
-              ),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 420,
-                  mainAxisExtent: 108,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 8,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildWideUserCard(
-                    user: section.users[index],
-                    allTags: allTags,
-                    l10n: l10n,
-                  ),
-                  childCount: section.users.length,
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildUserListTile(
-                    user: section.users[index],
-                    allTags: allTags,
-                    l10n: l10n,
-                  ),
-                  childCount: section.users.length,
-                ),
-              ),
-            ),
+          ..._surnameBlockSlivers(
+            users: section.users,
+            allTags: allTags,
+            horizontalPadding: horizontalPadding,
+            isWide: isWide,
+            l10n: l10n,
+            appContext: appContext,
+            groupSurnames: groupSurnames,
+          ),
         ],
         const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
       ],
+    );
+  }
+
+  List<Widget> _surnameBlockSlivers({
+    required List<User> users,
+    required List<UserTag> allTags,
+    required double horizontalPadding,
+    required bool isWide,
+    required AppLocalizations l10n,
+    required AppContext appContext,
+    required bool groupSurnames,
+  }) {
+    final blocks = groupSurnames
+        ? PeopleDirectorySections.bySurname(users)
+        : [PeopleDirectorySurnameBlock(users: users)];
+
+    return [
+      for (final block in blocks) ...[
+        if (block.canSelectTogether)
+          SliverToBoxAdapter(
+            child: _buildSurnameHeader(
+              surname: block.surnameLabel!,
+              users: block.users,
+              horizontalPadding: horizontalPadding,
+              l10n: l10n,
+              appContext: appContext,
+            ),
+          ),
+        _usersSliver(
+          users: block.users,
+          allTags: allTags,
+          horizontalPadding: horizontalPadding,
+          isWide: isWide,
+          l10n: l10n,
+        ),
+      ],
+    ];
+  }
+
+  Widget _usersSliver({
+    required List<User> users,
+    required List<UserTag> allTags,
+    required double horizontalPadding,
+    required bool isWide,
+    required AppLocalizations l10n,
+  }) {
+    if (isWide) {
+      return SliverPadding(
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          0,
+          horizontalPadding,
+          0,
+        ),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 420,
+            mainAxisExtent: 108,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 8,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => _buildWideUserCard(
+              user: users[index],
+              allTags: allTags,
+              l10n: l10n,
+            ),
+            childCount: users.length,
+          ),
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => _buildUserListTile(
+            user: users[index],
+            allTags: allTags,
+            l10n: l10n,
+          ),
+          childCount: users.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSurnameHeader({
+    required String surname,
+    required List<User> users,
+    required double horizontalPadding,
+    required AppLocalizations l10n,
+    required AppContext appContext,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final selectedCount =
+        users.where((user) => _selectedUIDs.contains(user.id)).length;
+    final bool? checkboxValue = selectedCount == 0
+        ? false
+        : selectedCount == users.length
+            ? true
+            : null;
+    final allSelected = checkboxValue == true;
+    final tooltip = allSelected
+        ? l10n.selectUsersUnselectSurname(surname)
+        : l10n.selectUsersSelectSurname(surname);
+
+    return Tooltip(
+      message: tooltip,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding + 4,
+          2,
+          horizontalPadding + 4,
+          2,
+        ),
+        child: Material(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _toggleSurnameGroup(users, appContext),
+            child: Row(
+              children: [
+                const SizedBox(width: 4),
+                // The row handles the tap. A null onChanged would grey the box out.
+                IgnorePointer(
+                  child: Checkbox(
+                    tristate: true,
+                    visualDensity: VisualDensity.compact,
+                    value: checkboxValue,
+                    onChanged: (_) {},
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    surname,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${users.length}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -1000,6 +1132,16 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       final ids = filteredUsers.map((user) => user.id).toSet();
       _selectedUIDs.removeWhere(ids.contains);
     });
+  }
+
+  void _toggleSurnameGroup(List<User> users, AppContext appContext) {
+    final allSelected =
+        users.every((user) => _selectedUIDs.contains(user.id));
+    if (allSelected) {
+      _unselectAllFiltered(users);
+    } else {
+      _selectAllFiltered(users, appContext);
+    }
   }
 
   Future<void> _onAddFromCellGroup(AppContext appContext) async {

@@ -39,6 +39,8 @@ void main() {
     WidgetTester tester, {
     required double width,
     required List<User> users,
+    List<String>? selectedUIDs,
+    int? maxSelection,
   }) async {
     final tags = [
       UserTag(id: 'worship', name: 'Worship Team', color: '#6B4EAA'),
@@ -78,7 +80,9 @@ void main() {
             brightness: Brightness.dark,
           ),
           home: SelectUsersPage(
-            selectedUIDs: users.map((user) => user.id).toList(),
+            selectedUIDs:
+                selectedUIDs ?? users.map((user) => user.id).toList(),
+            maxSelection: maxSelection,
           ),
         ),
       ),
@@ -173,6 +177,100 @@ void main() {
     expect(find.text('Portadown'), findsOneWidget);
     expect(find.text('Serving'), findsWidgets);
     expect(find.text('Worship Team'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  Checkbox checkboxFor(WidgetTester tester, String name) {
+    final tile = find.widgetWithText(ListTile, name);
+    return tester.widget<Checkbox>(
+      find.descendant(of: tile, matching: find.byType(Checkbox)),
+    );
+  }
+
+  testWidgets('surname header selects and clears that family only', (
+    tester,
+  ) async {
+    await pumpPicker(
+      tester,
+      width: 400,
+      selectedUIDs: const ['ben'],
+      users: [
+        person(id: 'amy', forname: 'Amy', surname: 'Adams', tagIDs: []),
+        person(id: 'ben', forname: 'Ben', surname: 'Campbell', tagIDs: []),
+        person(id: 'cara', forname: 'Cara', surname: 'Campbell', tagIDs: []),
+        person(id: 'dan', forname: 'Dan', surname: 'Campbell', tagIDs: []),
+      ],
+    );
+
+    expect(find.text('Campbell'), findsOneWidget);
+    expect(find.byTooltip('Select Adams'), findsNothing);
+    expect(checkboxFor(tester, 'Amy Adams').value, isFalse);
+    expect(checkboxFor(tester, 'Ben Campbell').value, isTrue);
+    expect(
+      tester
+          .widget<Checkbox>(
+            find.descendant(
+              of: find.byTooltip('Select Campbell'),
+              matching: find.byType(Checkbox),
+            ),
+          )
+          .value,
+      isNull,
+    );
+
+    await tester.tap(find.byTooltip('Select Campbell'));
+    await tester.pumpAndSettle();
+
+    expect(checkboxFor(tester, 'Amy Adams').value, isFalse);
+    expect(checkboxFor(tester, 'Ben Campbell').value, isTrue);
+    expect(checkboxFor(tester, 'Cara Campbell').value, isTrue);
+    expect(checkboxFor(tester, 'Dan Campbell').value, isTrue);
+
+    await tester.tap(find.byTooltip('Unselect Campbell'));
+    await tester.pumpAndSettle();
+
+    expect(checkboxFor(tester, 'Ben Campbell').value, isFalse);
+    expect(checkboxFor(tester, 'Cara Campbell').value, isFalse);
+    expect(checkboxFor(tester, 'Dan Campbell').value, isFalse);
+    expect(checkboxFor(tester, 'Amy Adams').value, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('capped picker does not offer a surname group', (tester) async {
+    await pumpPicker(
+      tester,
+      width: 400,
+      selectedUIDs: const [],
+      maxSelection: 3,
+      users: [
+        person(id: 'ben', forname: 'Ben', surname: 'Campbell', tagIDs: []),
+        person(id: 'cara', forname: 'Cara', surname: 'Campbell', tagIDs: []),
+      ],
+    );
+
+    expect(find.byTooltip('Select Campbell'), findsNothing);
+    expect(find.text('Ben Campbell'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('wide picker keeps a surname group above the cards', (
+    tester,
+  ) async {
+    await pumpPicker(
+      tester,
+      width: 1200,
+      selectedUIDs: const [],
+      users: [
+        person(id: 'ben', forname: 'Ben', surname: 'Campbell', tagIDs: [
+          'worship',
+          'speaker',
+        ]),
+        person(id: 'cara', forname: 'Cara', surname: 'Campbell', tagIDs: []),
+      ],
+    );
+
+    expect(find.byTooltip('Select Campbell'), findsOneWidget);
+    expect(tester.getSize(find.byType(Card).first).height, 108);
     expect(tester.takeException(), isNull);
   });
 }

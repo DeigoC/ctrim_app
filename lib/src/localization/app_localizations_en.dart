@@ -1320,6 +1320,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersFilterShowSection => 'Show';
 
   @override
+  String get volunteersFilterAudienceHintEveryone =>
+      'Everyone at this location, including people who only follow updates.';
+
+  @override
+  String get volunteersFilterAudienceHintPlaceholders =>
+      'Names added before that person has signed in.';
+
+  @override
+  String get volunteersFilterAudienceHintBoth =>
+      'Serving members and placeholders. People who only follow updates stay off this list.';
+
+  @override
+  String get volunteersEmptyServingAndPlaceholders =>
+      'No serving members or placeholders to show';
+
+  @override
   String get volunteersFilterLocationSection => 'Location';
 
   @override

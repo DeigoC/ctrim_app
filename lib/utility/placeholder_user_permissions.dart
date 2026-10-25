@@ -75,10 +75,13 @@ bool isTransientVolunteerPlaceholder(User user) {
 /// Whether [user] should appear in the People directory for [viewer]
 /// given the placeholders filter.
 ///
-/// Off (with Serving also off): all members the viewer may see — active
-/// profiles plus viewer-visible placeholders (created by them, on a cell
-/// group they lead, or any placeholder for area admins). On: placeholders
-/// only — same visibility rules, excluding linked / non-placeholder rows.
+/// Off: all members the viewer may see — active profiles plus viewer-visible
+/// placeholders (created by them, on a cell group they lead, or any
+/// placeholder for area admins). On: placeholders only — same visibility
+/// rules, excluding linked / non-placeholder rows.
+///
+/// Serving and Placeholders together is not this flag. Leave it off and use
+/// `PeopleDirectoryQuery.matchesShowFilter` so serving members stay in the list.
 bool isVisibleInVolunteerDirectory({
   required User user,
   required User viewer,
