@@ -260,6 +260,7 @@ void main() {
       width: 1200,
       selectedUIDs: const [],
       users: [
+        person(id: 'ada', forname: 'Ada', surname: 'Cain', tagIDs: []),
         person(id: 'ben', forname: 'Ben', surname: 'Campbell', tagIDs: [
           'worship',
           'speaker',
@@ -268,8 +269,18 @@ void main() {
       ],
     );
 
-    expect(find.byTooltip('Select Campbell'), findsOneWidget);
-    expect(tester.getSize(find.byType(Card).first).height, 108);
+    final bar = tester.getRect(
+      find.descendant(
+        of: find.byTooltip('Select Campbell'),
+        matching: find.byType(InkWell),
+      ),
+    );
+    final above = tester.getRect(find.widgetWithText(Card, 'Ada Cain'));
+    final familyCard = tester.getRect(find.widgetWithText(Card, 'Ben Campbell'));
+
+    expect(bar.top - above.bottom, greaterThanOrEqualTo(16));
+    expect(familyCard.top - bar.bottom, greaterThanOrEqualTo(12));
+    expect(tester.getSize(find.widgetWithText(Card, 'Ben Campbell')).height, 108);
     expect(tester.takeException(), isNull);
   });
 }

@@ -77,6 +77,51 @@ class EventHeadDBManager {
     return snapshot.docs.map((doc) => doc.data()).toList();
   }
 
+  /// Newest posts linked to [cellGroupId] with [EventHead.eventDate] before
+  /// [before]. Composite index: `CellGroupIDs` array-contains + `EventDate`.
+  Future<List<EventHead>> fetchEarlierHeadsWithCellGroup({
+    required String cellGroupId,
+    required DateTime before,
+    int limit = 40,
+  }) {
+    return _fetchEarlierHeads(
+      arrayField: 'CellGroupIDs',
+      id: cellGroupId,
+      before: before,
+      limit: limit,
+    );
+  }
+
+  /// Newest posts carrying [tagId] with [EventHead.eventDate] before [before].
+  /// Composite index: `TagIDs` array-contains + `EventDate`.
+  Future<List<EventHead>> fetchEarlierHeadsWithPostTag({
+    required String tagId,
+    required DateTime before,
+    int limit = 40,
+  }) {
+    return _fetchEarlierHeads(
+      arrayField: 'TagIDs',
+      id: tagId,
+      before: before,
+      limit: limit,
+    );
+  }
+
+  Future<List<EventHead>> _fetchEarlierHeads({
+    required String arrayField,
+    required String id,
+    required DateTime before,
+    required int limit,
+  }) async {
+    final snapshot = await _ref
+        .where(arrayField, arrayContains: id)
+        .where('EventDate', isLessThan: Timestamp.fromDate(before))
+        .orderBy('EventDate', descending: true)
+        .limit(limit)
+        .get();
+    return snapshot.docs.map((doc) => doc.data()).toList();
+  }
+
   Future<EventHead> fetchHead(final String id) async {
     return await _ref.doc(id).get().then((value) => value.data() as EventHead);
   }

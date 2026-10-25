@@ -68,4 +68,32 @@ void main() {
     expect(find.text('Show less'), findsOneWidget);
     expect(find.text('Person 8'), findsOneWidget);
   });
+
+  testWidgets('a folded line keeps a newcomer chip beside the name',
+      (tester) async {
+    final names = [for (var i = 0; i < 9; i++) 'Person $i'];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AttendancePeoplePreview(
+            names: names,
+            nameBadges: [
+              const Text('New'),
+              for (var i = 1; i < names.length; i++) null,
+            ],
+            tiles: [for (final name in names) Text('tile $name')],
+            overviewUsers: const <User>[],
+            isWide: false,
+            expanded: false,
+            onToggle: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Person 0'), findsOneWidget);
+    expect(find.text('New'), findsOneWidget);
+    expect(find.text('Person 0, Person 1, Person 2'), findsNothing);
+    expect(find.text('+6 more'), findsOneWidget);
+  });
 }

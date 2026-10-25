@@ -9,9 +9,11 @@ import '../../models/event/event_attendance.dart';
 import '../../models/user.dart';
 import '../../pages/personal/guest_registration_page.dart';
 import '../../pages/personal/select_users_page.dart';
+import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/attendance_list_preview.dart';
 import '../../utility/attendance_name_order.dart';
+import '../../utility/attendance_newcomer.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
@@ -21,6 +23,7 @@ import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
+import '../catalog/colored_chip.dart';
 import '../common/load_progress_body.dart';
 import '../two_column_masonry.dart';
 import '../user_avatar.dart';
@@ -51,6 +54,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
   Object? _loadError;
   bool _expectedExpanded = false;
   bool _attendeesExpanded = false;
+  List<AttendanceSeriesPost> _earlierSeries = const [];
+  int _seriesGeneration = 0;
 
   @override
   bool get wantKeepAlive => true;
@@ -59,6 +64,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
   void initState() {
     super.initState();
     _loadAttendance();
+    _loadSeries();
   }
 
   /// Loads attendance once per post view. Tab switches remount this widget;
@@ -98,6 +104,43 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     }
   }
 
+  /// Earlier attendance in this post's cell group, or its tags when it has
+  /// no cell group. A failed lookup leaves the names unmarked.
+  Future<void> _loadSeries() async {
+    final generation = ++_seriesGeneration;
+    try {
+      final earlier = await AttendanceNewcomer.loadEarlier(
+        current: widget.eventContext.head,
+      );
+      if (!mounted || generation != _seriesGeneration) return;
+      setState(() => _earlierSeries = earlier);
+    } catch (e, stack) {
+      debugPrint('Attendance series lookup failed: $e\n$stack');
+      if (!mounted || generation != _seriesGeneration) return;
+      setState(() => _earlierSeries = const []);
+    }
+  }
+
+  Map<String, AttendanceVisitMark> _visitMarks() {
+    final attendance = widget.eventContext.attendance;
+    if (attendance == null) return const {};
+    return AttendanceNewcomer.marksFor(
+      current: widget.eventContext.head,
+      attendees: attendance.attendees,
+      earlier: _earlierSeries,
+    );
+  }
+
+  Widget? _visitBadge(
+    Map<String, AttendanceVisitMark> marks,
+    String? userId,
+  ) {
+    if (userId == null || userId.isEmpty) return null;
+    final mark = marks[userId];
+    if (mark == null) return null;
+    return _AttendanceVisitChip(mark: mark);
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -114,7 +157,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         totalSteps: 1,
         error: _loadError,
         errorTitle: 'Could not load attendance',
-        onRetry: () => _loadAttendance(forceReload: true),
+        onRetry: () {
+          _loadAttendance(forceReload: true);
+          _loadSeries();
+        },
       );
     }
 
@@ -251,6 +297,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
           )
         : null;
 
+    final visitMarks = _visitMarks();
     final attendeesCard = hasAttendees
         ? _buildSectionCard(
             theme,
@@ -269,6 +316,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                 for (final entry in attendees)
                   _displayNameForAttendee(appContext, entry),
               ],
+              nameBadges: [
+                for (final entry in attendees)
+                  _visitBadge(visitMarks, entry.userId),
+              ],
               overviewUsers: _usersForAttendees(
                 appContext,
                 attendees
@@ -284,6 +335,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                     appContext,
                     entry,
                     canManage: canManage,
+                    visitMark:
+                        entry.userId == null ? null : visitMarks[entry.userId!],
                   ),
               ],
               isWide: isWide,
@@ -552,6 +605,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     AppContext appContext,
     AttendeeEntry entry, {
     required bool canManage,
+    AttendanceVisitMark? visitMark,
   }) {
     final name = _displayNameForAttendee(appContext, entry);
     final note = entry.isExternal && (entry.note?.isNotEmpty ?? false)
@@ -566,7 +620,21 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
               backgroundColor: colorScheme.tertiaryContainer,
               child: const Icon(Icons.person_outline, size: 20),
             ),
-      title: Text(name),
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (visitMark != null) ...[
+            const SizedBox(width: 8),
+            _AttendanceVisitChip(mark: visitMark),
+          ],
+        ],
+      ),
       subtitle: note == null ? null : Text(note),
       trailing: canManage
           ? IconButton(
@@ -934,5 +1002,24 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     }
 
     _applyAttendeesLocally(next);
+  }
+}
+
+class _AttendanceVisitChip extends StatelessWidget {
+  const _AttendanceVisitChip({required this.mark});
+
+  final AttendanceVisitMark mark;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final first = mark == AttendanceVisitMark.first;
+    return ColoredChip(
+      label: first ? l10n.attendanceVisitNew : l10n.attendanceVisitReturning,
+      color: first ? colorScheme.primary : colorScheme.tertiary,
+      selected: first,
+      dense: true,
+    );
   }
 }

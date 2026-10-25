@@ -5373,6 +5373,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Before you send a gift'**
   String get donationsNotesSubtitle;
+
+  /// Chip beside a person on their first attendance in this cell group or post tag
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get attendanceVisitNew;
+
+  /// Chip beside a person on their second or third attendance in this cell group or post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Back again'**
+  String get attendanceVisitReturning;
 }
 
 class _AppLocalizationsDelegate

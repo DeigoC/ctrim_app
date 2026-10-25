@@ -3080,4 +3080,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get donationsNotesSubtitle => 'Before you send a gift';
+
+  @override
+  String get attendanceVisitNew => 'New';
+
+  @override
+  String get attendanceVisitReturning => 'Back again';
 }

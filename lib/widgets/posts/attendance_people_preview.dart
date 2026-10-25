@@ -18,10 +18,14 @@ class AttendancePeoplePreview extends StatelessWidget {
     required this.expanded,
     required this.onToggle,
     this.overviewDetail,
+    this.nameBadges = const [],
   });
 
   /// Display names, same order and length as [tiles].
   final List<String> names;
+
+  /// Optional chip beside each name in the folded line. Same order as [names].
+  final List<Widget?> nameBadges;
   final List<Widget> tiles;
 
   /// Directory profiles for the face row. Guests without a profile are omitted.
@@ -81,14 +85,45 @@ class AttendancePeoplePreview extends StatelessWidget {
         if (preview.shown.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-            child: Text(
-              preview.shown.join(', '),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface,
-              ),
-            ),
+            child: _foldedNames(theme, colorScheme, preview),
           ),
         _toggleButton(context, expanded: false, hidden: preview.hidden),
+      ],
+    );
+  }
+
+  Widget _foldedNames(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    AttendanceNamePreview preview,
+  ) {
+    final style = theme.textTheme.bodyMedium?.copyWith(
+      color: colorScheme.onSurface,
+    );
+    final badges = [
+      for (var i = 0; i < preview.shown.length; i++)
+        i < nameBadges.length ? nameBadges[i] : null,
+    ];
+    if (badges.every((badge) => badge == null)) {
+      return Text(preview.shown.join(', '), style: style);
+    }
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        for (var i = 0; i < preview.shown.length; i++)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(preview.shown[i], style: style),
+              if (badges[i] != null) ...[
+                const SizedBox(width: 6),
+                badges[i]!,
+              ],
+            ],
+          ),
       ],
     );
   }

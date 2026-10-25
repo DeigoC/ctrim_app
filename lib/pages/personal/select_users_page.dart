@@ -589,9 +589,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           horizontalPadding + 4,
-          2,
+          16,
           horizontalPadding + 4,
-          2,
+          12,
         ),
         child: Material(
           color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
