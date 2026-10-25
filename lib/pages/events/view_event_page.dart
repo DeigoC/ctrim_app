@@ -33,6 +33,7 @@ import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
 import 'post_templates/select_post_template_page.dart';
+import 'select_expected_attendance_preset_page.dart';
 import 'select_schedule_preset_page.dart';
 import 'send_broadcast_notification_page.dart';
 import 'view_meta_logs_page.dart';
@@ -870,6 +871,8 @@ class _ViewEventPageState extends State<ViewEventPage>
         onAddSchedule: _onAddScheduleItem,
         onArrangeSchedule: _onArrangeSchedule,
         onApplySchedulePreset: _onApplySchedulePresetFromSheet,
+        onApplyExpectedAttendancePreset:
+            _onApplyExpectedAttendancePresetFromSheet,
         onEditMedia: _onEditMediaClick,
         onManageContributors: _onManageContributorsFromSheet,
         onManageLeadSpeaker: _onManageLeadSpeakerFromSheet,
@@ -1001,6 +1004,70 @@ class _ViewEventPageState extends State<ViewEventPage>
       SnackBar(
         content: Text(
             'Schedule updated to “$presetName” — save the post to keep the change'),
+      ),
+    );
+  }
+
+  Future<void> _onApplyExpectedAttendancePresetFromSheet() async {
+    Navigator.of(context).pop();
+    final selected = await Navigator.push<
+        ({PostTemplate template, ExpectedAttendancePreset preset})>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectExpectedAttendancePresetPage(
+          preferredTitle: _eventContext.head.title,
+          preferredLocation: _eventContext.head.location,
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+
+    final templateTitle = selected.template.title;
+    final presetName = selected.preset.name;
+    final confirm = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Replace expected people?',
+      content:
+          'This replaces the expected attendance list with “$presetName” from '
+          '“$templateTitle”. Interest and who has been marked as attending stay. '
+          'Save the post to keep the change.',
+      confirmText: 'Replace',
+      icon: Icons.groups_outlined,
+    );
+    if (!confirm || !mounted) return;
+
+    if (!_eventContext.hasLoadedAttendance) {
+      final ok = await DialogManager.runWithProgressDialog(
+        context: context,
+        title: 'Loading attendance…',
+        action: () async {
+          final attendance =
+              await EventSupplementalDBManager(_eventContext.id)
+                  .fetchAttendance();
+          _eventContext.setFetchedAttendance(
+            attendance,
+            forceReplace: !_eventContext.isAttendanceDirty,
+          );
+        },
+      );
+      if (!ok || !mounted) return;
+    }
+
+    PostTemplateMapper.applyExpectedAttendancePreset(
+      _eventContext,
+      selected.preset,
+      applyToLiveAttendance: true,
+    );
+    Provider.of<AppContext>(context, listen: false)
+        .analytics
+        .logExpectedAttendancePresetApply(_eventContext.id);
+    setState(() {});
+    final peopleIndex = _peopleTabIndex;
+    if (peopleIndex != null) _tabController.animateTo(peopleIndex);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            'Expected people updated to “$presetName” — save the post to keep the change'),
       ),
     );
   }

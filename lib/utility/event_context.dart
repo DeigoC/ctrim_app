@@ -388,6 +388,23 @@ class EventContext {
       });
   }
 
+  /// Replaces expected user IDs on the live attendance doc (if loaded).
+  ///
+  /// Interest and checked attendees are preserved. Marks attendance dirty and
+  /// enables Save. Also keeps the draft expected list in sync.
+  void replaceExpectedUserIds(final List<String> userIds) {
+    applyExpectedAttendeeUserIDs(userIds);
+    if (_attendance == null) return;
+    applyStaffAttendanceEdit(EventAttendance.fromMap({
+      'interested': {
+        for (final e in _attendance!.interested.entries)
+          e.key: e.value.toJson(),
+      },
+      'attendees': _attendance!.attendees.map((e) => e.toJson()).toList(),
+      'expectedUserIds': List<String>.from(_expectedAttendeeUserIDs),
+    }));
+  }
+
   /// People marked as attended on a new post before it is published.
   ///
   /// Included in the attendance doc only when the event date is before [now].

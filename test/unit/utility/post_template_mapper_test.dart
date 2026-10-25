@@ -9,6 +9,8 @@ void main() {
     Map<String, dynamic> baseLocalMap({
       List? roles,
       List? schedulePresets,
+      List? expectedAttendancePresets,
+      List? expectedAttendeeUserIDs,
     }) {
       return {
         'Title': 'Sunday Service',
@@ -18,7 +20,10 @@ void main() {
         'Location': 'Belfast',
         'Topics': <String>['Belfast'],
         'TagIDs': <String>[],
-        'ExpectedAttendeeUserIDs': <String>['expected-1'],
+        'ExpectedAttendeeUserIDs':
+            expectedAttendeeUserIDs ?? <String>['expected-1'],
+        if (expectedAttendancePresets != null)
+          'ExpectedAttendancePresets': expectedAttendancePresets,
         'Contributors': <String>[],
         'LeadSpeakerUID': null,
         'Subtitles': <String>['Welcome'],
@@ -314,6 +319,67 @@ void main() {
       expect(roundTrip.roles.single['standing'], isTrue);
       expect(roundTrip.roles.single['start'], callTime);
       expect(roundTrip.roles.single['end'], isNull);
+    });
+
+    test('applies an expected attendance preset to the draft list', () {
+      final map = baseLocalMap(
+        expectedAttendeeUserIDs: <String>['legacy'],
+        expectedAttendancePresets: [
+          {
+            'id': 'team-a',
+            'name': 'Team A',
+            'userIds': <String>['a1', 'a2'],
+          },
+          {
+            'id': 'team-b',
+            'name': 'Team B',
+            'userIds': <String>['b1'],
+          },
+        ],
+      );
+      final template = PostTemplate.fromMap(true, 'expected', map);
+      final context = PostTemplateMapper.mapTemplateToEventContext(
+        template: template,
+        currentUserID: 'author-1',
+        expectedAttendancePreset: template.expectedAttendancePresetById('team-b'),
+      );
+
+      expect(context.expectedAttendeeUserIDs, ['b1']);
+    });
+
+    test('applying expected attendance leaves the schedule alone', () {
+      final context = EventContext.adding(currentUserID: 'author-1');
+      context.program.addRole(
+        uids: ['host'],
+        title: 'Host',
+        start: DateTime(2026, 3, 15, 10),
+        end: DateTime(2026, 3, 15, 10, 15),
+        id: 1,
+      );
+      context.applyExpectedAttendeeUserIDs(['old']);
+
+      PostTemplateMapper.applyExpectedAttendancePreset(
+        context,
+        ExpectedAttendancePreset(
+          id: 'team-a',
+          name: 'Team A',
+          userIds: ['a1', 'a2'],
+        ),
+      );
+
+      expect(context.expectedAttendeeUserIDs, ['a1', 'a2']);
+      expect(context.program.roles.single['title'], 'Host');
+    });
+
+    test('captureExpectedAsPreset snapshots the draft list', () {
+      final context = EventContext.adding(currentUserID: 'author-1');
+      context.applyExpectedAttendeeUserIDs(['u1', 'u2']);
+      final captured = PostTemplateMapper.captureExpectedAsPreset(
+        existing: ExpectedAttendancePreset.emptyDefault(),
+        eventContext: context,
+      );
+      expect(captured.id, ExpectedAttendancePreset.defaultId);
+      expect(captured.userIds, ['u1', 'u2']);
     });
   });
 }

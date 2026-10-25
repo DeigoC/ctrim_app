@@ -19,6 +19,7 @@ import '../../utility/post_template_mapper.dart';
 import '../../utility/post_title_date.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/posts/expected_attendance_preset_picker.dart';
 import '../../widgets/posts/schedule_preset_picker.dart';
 
 enum _BulkPostRelation { child, sibling }
@@ -90,11 +91,19 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
 
   bool get _hasMultiplePresets => _template.schedulePresets.length > 1;
 
+  bool get _hasMultipleExpectedPresets =>
+      _template.expectedAttendancePresets.length > 1;
+
   int get _maxWeeks => maxBulkWeeksFor(_selectedDays.length);
 
   String? get _defaultPresetId => _template.schedulePresets.isEmpty
       ? null
       : _template.schedulePresets.first.id;
+
+  String? get _defaultExpectedPresetId =>
+      _template.expectedAttendancePresets.isEmpty
+          ? null
+          : _template.expectedAttendancePresets.first.id;
 
   @override
   void initState() {
@@ -172,6 +181,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
             date: date,
             headMedia: _pickRandomCover(),
             schedulePresetId: _defaultPresetId,
+            expectedAttendancePresetId: _defaultExpectedPresetId,
           ),
       ];
     });
@@ -197,6 +207,12 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     return _template.presetById(id)?.name ?? 'Schedule preset';
   }
 
+  String _expectedPresetName(String? id) {
+    if (id == null) return 'No expected list';
+    return _template.expectedAttendancePresetById(id)?.name ??
+        'Expected attendance';
+  }
+
   Future<void> _pickPresetForRow(int index) async {
     final selected = await showSchedulePresetPicker(
       context: context,
@@ -207,6 +223,19 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     );
     if (!mounted || selected == null) return;
     setState(() => _previews[index].schedulePresetId = selected.id);
+  }
+
+  Future<void> _pickExpectedPresetForRow(int index) async {
+    final selected = await showExpectedAttendancePresetPicker(
+      context: context,
+      presets: _template.expectedAttendancePresets,
+      selectedId: _previews[index].expectedAttendancePresetId,
+      title: 'Expected attendance preset',
+      subtitle: 'Expected members for this date',
+    );
+    if (!mounted || selected == null) return;
+    setState(
+        () => _previews[index].expectedAttendancePresetId = selected.id);
   }
 
   Future<void> _applyPresetToAll() async {
@@ -220,6 +249,21 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     setState(() {
       for (final preview in _previews) {
         preview.schedulePresetId = selected.id;
+      }
+    });
+  }
+
+  Future<void> _applyExpectedPresetToAll() async {
+    final selected = await showExpectedAttendancePresetPicker(
+      context: context,
+      presets: _template.expectedAttendancePresets,
+      title: 'Apply to all',
+      subtitle: 'Use this expected-member list on every date',
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      for (final preview in _previews) {
+        preview.expectedAttendancePresetId = selected.id;
       }
     });
   }
@@ -265,6 +309,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           parentID: parentID,
           allUsers: appContext.allUsers,
           schedulePresetId: preview.schedulePresetId,
+          expectedAttendancePresetId: preview.expectedAttendancePresetId,
         );
         PostTemplateMapper.adjustEventProgramToDate(eventContext, preview.date);
         _applyPreviewHeadMedia(eventContext.head, preview.headMedia);
@@ -499,15 +544,29 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                             : colorScheme.error,
                       ),
                 ),
-                if (_hasMultiplePresets) ...[
+                if (_hasMultiplePresets || _hasMultipleExpectedPresets) ...[
                   const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton.tonalIcon(
-                      onPressed: _previews.isEmpty ? null : _applyPresetToAll,
-                      icon: const Icon(Icons.view_timeline_outlined, size: 18),
-                      label: const Text('Apply schedule to all'),
-                    ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (_hasMultiplePresets)
+                        FilledButton.tonalIcon(
+                          onPressed:
+                              _previews.isEmpty ? null : _applyPresetToAll,
+                          icon: const Icon(Icons.view_timeline_outlined,
+                              size: 18),
+                          label: const Text('Apply schedule to all'),
+                        ),
+                      if (_hasMultipleExpectedPresets)
+                        FilledButton.tonalIcon(
+                          onPressed: _previews.isEmpty
+                              ? null
+                              : _applyExpectedPresetToAll,
+                          icon: const Icon(Icons.groups_outlined, size: 18),
+                          label: const Text('Apply expected to all'),
+                        ),
+                    ],
                   ),
                 ],
               ],
@@ -736,6 +795,20 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                                       const EdgeInsets.symmetric(horizontal: 8),
                                 ),
                               ),
+                            if (_hasMultipleExpectedPresets)
+                              TextButton.icon(
+                                onPressed: () =>
+                                    _pickExpectedPresetForRow(index),
+                                icon:
+                                    const Icon(Icons.groups_outlined, size: 16),
+                                label: Text(_expectedPresetName(
+                                    preview.expectedAttendancePresetId)),
+                                style: TextButton.styleFrom(
+                                  visualDensity: VisualDensity.compact,
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -793,10 +866,22 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                           ),
                     ),
                   ],
+                  if (_hasMultipleExpectedPresets) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      _expectedPresetName(preview.expectedAttendancePresetId),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colorScheme.tertiary,
+                          ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            if (_hasSubtitles || _hasCoverPool || _hasMultiplePresets)
+            if (_hasSubtitles ||
+                _hasCoverPool ||
+                _hasMultiplePresets ||
+                _hasMultipleExpectedPresets)
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -817,6 +902,13 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                       icon: const Icon(Icons.view_timeline_outlined, size: 18),
                       tooltip: _presetName(preview.schedulePresetId),
                       onPressed: () => _pickPresetForRow(index),
+                    ),
+                  if (_hasMultipleExpectedPresets)
+                    IconButton(
+                      icon: const Icon(Icons.groups_outlined, size: 18),
+                      tooltip: _expectedPresetName(
+                          preview.expectedAttendancePresetId),
+                      onPressed: () => _pickExpectedPresetForRow(index),
                     ),
                 ],
               ),
@@ -965,6 +1057,7 @@ class _PostPreview {
   final DateTime date;
   Map<String, dynamic>? headMedia;
   String? schedulePresetId;
+  String? expectedAttendancePresetId;
 
   _PostPreview({
     required this.title,
@@ -972,5 +1065,6 @@ class _PostPreview {
     required this.date,
     this.headMedia,
     this.schedulePresetId,
+    this.expectedAttendancePresetId,
   });
 }

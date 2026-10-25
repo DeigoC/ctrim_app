@@ -19,6 +19,7 @@ class PostEditSheet extends StatefulWidget {
     required this.onAddSchedule,
     required this.onArrangeSchedule,
     required this.onApplySchedulePreset,
+    required this.onApplyExpectedAttendancePreset,
     required this.onEditMedia,
     required this.onManageContributors,
     required this.onManageLeadSpeaker,
@@ -37,6 +38,7 @@ class PostEditSheet extends StatefulWidget {
   final VoidCallback onAddSchedule;
   final VoidCallback onArrangeSchedule;
   final VoidCallback onApplySchedulePreset;
+  final VoidCallback onApplyExpectedAttendancePreset;
   final VoidCallback onEditMedia;
   final VoidCallback onManageContributors;
   final VoidCallback onManageLeadSpeaker;
@@ -150,6 +152,8 @@ class _PostEditSheetState extends State<PostEditSheet> {
           onManageLeadSpeaker: widget.onManageLeadSpeaker,
           onManageContributors: widget.onManageContributors,
           onOpenPeopleTab: widget.onOpenPeopleTab,
+          onApplyExpectedAttendancePreset:
+              widget.onApplyExpectedAttendancePreset,
           onOpenRelated: () => _open(_PostEditSheetPage.related),
           onNotifyBroadcast: widget.onNotifyBroadcast,
           onNotifyScheduled: widget.onNotifyScheduled,
@@ -188,6 +192,7 @@ class _PostEditMenu extends StatelessWidget {
     required this.onManageLeadSpeaker,
     required this.onManageContributors,
     required this.onOpenPeopleTab,
+    required this.onApplyExpectedAttendancePreset,
     required this.onOpenRelated,
     required this.onNotifyBroadcast,
     required this.onNotifyScheduled,
@@ -205,6 +210,7 @@ class _PostEditMenu extends StatelessWidget {
   final VoidCallback onManageLeadSpeaker;
   final VoidCallback onManageContributors;
   final VoidCallback onOpenPeopleTab;
+  final VoidCallback onApplyExpectedAttendancePreset;
   final VoidCallback onOpenRelated;
   final VoidCallback onNotifyBroadcast;
   final VoidCallback onNotifyScheduled;
@@ -271,6 +277,13 @@ class _PostEditMenu extends StatelessWidget {
               title: 'People tab',
               subtitle: 'Interest and attendance',
               onTap: onOpenPeopleTab,
+            ),
+            ActionSheetOption(
+              icon: Icons.person_add_alt_1_outlined,
+              color: Colors.pink,
+              title: 'Apply expected attendance',
+              subtitle: 'Replace expected people from a template',
+              onTap: onApplyExpectedAttendancePreset,
             ),
           ],
         ),

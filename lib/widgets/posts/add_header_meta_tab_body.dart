@@ -29,6 +29,8 @@ class AddEventHeadMeta extends StatefulWidget {
     this.showNotificationControls = true,
     this.showPastAttendancePicker = false,
     this.allowSelfAsContributor = false,
+    this.expectedPresetBar,
+    this.onExpectedAttendeesChanged,
   });
   final TextEditingController tecTitle, tecSubtitle;
   final EventContext eventContext;
@@ -44,6 +46,12 @@ class AddEventHeadMeta extends StatefulWidget {
   /// contributor. Templates reuse [EventContext.adding], which sets the editor
   /// as author, and posts normally exclude the author from contributors.
   final bool allowSelfAsContributor;
+
+  /// Optional bar above expected attendees (template expected-attendance presets).
+  final Widget? expectedPresetBar;
+
+  /// Called after expected attendees change (template editor flushes presets).
+  final VoidCallback? onExpectedAttendeesChanged;
 
   @override
   State<AddEventHeadMeta> createState() => _AddEventHeadMetaState();
@@ -862,6 +870,10 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.expectedPresetBar != null) ...[
+          widget.expectedPresetBar!,
+          const SizedBox(height: 12),
+        ],
         Text(
           'Expected attendees',
           style:
@@ -991,6 +1003,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     setState(() {
       widget.eventContext.applyExpectedAttendeeUserIDs(seededIds!);
     });
+    widget.onExpectedAttendeesChanged?.call();
   }
 
   Future<void> _onManageExpectedAttendeesTap() async {
@@ -1016,6 +1029,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     setState(() {
       widget.eventContext.applyExpectedAttendeeUserIDs(result);
     });
+    widget.onExpectedAttendeesChanged?.call();
   }
 
   Future<void> _onSelectAttendeesTap() async {
