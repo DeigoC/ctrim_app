@@ -405,7 +405,7 @@ class EventSupplementalDBManager {
     await _colRef.doc('logs').update(log.toJson());
   }
 
-  // * Attendance (private lists; counts live on EventHead)
+  // * Attendance (lists are publicly readable; counts also live on EventHead)
 
   Future<EventAttendance> fetchAttendance() async {
     final doc = await _colRef.doc('attendance').get();

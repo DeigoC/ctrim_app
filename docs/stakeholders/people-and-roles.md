@@ -79,7 +79,7 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## Names guests see
 
-On a profile link, a ministry list, pastors, a schedule role, or the speaker on a bulletin card, people who are not signed in see a first name and the first letter of the surname (for example Adam B.). That person can turn on **Full Surname for Guests** in Personal settings, and an area admin can set the same choice when editing their profile. Signed-in people still see full names.
+On a profile link, a ministry list, pastors, a schedule role, the speaker on a bulletin card, or the People tab on a post (interest, expected, and attendance), people who are not signed in see a first name and the first letter of the surname (for example Adam B.). That person can turn on **Full Surname for Guests** in Personal settings, and an area admin can set the same choice when editing their profile. Signed-in people still see full names.
 
 ## People directory
 

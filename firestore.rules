@@ -105,16 +105,16 @@ service cloud.firestore {
       }
     }
 
-    // Events: split head vs supplemental so attendance names stay signed-in-only.
+    // Events: head and supplemental (including attendance) are publicly readable.
+    // Guest UI shortens surnames unless the person opted into Full Surname for Guests.
+    // Interest writes and staff attendance edits stay auth-gated below.
     match /events/{eventId} {
       allow read: if true;
       allow create: if isLeader();
       allow update: if isWorker() || isAttendanceCountOnlyUpdate();
 
       match /supplemental/{docId} {
-        allow read: if docId == 'attendance'
-          ? request.auth != null
-          : true;
+        allow read: if true;
 
         allow create: if docId == 'attendance'
           ? (isWorker() || isOwnInterestCreate())

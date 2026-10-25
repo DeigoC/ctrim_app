@@ -13,8 +13,8 @@ Definitions for **post**, **interest**, **bookmark**, **template**, and related 
 - **Share** (top of an open post, on every tab) sends the post’s **link** (`ctrim.org/post/…`), or the **write-up** (the title, the link, and the About text). On a phone this opens the usual share menu. When that menu is not available, the link is copied so you can paste it. Guests and members who open the link land on that post. If the post is the first page (a shared link, a bookmark, or a refresh), **Home** in the top corner opens the bulletin. Opening the post from inside the app still uses Back
 - Other browseable records work the same way: cell groups, churches, information topics, testimonials, and people profiles each have an address you can share or bookmark
 - Bulletin cards can still show **interest** and **attendance** counts
-- When signed in: open the **People** tab to mark **interest** (“follow updates” for that post) and see who else is interested or attending
-- Guests do not see the People tab on an open post; signing in unlocks interest and people lists
+- Open the **People** tab to see who is interested or attending. Guests see shortened names unless that person turned on **Full Surname for Guests**
+- When signed in: mark **interest** (“follow updates” for that post) on the People tab
 - **Bookmark** posts to keep track of them (long-press a card on the bulletin, or use the bookmark control on an open post)
 
 ## Finding posts (sort & filters)
@@ -51,7 +51,7 @@ Opening a post shows tabs when that content exists:
 | Tab | What’s there |
 |-----|----------------|
 | **About** | Title, details, and main description |
-| **People** | Interest, expected attendees, and attendance (signed-in only; guests do not see this tab) |
+| **People** | Interest, expected attendees, and attendance (guests can browse names; signing in unlocks marking interest) |
 | **Schedule** | Programme / roles and times (guests may see a filtered view — see below) |
 | **Media** | Photos and video, in the order set on the post. The first image is the cover |
 | **Related** | Linked parent, sibling, or child posts |
@@ -62,7 +62,7 @@ Tap a photo or video to open it. Pinch a photo to look closer, swipe sideways fo
 
 | Idea | In plain language |
 |------|-------------------|
-| **Interest** | “I want to **follow updates** about this post.” Not a formal RSVP. Signed-in people opt in on the People tab. Guests do not see that tab. |
+| **Interest** | “I want to **follow updates** about this post.” Not a formal RSVP. Signed-in people opt in on the People tab; guests can see who is interested but must sign in to mark their own. |
 | **Bookmark** | Keep the post on your shortlist and (when organisers save with an update log) get notified about changes. Separate from interest — you can bookmark without marking interest. |
 | **Expected attendees** | The **usual people** for a meeting (often set on a **template**, or filled from a linked cell group). They see the meeting on **My Schedule**; on the day, organisers can check them off into attendance quickly. |
 | **Attendance** | Who is (or was) attending — registered people or **placeholders**. Interested people can be promoted to attending; expected people can be checked off. **Post contributors** (and the author) manage the lists; they stay editable after the event. On the people picker, two or more people with the same surname have a tick box for that group, so a family can be marked together. On a phone, nine or more people in **Expected** or **Attendance** fold to a few names, their faces, and a **+** count of who is hidden. A wide screen lists about twice that many before folding. **+ more** opens the full list. When you **create** a post dated **before today**, the draft shows **Who attended** only (not expected people) so you can record who was there before the post is saved. |
