@@ -197,14 +197,14 @@ void main() {
         );
       });
 
-      test('hides all placeholders unless the filter is on', () {
+      test('includes viewer-visible placeholders when filter is off', () {
         expect(
           isVisibleInVolunteerDirectory(
             user: placeholder,
             viewer: admin,
             placeholdersOnly: false,
           ),
-          isFalse,
+          isTrue,
         );
         expect(
           isVisibleInVolunteerDirectory(
@@ -212,15 +212,23 @@ void main() {
             viewer: admin,
             placeholdersOnly: false,
           ),
-          isFalse,
+          isTrue,
         );
         expect(
           isVisibleInVolunteerDirectory(
             user: placeholder,
-            viewer: admin,
-            placeholdersOnly: true,
+            viewer: author,
+            placeholdersOnly: false,
           ),
           isTrue,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: other,
+            placeholdersOnly: false,
+          ),
+          isFalse,
         );
       });
 
@@ -241,9 +249,17 @@ void main() {
           ),
           isFalse,
         );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: admin,
+            placeholdersOnly: true,
+          ),
+          isTrue,
+        );
       });
 
-      test('non-admin only sees own minted placeholders when filter is on', () {
+      test('non-admin only sees own minted placeholders', () {
         expect(
           isVisibleInVolunteerDirectory(
             user: placeholder,
@@ -266,6 +282,14 @@ void main() {
             user: legacyUnlinked,
             viewer: author,
             placeholdersOnly: true,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: legacyUnlinked,
+            viewer: author,
+            placeholdersOnly: false,
           ),
           isFalse,
         );
@@ -296,7 +320,7 @@ void main() {
             placeholdersOnly: false,
             leadsCellGroupContainingUser: true,
           ),
-          isFalse,
+          isTrue,
         );
       });
     });
