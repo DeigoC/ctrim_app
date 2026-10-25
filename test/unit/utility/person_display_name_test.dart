@@ -88,4 +88,45 @@ void main() {
       );
     });
   });
+
+  group('PersonDisplayName.forViewer', () {
+    test('shortens attendance names for guests unless they opted in', () {
+      final user = User(id: '1', forname: 'Jane', surname: 'Doe');
+      expect(
+        PersonDisplayName.forViewer(
+          storedName: 'Jane Doe',
+          user: user,
+          guest: true,
+        ),
+        'Jane D.',
+      );
+
+      final optedIn = User(
+        id: '1',
+        forname: 'Jane',
+        surname: 'Doe',
+        showFullSurnameToGuests: true,
+      );
+      expect(
+        PersonDisplayName.forViewer(
+          storedName: 'Jane Doe',
+          user: optedIn,
+          guest: true,
+        ),
+        'Jane Doe',
+      );
+    });
+
+    test('abbreviates a stored attendee name when the profile is missing', () {
+      expect(
+        PersonDisplayName.forViewer(
+          storedName: 'Mary Smith',
+          user: null,
+          guest: true,
+          emptyFallback: 'Attendee',
+        ),
+        'Mary S.',
+      );
+    });
+  });
 }

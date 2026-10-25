@@ -32,7 +32,7 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 
 | Term | Meaning |
 |------|---------|
-| **Interest** (“follow updates”) | Signed-in “I want updates about this post” — not a formal RSVP. Shows on the post’s People tab (signed-in only; guests do not see that tab). |
+| **Interest** (“follow updates”) | Signed-in “I want updates about this post” — not a formal RSVP. Shows on the post’s People tab; guests can browse names but must sign in to opt in. |
 | **Bookmark** | Keep a post on your shortlist (long-press a card, or the bookmark control on an open post). Bookmarks drive the **Bookmarks** bulletin filter and can receive **update log** alerts when organisers save changes. |
 | **Expected attendees** | The usual people for a meeting (often from a template or filled from a linked cell group). Organisers check them off into attendance. |
 | **Attendance** | Who is (or was) at the event — registered people or placeholders. Managed by the author and contributors. |
