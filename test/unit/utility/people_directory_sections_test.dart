@@ -103,5 +103,64 @@ void main() {
           blocks.map((block) => block.surnameLabel), ['Adams', null, 'Cole']);
       expect(blocks[1].users.map((e) => e.id), ['b']);
     });
+
+    test('scrollLines keeps headings in one list and packs wide rows', () {
+      final users = [
+        u(id: 'a1', forname: 'Ann', surname: 'Adams'),
+        u(id: 'a2', forname: 'Amy', surname: 'Adams'),
+        u(id: 'b', forname: 'Ben', surname: 'Baker'),
+        u(id: 'c1', forname: 'Cara', surname: 'Cole'),
+        u(id: 'c2', forname: 'Chris', surname: 'Cole'),
+        u(id: 'c3', forname: 'Cyd', surname: 'Cole'),
+      ];
+
+      final lines = PeopleDirectorySections.scrollLines(
+        users: users,
+        useLetterSections: true,
+        groupSurnames: true,
+        peoplePerRow: 2,
+      );
+
+      expect(
+        lines.map((line) => line.storageKey),
+        [
+          'letter:A',
+          'surname:adams:a1',
+          'people:a1,a2',
+          'letter:B',
+          'people:b',
+          'letter:C',
+          'surname:cole:c1',
+          'people:c1,c2',
+          'people:c3',
+        ],
+      );
+      expect(lines[1].users.map((user) => user.id), ['a1', 'a2']);
+    });
+
+    test('scrollLines omits letter headings while searching', () {
+      final users = [
+        u(id: 'a', surname: 'Adams'),
+        u(id: 'b', surname: 'Baker'),
+      ];
+
+      final lines = PeopleDirectorySections.scrollLines(
+        users: users,
+        useLetterSections: false,
+        groupSurnames: false,
+        peoplePerRow: 1,
+      );
+
+      expect(lines.every((line) => line.isPeople), isTrue);
+      expect(lines.map((line) => line.users.single.id), ['a', 'b']);
+    });
+
+    test('grid column count matches a max extent of 420', () {
+      expect(PeopleDirectoryGrid.crossAxisCount(0), 1);
+      expect(PeopleDirectoryGrid.crossAxisCount(420), 1);
+      expect(PeopleDirectoryGrid.crossAxisCount(868), 3);
+      expect(PeopleDirectoryGrid.crossAxisCount(1400), 4);
+      expect(PeopleDirectoryGrid.childCrossAxisExtent(1400), (1400 - 36) / 4);
+    });
   });
 }

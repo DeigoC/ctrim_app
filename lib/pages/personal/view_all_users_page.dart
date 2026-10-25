@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../models/user.dart';
 import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/after_route_transition.dart';
 import '../../utility/app_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/cell_group_roster_cache.dart';
@@ -20,6 +21,7 @@ import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/volunteer_role_helpers.dart';
 import '../../utility/app_links.dart';
 import '../../widgets/common/action_sheet.dart';
+import '../../widgets/personal/people_directory_band.dart';
 import '../../widgets/app_search_bar.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
@@ -51,6 +53,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   bool _servingOnly = false;
   bool _refreshing = false;
   String? _refreshError;
+  final AfterRouteTransition _afterOpen = AfterRouteTransition();
+  int? _filteredUsersKey;
+  List<User>? _filteredUsersCache;
 
   @override
   void initState() {
@@ -64,15 +69,23 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       assignable,
     );
     // Cache-aware refresh: skips Firestore when lastUpdate matches.
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _refreshUsersFromServer(ignoreCooldown: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      await _ensureCellGroupRostersLoaded();
+      _afterOpen.schedule(this, () {
+        _refreshDirectoryAfterOpen();
+      });
     });
+  }
+
+  Future<void> _refreshDirectoryAfterOpen() async {
+    await _refreshUsersFromServer(ignoreCooldown: true);
+    if (!mounted) return;
+    await _ensureCellGroupRostersLoaded();
   }
 
   @override
   void dispose() {
+    _afterOpen.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -80,10 +93,15 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   Future<void> _ensureCellGroupRostersLoaded() async {
     if (!mounted) return;
     final appContext = Provider.of<AppContext>(context, listen: false);
-    await CellGroupRosterCache.ensureLoaded(
-      appContext.allCellGroups.where((g) => !g.isArchived).map((g) => g.id),
+    final ids = appContext.allCellGroups
+        .where((group) => !group.isArchived)
+        .map((group) => group.id)
+        .toList();
+    final missing = ids.any(
+      (id) => id.isNotEmpty && !CellGroupRosterCache.isLoaded(id),
     );
-    if (mounted) setState(() {});
+    await CellGroupRosterCache.ensureLoaded(ids);
+    if (mounted && missing) setState(() {});
   }
 
   Set<String> _ledMemberIds(AppContext appContext) {
@@ -351,6 +369,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   users: listUsers,
                   allTags: appContext.allTags,
                   cellGroupLeaders: cellGroupLeaders,
+                  ledMemberIds: ledMemberIds,
                   appContext: appContext,
                   horizontalPadding: horizontalPadding,
                   headerPadding: filterHorizontalPadding,
@@ -585,6 +604,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required List<User> users,
     required List<UserTag> allTags,
     required CellGroupLeaderIndex cellGroupLeaders,
+    required Set<String> ledMemberIds,
     required AppContext appContext,
     required double horizontalPadding,
     required double headerPadding,
@@ -594,13 +614,18 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required bool showingUnfilteredSearchFallback,
     required int unfilteredMatchCount,
   }) {
-    final sections = users.isEmpty
-        ? const <PeopleDirectorySection>[]
-        : _useLetterSections
-            ? PeopleDirectorySections.bySurnameLetter(users)
-            : [
-                PeopleDirectorySection(letter: '', users: users),
-              ];
+    final crossAxisExtent = isWide
+        ? (MediaQuery.sizeOf(context).width - horizontalPadding * 2)
+            .clamp(0.0, double.infinity)
+        : 0.0;
+    final lines = PeopleDirectorySections.scrollLines(
+      users: users,
+      useLetterSections: _useLetterSections,
+      groupSurnames: false,
+      peoplePerRow: isWide
+          ? PeopleDirectoryGrid.crossAxisCount(crossAxisExtent.toDouble())
+          : 1,
+    );
 
     return CustomScrollView(
       slivers: [
@@ -665,58 +690,86 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
             ),
           )
         else ...[
-          for (final section in sections) ...[
-            if (_useLetterSections)
-              SliverToBoxAdapter(
-                child: _buildLetterHeader(
-                  section.letter,
-                  horizontalPadding: horizontalPadding,
-                ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildDirectoryLine(
+                line: lines[index],
+                spacedBelow: isWide &&
+                    index + 1 < lines.length &&
+                    lines[index + 1].isPeople,
+                allTags: allTags,
+                cellGroupLeaders: cellGroupLeaders,
+                ledMemberIds: ledMemberIds,
+                appContext: appContext,
+                horizontalPadding: horizontalPadding,
+                crossAxisExtent: crossAxisExtent.toDouble(),
+                isWide: isWide,
+                l10n: l10n,
               ),
-            if (isWide)
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  0,
-                  horizontalPadding,
-                  0,
-                ),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 420,
-                    mainAxisExtent: 92,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 8,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildUserGridCard(
-                      user: section.users[index],
-                      allTags: allTags,
-                      cellGroupLeaders: cellGroupLeaders,
-                      appContext: appContext,
-                      l10n: l10n,
-                    ),
-                    childCount: section.users.length,
-                  ),
-                ),
-              )
-            else
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildUserListTile(
-                    user: section.users[index],
-                    allTags: allTags,
-                    cellGroupLeaders: cellGroupLeaders,
-                    appContext: appContext,
-                    l10n: l10n,
-                  ),
-                  childCount: section.users.length,
-                ),
-              ),
-          ],
+              childCount: lines.length,
+              addAutomaticKeepAlives: false,
+              findChildIndexCallback: (key) =>
+                  PeopleDirectorySections.indexForKey(lines, key),
+            ),
+          ),
           const SliverPadding(padding: EdgeInsets.only(bottom: 88)),
         ],
       ],
+    );
+  }
+
+  Widget _buildDirectoryLine({
+    required PeopleDirectoryScrollLine line,
+    required bool spacedBelow,
+    required List<UserTag> allTags,
+    required CellGroupLeaderIndex cellGroupLeaders,
+    required Set<String> ledMemberIds,
+    required AppContext appContext,
+    required double horizontalPadding,
+    required double crossAxisExtent,
+    required bool isWide,
+    required AppLocalizations l10n,
+  }) {
+    final Widget child;
+    if (line.isLetter) {
+      child = _buildLetterHeader(
+        line.letter!,
+        horizontalPadding: horizontalPadding,
+      );
+    } else if (isWide) {
+      child = Padding(
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        child: PeopleDirectoryBand(
+          crossAxisExtent: crossAxisExtent,
+          mainAxisExtent: 92,
+          spacedBelow: spacedBelow,
+          children: [
+            for (final user in line.users)
+              _buildUserGridCard(
+                user: user,
+                allTags: allTags,
+                cellGroupLeaders: cellGroupLeaders,
+                ledMemberIds: ledMemberIds,
+                appContext: appContext,
+                l10n: l10n,
+              ),
+          ],
+        ),
+      );
+    } else {
+      child = _buildUserListTile(
+        user: line.users.single,
+        allTags: allTags,
+        cellGroupLeaders: cellGroupLeaders,
+        ledMemberIds: ledMemberIds,
+        appContext: appContext,
+        l10n: l10n,
+      );
+    }
+
+    return KeyedSubtree(
+      key: ValueKey(line.storageKey),
+      child: child,
     );
   }
 
@@ -744,6 +797,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required User user,
     required List<UserTag> allTags,
     required CellGroupLeaderIndex cellGroupLeaders,
+    required Set<String> ledMemberIds,
     required AppContext appContext,
     required AppLocalizations l10n,
   }) {
@@ -759,8 +813,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final canEditUser = canEditPlaceholderProfile(
       actor: appContext.currentUser,
       target: user,
-      leadsCellGroupContainingTarget:
-          _ledMemberIds(appContext).contains(user.id),
+      leadsCellGroupContainingTarget: ledMemberIds.contains(user.id),
     );
     final meta = _compactPersonMeta(roles: roles, tags: userTags);
 
@@ -790,6 +843,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required User user,
     required List<UserTag> allTags,
     required CellGroupLeaderIndex cellGroupLeaders,
+    required Set<String> ledMemberIds,
     required AppContext appContext,
     required AppLocalizations l10n,
   }) {
@@ -805,8 +859,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final canEditUser = canEditPlaceholderProfile(
       actor: appContext.currentUser,
       target: user,
-      leadsCellGroupContainingTarget:
-          _ledMemberIds(appContext).contains(user.id),
+      leadsCellGroupContainingTarget: ledMemberIds.contains(user.id),
     );
     final theme = Theme.of(context);
     final meta = _compactPersonMeta(roles: roles, tags: userTags);
@@ -1204,6 +1257,24 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final appContext = Provider.of<AppContext>(context, listen: false);
     final currentUser = appContext.currentUser;
     final ledMemberIds = _ledMemberIds(appContext);
+    final cacheKey = Object.hash(
+      appContext.usersEpoch,
+      appContext.sessionEpoch,
+      appContext.catalogsEpoch,
+      identityHashCode(allUsers),
+      _locationFilter,
+      _servingOnly,
+      _placeholdersOnly,
+      _showInactive,
+      _sortMode,
+      _searchQuery,
+      _hashIds(_selectedTagIDs),
+      _hashIds(_selectedRoles.map((role) => role.name)),
+      _hashIds(ledMemberIds),
+    );
+    final cached = _filteredUsersCache;
+    if (cached != null && cacheKey == _filteredUsersKey) return cached;
+
     Iterable<User> users = allUsers;
 
     // Placeholders alone uses placeholders-only visibility. Both chips leave
@@ -1267,7 +1338,14 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
             ),
         };
       });
+    _filteredUsersKey = cacheKey;
+    _filteredUsersCache = result;
     return result;
+  }
+
+  int _hashIds(Iterable<String> ids) {
+    final sorted = ids.toList()..sort();
+    return Object.hashAll(sorted);
   }
 
   String _personLocationLine(User user, AppLocalizations l10n) {

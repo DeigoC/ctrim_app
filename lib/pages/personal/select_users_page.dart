@@ -8,6 +8,7 @@ import '../../models/user.dart';
 import '../../models/user_tag.dart';
 import '../../pages/events/select_catalog_items_page.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/after_route_transition.dart';
 import '../../utility/app_context.dart';
 import '../../utility/catalog/catalog_picker_helpers.dart';
 import '../../utility/cell_group_roster_cache.dart';
@@ -25,6 +26,7 @@ import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/volunteer_role_helpers.dart';
 import '../../widgets/app_search_bar.dart';
 import '../../widgets/common/app_dialog.dart';
+import '../../widgets/personal/people_directory_band.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/common/action_sheet.dart';
@@ -115,6 +117,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   bool _isSearching = false;
   String _searchQuery = '';
   Set<String> _selectedTagIDs = {};
+  final AfterRouteTransition _afterOpen = AfterRouteTransition();
+  int? _filteredUsersKey;
+  List<User>? _filteredUsersCache;
 
   @override
   void initState() {
@@ -141,17 +146,25 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     }
     _servingOnly = widget.preferServing;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ensureCellGroupRostersLoaded();
+      if (!mounted) return;
+      _afterOpen.schedule(this, () {
+        _ensureCellGroupRostersLoaded();
+      });
     });
   }
 
   Future<void> _ensureCellGroupRostersLoaded() async {
     if (!mounted) return;
     final appContext = Provider.of<AppContext>(context, listen: false);
-    await CellGroupRosterCache.ensureLoaded(
-      appContext.allCellGroups.where((g) => !g.isArchived).map((g) => g.id),
+    final ids = appContext.allCellGroups
+        .where((group) => !group.isArchived)
+        .map((group) => group.id)
+        .toList();
+    final missing = ids.any(
+      (id) => id.isNotEmpty && !CellGroupRosterCache.isLoaded(id),
     );
-    if (mounted) setState(() {});
+    await CellGroupRosterCache.ensureLoaded(ids);
+    if (mounted && missing) setState(() {});
   }
 
   Set<String> _ledMemberIds(AppContext appContext) {
@@ -163,6 +176,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
 
   @override
   void dispose() {
+    _afterOpen.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -445,121 +459,100 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     required AppLocalizations l10n,
     required AppContext appContext,
   }) {
-    final sections = _useLetterSections
-        ? PeopleDirectorySections.bySurnameLetter(users)
-        : [
-            PeopleDirectorySection(letter: '', users: users),
-          ];
     // Speakers are capped. A family tick would silently stop at that cap.
     final groupSurnames = widget.maxSelection == null;
+    final crossAxisExtent = isWide
+        ? (MediaQuery.sizeOf(context).width - horizontalPadding * 2)
+            .clamp(0.0, double.infinity)
+        : 0.0;
+    final lines = PeopleDirectorySections.scrollLines(
+      users: users,
+      useLetterSections: _useLetterSections,
+      groupSurnames: groupSurnames,
+      peoplePerRow: isWide
+          ? PeopleDirectoryGrid.crossAxisCount(crossAxisExtent.toDouble())
+          : 1,
+    );
 
     return CustomScrollView(
       slivers: [
-        for (final section in sections) ...[
-          if (_useLetterSections)
-            SliverToBoxAdapter(
-              child: _buildLetterHeader(
-                section.letter,
-                horizontalPadding: horizontalPadding,
-              ),
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => _buildDirectoryLine(
+              line: lines[index],
+              spacedBelow: isWide &&
+                  index + 1 < lines.length &&
+                  lines[index + 1].isPeople,
+              allTags: allTags,
+              horizontalPadding: horizontalPadding,
+              crossAxisExtent: crossAxisExtent.toDouble(),
+              isWide: isWide,
+              l10n: l10n,
+              appContext: appContext,
             ),
-          ..._surnameBlockSlivers(
-            users: section.users,
-            allTags: allTags,
-            horizontalPadding: horizontalPadding,
-            isWide: isWide,
-            l10n: l10n,
-            appContext: appContext,
-            groupSurnames: groupSurnames,
+            childCount: lines.length,
+            addAutomaticKeepAlives: false,
+            findChildIndexCallback: (key) =>
+                PeopleDirectorySections.indexForKey(lines, key),
           ),
-        ],
+        ),
         const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
       ],
     );
   }
 
-  List<Widget> _surnameBlockSlivers({
-    required List<User> users,
+  Widget _buildDirectoryLine({
+    required PeopleDirectoryScrollLine line,
+    required bool spacedBelow,
     required List<UserTag> allTags,
     required double horizontalPadding,
+    required double crossAxisExtent,
     required bool isWide,
     required AppLocalizations l10n,
     required AppContext appContext,
-    required bool groupSurnames,
   }) {
-    final blocks = groupSurnames
-        ? PeopleDirectorySections.bySurname(users)
-        : [PeopleDirectorySurnameBlock(users: users)];
-
-    return [
-      for (final block in blocks) ...[
-        if (block.canSelectTogether)
-          SliverToBoxAdapter(
-            child: _buildSurnameHeader(
-              surname: block.surnameLabel!,
-              users: block.users,
-              horizontalPadding: horizontalPadding,
-              l10n: l10n,
-              appContext: appContext,
-            ),
-          ),
-        _usersSliver(
-          users: block.users,
-          allTags: allTags,
-          horizontalPadding: horizontalPadding,
-          isWide: isWide,
-          l10n: l10n,
+    final Widget child;
+    if (line.isLetter) {
+      child = _buildLetterHeader(
+        line.letter!,
+        horizontalPadding: horizontalPadding,
+      );
+    } else if (line.isSurname) {
+      child = _buildSurnameHeader(
+        surname: line.surnameLabel!,
+        users: line.users,
+        horizontalPadding: horizontalPadding,
+        l10n: l10n,
+        appContext: appContext,
+      );
+    } else if (isWide) {
+      child = Padding(
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        child: PeopleDirectoryBand(
+          crossAxisExtent: crossAxisExtent,
+          mainAxisExtent: 108,
+          spacedBelow: spacedBelow,
+          children: [
+            for (final user in line.users)
+              _buildWideUserCard(
+                user: user,
+                allTags: allTags,
+                l10n: l10n,
+              ),
+          ],
         ),
-      ],
-    ];
-  }
-
-  Widget _usersSliver({
-    required List<User> users,
-    required List<UserTag> allTags,
-    required double horizontalPadding,
-    required bool isWide,
-    required AppLocalizations l10n,
-  }) {
-    if (isWide) {
-      return SliverPadding(
-        padding: EdgeInsets.fromLTRB(
-          horizontalPadding,
-          0,
-          horizontalPadding,
-          0,
-        ),
-        sliver: SliverGrid(
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 420,
-            mainAxisExtent: 108,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 8,
-          ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => _buildWideUserCard(
-              user: users[index],
-              allTags: allTags,
-              l10n: l10n,
-            ),
-            childCount: users.length,
-          ),
-        ),
+      );
+    } else {
+      child = _buildUserListTile(
+        user: line.users.single,
+        allTags: allTags,
+        l10n: l10n,
       );
     }
 
-    return SliverPadding(
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) => _buildUserListTile(
-            user: users[index],
-            allTags: allTags,
-            l10n: l10n,
-          ),
-          childCount: users.length,
-        ),
-      ),
+    return KeyedSubtree(
+      key: ValueKey(line.storageKey),
+      child: child,
     );
   }
 
@@ -726,6 +719,23 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   }
 
   List<User> _filteredUsers(AppContext appContext) {
+    final cacheKey = Object.hash(
+      appContext.usersEpoch,
+      appContext.sessionEpoch,
+      appContext.catalogsEpoch,
+      widget.includeCurrentUser,
+      widget.includePlaceholders,
+      _locationFilter,
+      _servingOnly,
+      _placeholdersOnly,
+      _searchQuery,
+      _hashIds(widget.excludedUIDs),
+      _hashIds(_selectedUIDs),
+      _hashIds(_selectedTagIDs),
+    );
+    final cached = _filteredUsersCache;
+    if (cached != null && cacheKey == _filteredUsersKey) return cached;
+
     Iterable<User> users = appContext.allUsers;
     final cellGroupLeaders =
         CellGroupLeaderIndex.fromGroups(appContext.allCellGroups);
@@ -778,7 +788,14 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     }
 
     final result = users.toList()..sort(UserTagHelpers.compareUsersBySurname);
+    _filteredUsersKey = cacheKey;
+    _filteredUsersCache = result;
     return result;
+  }
+
+  int _hashIds(Iterable<String> ids) {
+    final sorted = ids.toList()..sort();
+    return Object.hashAll(sorted);
   }
 
   /// Name matches ignoring location / Serving / tags / placeholders-only,

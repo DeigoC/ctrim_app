@@ -77,12 +77,18 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
   final Set<String> _selectedMonthIds = {};
   int _monthListGeneration = 0;
 
+  /// Photo tiles are the default. The list shows each file name and date.
+  bool _gridView = true;
+
   List<_BulkUrlCandidate> _urlCandidates = const [];
   final Set<int> _selectedUrlIndexes = {};
 
   @override
   void initState() {
     super.initState();
+    if (widget.eventContext.head.cellGroupIDs.isNotEmpty) {
+      _kind = SharedMediaFolderKind.cellGroup;
+    }
     _tabController = TabController(
       length: BulkAddMediaTab.values.length,
       vsync: this,
@@ -313,7 +319,8 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
               Text(
                 'Paste a public Google Drive folder link. The app reads the '
                 'folder’s shared file list (no Google API signup) and lets you '
-                'pick which images or videos to add.',
+                'pick which images or videos to add. Newest changes are listed '
+                'first.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -360,46 +367,7 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
               ],
               if (mediaEntries.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 4,
-                  children: [
-                    Text(
-                      '${_selectedIds.length} of ${mediaEntries.length} selected',
-                      style: theme.textTheme.titleSmall,
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _selectedIds
-                            ..clear()
-                            ..addAll(mediaEntries.map((e) => e.id));
-                        });
-                      },
-                      child: const Text('Select all'),
-                    ),
-                    TextButton(
-                      onPressed: () => setState(_selectedIds.clear),
-                      child: const Text('Clear'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ...mediaEntries.map(
-                  (entry) => _buildFolderEntryTile(
-                    entry,
-                    selected: _selectedIds.contains(entry.id),
-                    onSelected: (value) {
-                      setState(() {
-                        if (value) {
-                          _selectedIds.add(entry.id);
-                        } else {
-                          _selectedIds.remove(entry.id);
-                        }
-                      });
-                    },
-                  ),
-                ),
+                _buildMediaChoices(mediaEntries, _selectedIds),
               ] else if (_folderEntries.isNotEmpty && !_loadingFolder) ...[
                 const SizedBox(height: 16),
                 Text(
@@ -425,6 +393,207 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
     );
   }
 
+  Widget _buildMediaChoices(
+    List<DriveFolderEntry> mediaEntries,
+    Set<String> selectedIds,
+  ) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 4,
+                children: [
+                  Text(
+                    '${selectedIds.length} of ${mediaEntries.length} selected',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  TextButton(
+                    onPressed: _importing
+                        ? null
+                        : () {
+                            setState(() {
+                              selectedIds
+                                ..clear()
+                                ..addAll(mediaEntries.map((e) => e.id));
+                            });
+                          },
+                    child: const Text('Select all'),
+                  ),
+                  TextButton(
+                    onPressed:
+                        _importing ? null : () => setState(selectedIds.clear),
+                    child: const Text('Clear'),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: _gridView ? 'Show file names' : 'Show as photos',
+              onPressed: _importing
+                  ? null
+                  : () => setState(() => _gridView = !_gridView),
+              icon: Icon(_gridView ? Icons.view_list : Icons.grid_view),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_gridView)
+          _buildMediaGrid(mediaEntries, selectedIds)
+        else
+          ...mediaEntries.map(
+            (entry) => _buildFolderEntryTile(
+              entry,
+              selected: selectedIds.contains(entry.id),
+              onSelected: (value) =>
+                  _setMediaSelected(selectedIds, entry.id, value),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _setMediaSelected(Set<String> selectedIds, String id, bool selected) {
+    setState(() {
+      if (selected) {
+        selectedIds.add(id);
+      } else {
+        selectedIds.remove(id);
+      }
+    });
+  }
+
+  int _mediaGridColumns(double width) {
+    if (width >= 900) return 4;
+    if (width >= 600) return 3;
+    return 2;
+  }
+
+  Widget _buildMediaGrid(
+    List<DriveFolderEntry> mediaEntries,
+    Set<String> selectedIds,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: mediaEntries.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: _mediaGridColumns(constraints.maxWidth),
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemBuilder: (context, index) {
+            final entry = mediaEntries[index];
+            return _buildMediaGridTile(
+              entry,
+              selected: selectedIds.contains(entry.id),
+              onSelected: (value) =>
+                  _setMediaSelected(selectedIds, entry.id, value),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildMediaGridTile(
+    DriveFolderEntry entry, {
+    required bool selected,
+    required ValueChanged<bool> onSelected,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final alreadyAdded = _existingSrcs.contains(entry.directMediaUrl);
+    final label = entry.name.isEmpty ? 'Photo' : entry.name;
+
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        enabled: !alreadyAdded && !_importing,
+        label: alreadyAdded ? '$label, already in this post' : label,
+        child: Material(
+          color: colorScheme.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: selected
+                  ? colorScheme.primary
+                  : colorScheme.outline.withValues(alpha: 0.12),
+              width: selected ? 2 : 1,
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap:
+                alreadyAdded || _importing ? null : () => onSelected(!selected),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _buildMediaPreview(entry),
+                if (alreadyAdded)
+                  ColoredBox(
+                    color: colorScheme.surface.withValues(alpha: 0.55),
+                    child: Center(
+                      child: Text(
+                        'Added',
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
+                  ),
+                if (selected)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.check,
+                          size: 16,
+                          color: colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMediaPreview(DriveFolderEntry entry) {
+    final colorScheme = Theme.of(context).colorScheme;
+    if (!entry.isImage) {
+      return Icon(
+        Icons.videocam_outlined,
+        size: 36,
+        color: colorScheme.onSurfaceVariant,
+      );
+    }
+    return Image.network(
+      NetworkImageHelper.getImageUrl(entry.directMediaUrl),
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Icon(
+        Icons.broken_image_outlined,
+        color: colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+
   Widget _buildFolderEntryTile(
     DriveFolderEntry entry, {
     required bool selected,
@@ -432,6 +601,9 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final alreadyAdded = _existingSrcs.contains(entry.directMediaUrl);
+    final detail = entry.modifiedCaption.isNotEmpty
+        ? entry.modifiedCaption
+        : (entry.mimeType.isEmpty ? entry.mediaType : entry.mimeType);
 
     return Card(
       elevation: 0,
@@ -476,11 +648,7 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text(
-          alreadyAdded
-              ? 'Already in this post'
-              : (entry.mimeType.isEmpty ? entry.mediaType : entry.mimeType),
-        ),
+        subtitle: Text(alreadyAdded ? 'Already in this post' : detail),
       ),
     );
   }
@@ -501,8 +669,8 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
             padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 16),
             children: [
               Text(
-                'Loose photos in the shared month folder. Pick the ones that '
-                'belong on this post.',
+                'Loose photos in the shared month folder, newest first. Pick the '
+                'ones that belong on this post.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -624,46 +792,7 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
                 ),
               ] else if (mediaEntries.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 4,
-                  children: [
-                    Text(
-                      '${_selectedMonthIds.length} of ${mediaEntries.length} selected',
-                      style: theme.textTheme.titleSmall,
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _selectedMonthIds
-                            ..clear()
-                            ..addAll(mediaEntries.map((e) => e.id));
-                        });
-                      },
-                      child: const Text('Select all'),
-                    ),
-                    TextButton(
-                      onPressed: () => setState(_selectedMonthIds.clear),
-                      child: const Text('Clear'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ...mediaEntries.map(
-                  (entry) => _buildFolderEntryTile(
-                    entry,
-                    selected: _selectedMonthIds.contains(entry.id),
-                    onSelected: (value) {
-                      setState(() {
-                        if (value) {
-                          _selectedMonthIds.add(entry.id);
-                        } else {
-                          _selectedMonthIds.remove(entry.id);
-                        }
-                      });
-                    },
-                  ),
-                ),
+                _buildMediaChoices(mediaEntries, _selectedMonthIds),
               ] else if (_monthEntries.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text(

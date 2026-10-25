@@ -108,7 +108,17 @@ void main() {
     await tester.pump();
 
     expect(listing.requested, [_currentId]);
+    expect(find.byTooltip('welcome.jpg'), findsOneWidget);
+    expect(find.text('welcome.jpg'), findsNothing);
+    expect(find.byTooltip('Show file names'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Show file names'));
+    await tester.pump();
     expect(find.text('welcome.jpg'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Show as photos'));
+    await tester.pump();
+    expect(find.text('welcome.jpg'), findsNothing);
     expect(find.text('0 of 1 selected'), findsOneWidget);
     expect(find.text('Sunday service'), findsNothing);
     expect(
@@ -121,8 +131,8 @@ void main() {
     await tester.pump();
 
     expect(listing.requested, [_currentId, _previousId]);
-    expect(find.text('prayer.jpg'), findsOneWidget);
-    expect(find.text('welcome.jpg'), findsNothing);
+    expect(find.byTooltip('prayer.jpg'), findsOneWidget);
+    expect(find.byTooltip('welcome.jpg'), findsNothing);
     expect(find.text('0 of 1 selected'), findsOneWidget);
 
     await tester.tap(find.text('Cell Groups'));
@@ -130,9 +140,60 @@ void main() {
     await tester.pump();
 
     expect(listing.requested, [_currentId, _previousId, _cellId]);
-    expect(find.text('meeting.jpg'), findsOneWidget);
-    expect(find.text('prayer.jpg'), findsNothing);
+    expect(find.byTooltip('meeting.jpg'), findsOneWidget);
+    expect(find.byTooltip('prayer.jpg'), findsNothing);
     expect(find.text('0 of 1 selected'), findsOneWidget);
+  });
+
+  testWidgets('a cell group post opens on the Cell Groups folder',
+      (tester) async {
+    final listing = _ScriptedListing({
+      _currentId: const [
+        DriveFolderEntry(
+          id: 'imagefileid00000000000000001',
+          name: 'welcome.jpg',
+          mimeType: 'image/jpeg',
+          isFolder: false,
+        ),
+      ],
+      _cellId: const [
+        DriveFolderEntry(
+          id: 'cellimageid000000000000000001',
+          name: 'meeting.jpg',
+          mimeType: 'image/jpeg',
+          isFolder: false,
+        ),
+      ],
+    });
+    final eventContext = EventContext.adding(currentUserID: 'author-1')
+      ..applyCellGroupIDs(['group-1']);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BulkAddMediaPage(
+          eventContext: eventContext,
+          listing: listing,
+          folders: SharedMediaFolders(
+            service: SharedMediaFolderPair(
+              currentLabel: 'October 2026',
+              currentFolderUrl:
+                  'https://drive.google.com/drive/folders/$_currentId',
+            ),
+            cellGroup: SharedMediaFolderPair(
+              currentLabel: 'October meetings',
+              currentFolderUrl:
+                  'https://drive.google.com/drive/folders/$_cellId',
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(listing.requested, [_cellId]);
+    expect(find.byTooltip('meeting.jpg'), findsOneWidget);
+    expect(find.byTooltip('welcome.jpg'), findsNothing);
   });
 }
 

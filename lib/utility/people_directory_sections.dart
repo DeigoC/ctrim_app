@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/user.dart';
 
 /// One A–Z (or #) section in the people directory.
@@ -121,5 +123,127 @@ class PeopleDirectorySections {
     }
     flushLoose();
     return blocks;
+  }
+
+  /// One flat list for a single lazy sliver.
+  ///
+  /// A sliver per letter or surname builds its first row on the opening frame
+  /// even when that section is below the fold. Headings are rows here so only
+  /// the visible window is built. [peoplePerRow] is 1 on a phone and the wide
+  /// grid's column count; a short last row is not stretched, and a row never
+  /// crosses a letter or surname heading.
+  static List<PeopleDirectoryScrollLine> scrollLines({
+    required List<User> users,
+    required bool useLetterSections,
+    required bool groupSurnames,
+    required int peoplePerRow,
+  }) {
+    if (users.isEmpty) return const [];
+
+    final rowSize = peoplePerRow < 1 ? 1 : peoplePerRow;
+    final sections = useLetterSections
+        ? bySurnameLetter(users)
+        : [PeopleDirectorySection(letter: '', users: users)];
+    final lines = <PeopleDirectoryScrollLine>[];
+
+    void addPeople(List<User> people) {
+      for (var start = 0; start < people.length; start += rowSize) {
+        final end =
+            start + rowSize > people.length ? people.length : start + rowSize;
+        lines.add(
+          PeopleDirectoryScrollLine.people(people.sublist(start, end)),
+        );
+      }
+    }
+
+    for (final section in sections) {
+      if (useLetterSections && section.letter.isNotEmpty) {
+        lines.add(PeopleDirectoryScrollLine.letter(section.letter));
+      }
+      final blocks = groupSurnames
+          ? bySurname(section.users)
+          : [PeopleDirectorySurnameBlock(users: section.users)];
+      for (final block in blocks) {
+        if (block.canSelectTogether) {
+          lines.add(
+            PeopleDirectoryScrollLine.surname(
+              surnameLabel: block.surnameLabel!,
+              users: block.users,
+            ),
+          );
+        }
+        addPeople(block.users);
+      }
+    }
+    return lines;
+  }
+
+  static int? indexForKey(List<PeopleDirectoryScrollLine> lines, Key key) {
+    if (key is! ValueKey<String>) return null;
+    final value = key.value;
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].storageKey == value) return i;
+    }
+    return null;
+  }
+}
+
+/// Column count for the wide people grid (`maxCrossAxisExtent` 420).
+///
+/// Matches Flutter's max-cross-axis-extent grid so a hand-built row has the
+/// same card width as the grid it replaced.
+abstract final class PeopleDirectoryGrid {
+  static const double maxCrossAxisExtent = 420;
+  static const double crossAxisSpacing = 12;
+  static const double mainAxisSpacing = 8;
+
+  static int crossAxisCount(double crossAxisExtent) {
+    if (crossAxisExtent <= 0) return 1;
+    final count =
+        (crossAxisExtent / (maxCrossAxisExtent + crossAxisSpacing)).ceil();
+    return count < 1 ? 1 : count;
+  }
+
+  static double childCrossAxisExtent(double crossAxisExtent) {
+    final count = crossAxisCount(crossAxisExtent);
+    final usable = crossAxisExtent - crossAxisSpacing * (count - 1);
+    if (usable <= 0) return 0;
+    return usable / count;
+  }
+}
+
+/// One row in the people directory's single lazy list.
+class PeopleDirectoryScrollLine {
+  const PeopleDirectoryScrollLine.letter(this.letter)
+      : users = const [],
+        surnameLabel = null;
+
+  const PeopleDirectoryScrollLine.surname({
+    required this.surnameLabel,
+    required this.users,
+  }) : letter = null;
+
+  const PeopleDirectoryScrollLine.people(this.users)
+      : letter = null,
+        surnameLabel = null;
+
+  final String? letter;
+  final String? surnameLabel;
+
+  /// Family members for a surname heading, or the people packed into this row.
+  final List<User> users;
+
+  bool get isLetter => letter != null;
+
+  bool get isSurname => surnameLabel != null;
+
+  bool get isPeople => letter == null && surnameLabel == null;
+
+  String get storageKey {
+    if (letter != null) return 'letter:$letter';
+    if (surnameLabel != null) {
+      return 'surname:${surnameLabel!.toLowerCase()}:${users.first.id}';
+    }
+    return 'people:${users.map((user) => user.id).join(',')}';
   }
 }

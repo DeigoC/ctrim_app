@@ -20,21 +20,25 @@ class DriveFolderListing {
   final http.Client _httpClient;
 
   /// URL Drive serves for a public folder’s embeddable file list.
+  ///
+  /// `hl=en-GB` keeps the last-modified text stable: `15/10/2024` for older
+  /// files, and `22 Sept` (no year) for the current year.
   static String embeddedFolderViewUrl(String folderId) =>
-      'https://drive.google.com/embeddedfolderview?id=$folderId';
+      'https://drive.google.com/embeddedfolderview?hl=en-GB&id=$folderId';
 
   /// Fetches and parses media-capable entries from a public Drive folder.
   Future<List<DriveFolderEntry>> listPublicFolder(String folderId) async {
     final html = await fetchEmbeddedFolderHtml(folderId);
-    if (html.contains('ServiceLogin') &&
-        !html.contains('class="flip-entry"')) {
+    if (html.contains('ServiceLogin') && !html.contains('class="flip-entry"')) {
       throw DriveFolderListingException(
         'This folder is not public. Share it as “Anyone with the link” '
         '(Viewer), then try again.',
       );
     }
 
-    final entries = parseDriveEmbeddedFolderView(html);
+    final entries = sortDriveFolderEntriesNewestFirst(
+      parseDriveEmbeddedFolderView(html),
+    );
     if (entries.isEmpty) {
       throw DriveFolderListingException(
         'No files found in that folder. Confirm the folder link is public '
