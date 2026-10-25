@@ -71,6 +71,7 @@ void main() {
     await _pump(tester, _sheet(isLeader: false, hasParent: true));
 
     expect(find.text('Schedule'), findsOneWidget);
+    expect(find.text('Apply expected attendance'), findsOneWidget);
     expect(find.text('Create related posts'), findsNothing);
     expect(find.text('Broadcast'), findsNothing);
     expect(find.text('Scheduled members'), findsNothing);
@@ -111,6 +112,7 @@ PostEditSheet _sheet({
     onAddSchedule: onAddSchedule ?? () {},
     onArrangeSchedule: () {},
     onApplySchedulePreset: () {},
+    onApplyExpectedAttendancePreset: () {},
     onEditMedia: () {},
     onManageContributors: () {},
     onManageLeadSpeaker: () {},

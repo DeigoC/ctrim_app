@@ -619,6 +619,12 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
             '${template.schedulePresets.length} schedule presets',
             colorScheme,
           ),
+        if (template.expectedAttendancePresets.length > 1)
+          _buildDetailChip(
+            Icons.groups_outlined,
+            '${template.expectedAttendancePresets.length} expected presets',
+            colorScheme,
+          ),
       ],
     );
   }

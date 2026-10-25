@@ -495,6 +495,54 @@ void main() {
         );
       });
 
+      test('synthesizes a default expected attendance preset from top-level IDs',
+          () {
+        final map = baseLocalMap();
+        map['ExpectedAttendeeUserIDs'] = <String>['u1', 'u2'];
+        final template = PostTemplate.fromMap(true, 'legacy-expected', map);
+
+        expect(template.expectedAttendancePresets, hasLength(1));
+        expect(template.expectedAttendancePresets.single.id,
+            ExpectedAttendancePreset.defaultId);
+        expect(template.expectedAttendeeUserIDs, ['u1', 'u2']);
+        expect(template.toJson(true)['ExpectedAttendancePresets'], hasLength(1));
+      });
+
+      test('parses ExpectedAttendancePresets and aliases the first list', () {
+        final map = baseLocalMap();
+        map['ExpectedAttendeeUserIDs'] = <String>['legacy'];
+        map['ExpectedAttendancePresets'] = [
+          {
+            'id': 'team-a',
+            'name': 'Team A',
+            'userIds': <String>['a1', 'a2'],
+          },
+          {
+            'id': 'team-b',
+            'name': 'Team B',
+            'userIds': <String>['b1'],
+          },
+        ];
+        final template = PostTemplate.fromMap(true, 'multi-expected', map);
+
+        expect(template.expectedAttendancePresets, hasLength(2));
+        expect(template.expectedAttendancePresetById('team-b')?.name, 'Team B');
+        expect(template.expectedAttendeeUserIDs, ['a1', 'a2']);
+
+        final json = template.toJson(true);
+        expect(json['ExpectedAttendeeUserIDs'], ['a1', 'a2']);
+        expect((json['ExpectedAttendancePresets'] as List).last['name'],
+            'Team B');
+      });
+
+      test('does not synthesize an expected preset when the list is empty', () {
+        final template =
+            PostTemplate.fromMap(true, 'empty-expected', baseLocalMap());
+        expect(template.expectedAttendancePresets, isEmpty);
+        expect(template.expectedAttendeeUserIDs, isEmpty);
+        expect(template.toJson(true)['ExpectedAttendancePresets'], isEmpty);
+      });
+
       test('round-trips local serialization', () {
         final original = PostTemplate.fromMap(
           true,

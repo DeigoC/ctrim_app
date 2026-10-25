@@ -13,6 +13,8 @@ class PostTemplateMapper {
     Iterable<User> allUsers = const [],
     SchedulePreset? schedulePreset,
     String? schedulePresetId,
+    ExpectedAttendancePreset? expectedAttendancePreset,
+    String? expectedAttendancePresetId,
   }) {
     final EventContext eventContext =
         EventContext.adding(currentUserID: currentUserID, parentID: parentID);
@@ -64,8 +66,14 @@ class PostTemplateMapper {
     // meta related
     eventContext.applyTagIDs(List<String>.from(template.tagIDs));
     eventContext.applyCellGroupIDs(List<String>.from(template.cellGroupIDs));
-    eventContext.applyExpectedAttendeeUserIDs(
-        List<String>.from(template.expectedAttendeeUserIDs));
+    applyExpectedAttendancePreset(
+      eventContext,
+      resolveExpectedAttendancePreset(
+        template,
+        expectedAttendancePreset: expectedAttendancePreset,
+        expectedAttendancePresetId: expectedAttendancePresetId,
+      ),
+    );
     eventContext.syncNotificationTopics(
       includeLocationUmbrella: BroadcastAudience.includesLocationUmbrella(
         topics: template.topics,
@@ -116,6 +124,57 @@ class PostTemplateMapper {
     }
     if (template.schedulePresets.isEmpty) return null;
     return template.schedulePresets.first;
+  }
+
+  /// Picks an explicit expected preset, else the only/first, else null.
+  static ExpectedAttendancePreset? resolveExpectedAttendancePreset(
+    PostTemplate template, {
+    ExpectedAttendancePreset? expectedAttendancePreset,
+    String? expectedAttendancePresetId,
+  }) {
+    if (expectedAttendancePreset != null) return expectedAttendancePreset;
+    if (expectedAttendancePresetId != null) {
+      return template.expectedAttendancePresetById(expectedAttendancePresetId);
+    }
+    if (template.expectedAttendancePresets.isEmpty) return null;
+    return template.expectedAttendancePresets.first;
+  }
+
+  /// Replaces expected members on [eventContext] with [preset].
+  ///
+  /// Always updates the draft expected list. When [applyToLiveAttendance] is
+  /// true and attendance is loaded, also replaces live expected user IDs
+  /// (interest and checked attendees stay).
+  static void applyExpectedAttendancePreset(
+    EventContext eventContext,
+    ExpectedAttendancePreset? preset, {
+    bool applyToLiveAttendance = false,
+  }) {
+    final ids = List<String>.from(preset?.userIds ?? const []);
+    eventContext.applyExpectedAttendeeUserIDs(ids);
+    if (applyToLiveAttendance) {
+      eventContext.replaceExpectedUserIds(ids);
+    }
+  }
+
+  /// Snapshots the draft expected list onto a named preset.
+  static ExpectedAttendancePreset captureExpectedAsPreset({
+    required ExpectedAttendancePreset existing,
+    required EventContext eventContext,
+  }) {
+    return ExpectedAttendancePreset(
+      id: existing.id,
+      name: existing.name,
+      userIds: eventContext.expectedAttendeeUserIDs,
+    );
+  }
+
+  /// Loads a preset into the template editor (draft expected list only).
+  static void loadExpectedAttendancePresetForEditing(
+    EventContext eventContext,
+    ExpectedAttendancePreset preset,
+  ) {
+    applyExpectedAttendancePreset(eventContext, preset);
   }
 
   /// Replaces the programme on [eventContext] with [preset].

@@ -188,6 +188,79 @@ class SchedulePreset {
   }
 }
 
+/// Named expected-member list on a [PostTemplate].
+///
+/// Independent of [SchedulePreset]: the same meeting kind can have different
+/// usual people (Team A / Team B) without changing the running order.
+class ExpectedAttendancePreset {
+  static const String defaultId = 'default';
+  static const String defaultName = 'Default';
+
+  late String _id, _name;
+  late List<String> _userIds;
+
+  ExpectedAttendancePreset({
+    required String id,
+    required String name,
+    List<String>? userIds,
+  }) {
+    _id = id;
+    _name = name;
+    _userIds = _normalizeUserIds(userIds ?? const []);
+  }
+
+  ExpectedAttendancePreset.emptyDefault()
+      : this(id: defaultId, name: defaultName);
+
+  ExpectedAttendancePreset.fromMap(final Map<String, dynamic> data) {
+    _id = (data['id'] as String?)?.trim().isNotEmpty == true
+        ? data['id'] as String
+        : defaultId;
+    _name = (data['name'] as String?)?.trim().isNotEmpty == true
+        ? data['name'] as String
+        : defaultName;
+    _userIds = _normalizeUserIds(
+      List<String>.from(data['userIds'] ?? data['UserIds'] ?? const []),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': _id,
+      'name': _name,
+      'userIds': List<String>.from(_userIds),
+    };
+  }
+
+  String get id => _id;
+  String get name => _name;
+  List<String> get userIds => UnmodifiableListView(_userIds);
+
+  void setName(final String name) => _name = name;
+  void setUserIds(final List<String> userIds) =>
+      _userIds = _normalizeUserIds(userIds);
+
+  ExpectedAttendancePreset copy({String? id, String? name}) {
+    return ExpectedAttendancePreset(
+      id: id ?? _id,
+      name: name ?? _name,
+      userIds: _userIds,
+    );
+  }
+
+  static String newId() => DateTime.now().millisecondsSinceEpoch.toString();
+
+  static List<String> _normalizeUserIds(final List<String> userIds) {
+    final seen = <String>{};
+    final result = <String>[];
+    for (final id in userIds) {
+      if (id.isEmpty || !seen.add(id)) continue;
+      result.add(id);
+    }
+    return result;
+  }
+}
+
 class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
   PostTemplateCategory _category = PostTemplateCategory.service;
@@ -197,6 +270,7 @@ class PostTemplate {
       _expectedAttendeeUserIDs,
       _contributorUIDs,
       _subtitles;
+  late List<ExpectedAttendancePreset> _expectedAttendancePresets;
   late List<Map<String, dynamic>> _headMedia,
       _media,
       _headMediaPool,
@@ -227,9 +301,15 @@ class PostTemplate {
     _cellGroupIDs = data['CellGroupIDs'] != null
         ? List<String>.from(data['CellGroupIDs'])
         : <String>[];
-    _expectedAttendeeUserIDs = data['ExpectedAttendeeUserIDs'] != null
+    final topLevelExpected = data['ExpectedAttendeeUserIDs'] != null
         ? List<String>.from(data['ExpectedAttendeeUserIDs'])
         : <String>[];
+    _expectedAttendeeUserIDs = topLevelExpected;
+    _expectedAttendancePresets = _parseExpectedAttendancePresets(
+      data['ExpectedAttendancePresets'],
+      topLevelExpected: topLevelExpected,
+    );
+    _mirrorFirstExpectedPresetToTopLevel();
     _contributorUIDs = List.from(data['Contributors']);
     _subtitles = data['Subtitles'] != null
         ? List<String>.from(data['Subtitles'])
@@ -280,6 +360,7 @@ class PostTemplate {
 
   Map<String, dynamic> toJson(final bool forLocal) {
     _mirrorFirstPresetToTopLevel();
+    _mirrorFirstExpectedPresetToTopLevel();
     return {
       'Title': _title,
       'Description': _description,
@@ -291,6 +372,8 @@ class PostTemplate {
       'TagIDs': _tagIDs,
       'CellGroupIDs': _cellGroupIDs,
       'ExpectedAttendeeUserIDs': _expectedAttendeeUserIDs,
+      'ExpectedAttendancePresets':
+          _expectedAttendancePresets.map((preset) => preset.toJson()).toList(),
       'Contributors': _contributorUIDs,
       'LeadSpeakerUID': leadSpeakerUID,
       'LeadSpeakerUIDs': List<String>.from(_leadSpeakerUIDs),
@@ -358,8 +441,11 @@ class PostTemplate {
   List<String> get topics => _topics;
   List<String> get tagIDs => UnmodifiableListView(_tagIDs);
   List<String> get cellGroupIDs => UnmodifiableListView(_cellGroupIDs);
-  List<String> get expectedAttendeeUserIDs =>
-      UnmodifiableListView(_expectedAttendeeUserIDs);
+  List<String> get expectedAttendeeUserIDs => _expectedAttendancePresets.isEmpty
+      ? UnmodifiableListView(_expectedAttendeeUserIDs)
+      : UnmodifiableListView(_expectedAttendancePresets.first.userIds);
+  List<ExpectedAttendancePreset> get expectedAttendancePresets =>
+      UnmodifiableListView(_expectedAttendancePresets);
   List<String> get subtitles => _subtitles;
   String? get leadSpeakerUID =>
       _leadSpeakerUIDs.isEmpty ? null : _leadSpeakerUIDs.first;
@@ -374,8 +460,25 @@ class PostTemplate {
   void setCellGroupIDs(final List<String> cellGroupIDs) =>
       _cellGroupIDs = List<String>.from(cellGroupIDs);
 
-  void setExpectedAttendeeUserIDs(final List<String> userIds) =>
-      _expectedAttendeeUserIDs = List<String>.from(userIds);
+  void setExpectedAttendeeUserIDs(final List<String> userIds) {
+    final normalized = ExpectedAttendancePreset._normalizeUserIds(userIds);
+    if (_expectedAttendancePresets.isEmpty) {
+      if (normalized.isEmpty) {
+        _expectedAttendeeUserIDs = <String>[];
+        return;
+      }
+      _expectedAttendancePresets = [
+        ExpectedAttendancePreset(
+          id: ExpectedAttendancePreset.defaultId,
+          name: ExpectedAttendancePreset.defaultName,
+          userIds: normalized,
+        ),
+      ];
+    } else {
+      _expectedAttendancePresets.first.setUserIds(normalized);
+    }
+    _mirrorFirstExpectedPresetToTopLevel();
+  }
 
   SchedulePreset? presetById(final String id) {
     for (final preset in _schedulePresets) {
@@ -384,9 +487,23 @@ class PostTemplate {
     return null;
   }
 
+  ExpectedAttendancePreset? expectedAttendancePresetById(final String id) {
+    for (final preset in _expectedAttendancePresets) {
+      if (preset.id == id) return preset;
+    }
+    return null;
+  }
+
   void setSchedulePresets(final List<SchedulePreset> presets) {
     _schedulePresets = presets.map((preset) => preset.copy()).toList();
     _mirrorFirstPresetToTopLevel();
+  }
+
+  void setExpectedAttendancePresets(
+      final List<ExpectedAttendancePreset> presets) {
+    _expectedAttendancePresets =
+        presets.map((preset) => preset.copy()).toList();
+    _mirrorFirstExpectedPresetToTopLevel();
   }
 
   /// Prepends a change-history entry (same shape as post [EventLog] entries).
@@ -545,6 +662,33 @@ class PostTemplate {
     _startTime = first.startTime;
     _finishTime = first.finishTime;
     _roles = first.roles;
+  }
+
+  void _mirrorFirstExpectedPresetToTopLevel() {
+    if (_expectedAttendancePresets.isEmpty) {
+      _expectedAttendeeUserIDs = <String>[];
+      return;
+    }
+    _expectedAttendeeUserIDs =
+        List<String>.from(_expectedAttendancePresets.first.userIds);
+  }
+
+  static List<ExpectedAttendancePreset> _parseExpectedAttendancePresets(
+    final dynamic raw, {
+    required List<String> topLevelExpected,
+  }) {
+    final parsed = asStringKeyedMapList(raw)
+        .map((entry) => ExpectedAttendancePreset.fromMap(entry))
+        .toList();
+    if (parsed.isNotEmpty) return parsed;
+    if (topLevelExpected.isEmpty) return <ExpectedAttendancePreset>[];
+    return [
+      ExpectedAttendancePreset(
+        id: ExpectedAttendancePreset.defaultId,
+        name: ExpectedAttendancePreset.defaultName,
+        userIds: topLevelExpected,
+      ),
+    ];
   }
 
   static List<SchedulePreset> _parseSchedulePresets(

@@ -17,6 +17,7 @@ import '../../../utility/user_activity_messages.dart';
 import '../../../utility/user_activity_recorder.dart';
 import '../../../widgets/common/app_dialog.dart';
 import '../../../widgets/posts/add_header_meta_tab_body.dart';
+import '../../../widgets/posts/expected_attendance_preset_picker.dart';
 import '../../../widgets/posts/schedule_preset_picker.dart';
 import '../../../widgets/posts/template_edit_sheet.dart';
 import '../../../widgets/posts/template_log_dialog.dart';
@@ -55,6 +56,10 @@ class _EditTemplatePageState extends State<EditTemplatePage>
   late final String _initialPresetSignature;
   int _selectedPresetIndex = 0;
   bool _presetsDirty = false;
+  late List<ExpectedAttendancePreset> _expectedPresets;
+  late final String _initialExpectedPresetSignature;
+  int _selectedExpectedPresetIndex = 0;
+  bool _expectedPresetsDirty = false;
   bool _allowPop = false;
   bool _isSaved = false;
 
@@ -130,6 +135,13 @@ class _EditTemplatePageState extends State<EditTemplatePage>
         ? [SchedulePreset.emptyDefault()]
         : widget.oldTemplate.schedulePresets.map((p) => p.copy()).toList();
     _initialPresetSignature = _presetSignature(_presets);
+    _expectedPresets = widget.oldTemplate.expectedAttendancePresets.isEmpty
+        ? [ExpectedAttendancePreset.emptyDefault()]
+        : widget.oldTemplate.expectedAttendancePresets
+            .map((p) => p.copy())
+            .toList();
+    _initialExpectedPresetSignature =
+        _expectedPresetSignature(_expectedPresets);
     super.initState();
   }
 
@@ -184,11 +196,19 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     if (_defaultNotifyLocation != _initialDefaultNotifyLocation) return true;
     if (_presetsDirty) return true;
     if (_presetSignature(_presets) != _initialPresetSignature) return true;
+    if (_expectedPresetsDirty) return true;
+    if (_expectedPresetSignature(_expectedPresets) !=
+        _initialExpectedPresetSignature) {
+      return true;
+    }
     return false;
   }
 
   String _presetSignature(List<SchedulePreset> presets) =>
       presets.map((p) => '${p.id}:${p.name}').join('|');
+
+  String _expectedPresetSignature(List<ExpectedAttendancePreset> presets) =>
+      presets.map((p) => '${p.id}:${p.name}:${p.userIds.join(',')}').join('|');
 
   bool _sameStringLists(List<String> a, List<String> b) {
     if (a.length != b.length) return false;
@@ -462,6 +482,11 @@ class _EditTemplatePageState extends State<EditTemplatePage>
           eventContext: widget.eventContext,
           showNotificationControls: false,
           allowSelfAsContributor: true,
+          expectedPresetBar: _buildExpectedAttendancePresetBar(),
+          onExpectedAttendeesChanged: () {
+            _flushSelectedExpectedPreset();
+            setState(() => _expectedPresetsDirty = true);
+          },
         ),
         const Divider(height: 32),
         _buildCategoryCard(),
@@ -474,6 +499,178 @@ class _EditTemplatePageState extends State<EditTemplatePage>
         const SizedBox(height: 16),
       ],
     );
+  }
+
+  ExpectedAttendancePreset get _currentExpectedPreset =>
+      _expectedPresets[_selectedExpectedPresetIndex];
+
+  Widget _buildExpectedAttendancePresetBar() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: ListTile(
+        leading: Icon(Icons.groups_outlined, color: colorScheme.primary),
+        title: Text(
+          _currentExpectedPreset.name,
+          style:
+              theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+            expectedAttendancePresetSubtitle(_currentExpectedPreset)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: 'Duplicate expected preset',
+              icon: const Icon(Icons.copy_outlined),
+              onPressed: _onDuplicateExpectedPreset,
+            ),
+            PopupMenuButton<_ExpectedPresetMenuAction>(
+              tooltip: 'Expected attendance preset actions',
+              onSelected: _onExpectedPresetMenuAction,
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: _ExpectedPresetMenuAction.add,
+                  child: Text('Add empty preset'),
+                ),
+                const PopupMenuItem(
+                  value: _ExpectedPresetMenuAction.rename,
+                  child: Text('Rename'),
+                ),
+                if (_expectedPresets.length > 1)
+                  const PopupMenuItem(
+                    value: _ExpectedPresetMenuAction.delete,
+                    child: Text('Delete'),
+                  ),
+                if (_expectedPresets.length > 1)
+                  const PopupMenuItem(
+                    value: _ExpectedPresetMenuAction.switchPreset,
+                    child: Text('Switch preset'),
+                  ),
+              ],
+            ),
+          ],
+        ),
+        onTap: _expectedPresets.length > 1
+            ? _onSwitchExpectedPreset
+            : _onRenameExpectedPreset,
+      ),
+    );
+  }
+
+  void _flushSelectedExpectedPreset() {
+    _expectedPresets[_selectedExpectedPresetIndex] =
+        PostTemplateMapper.captureExpectedAsPreset(
+      existing: _currentExpectedPreset,
+      eventContext: widget.eventContext,
+    );
+  }
+
+  void _loadExpectedPresetAt(int index) {
+    _selectedExpectedPresetIndex = index;
+    PostTemplateMapper.loadExpectedAttendancePresetForEditing(
+      widget.eventContext,
+      _expectedPresets[index],
+    );
+  }
+
+  Future<void> _onSwitchExpectedPreset() async {
+    _flushSelectedExpectedPreset();
+    final selected = await showExpectedAttendancePresetPicker(
+      context: context,
+      presets: _expectedPresets,
+      selectedId: _currentExpectedPreset.id,
+      title: 'Expected attendance preset',
+      subtitle: 'Edit a different expected-member list on this template',
+    );
+    if (!mounted || selected == null) return;
+    final index = _expectedPresets.indexWhere((p) => p.id == selected.id);
+    if (index < 0 || index == _selectedExpectedPresetIndex) return;
+    setState(() => _loadExpectedPresetAt(index));
+  }
+
+  Future<void> _onDuplicateExpectedPreset() async {
+    _flushSelectedExpectedPreset();
+    final copy = _currentExpectedPreset.copy(
+      id: ExpectedAttendancePreset.newId(),
+      name: 'Copy of ${_currentExpectedPreset.name}',
+    );
+    setState(() {
+      _expectedPresets.insert(_selectedExpectedPresetIndex + 1, copy);
+      _expectedPresetsDirty = true;
+      _loadExpectedPresetAt(_selectedExpectedPresetIndex + 1);
+    });
+  }
+
+  Future<void> _onAddEmptyExpectedPreset() async {
+    _flushSelectedExpectedPreset();
+    final preset = ExpectedAttendancePreset(
+      id: ExpectedAttendancePreset.newId(),
+      name: 'Expected ${_expectedPresets.length + 1}',
+    );
+    setState(() {
+      _expectedPresets.add(preset);
+      _expectedPresetsDirty = true;
+      _loadExpectedPresetAt(_expectedPresets.length - 1);
+    });
+  }
+
+  Future<void> _onRenameExpectedPreset() async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (_) => _SchedulePresetNameDialog(
+        title: 'Rename expected preset',
+        initialName: _currentExpectedPreset.name,
+      ),
+    );
+    if (!mounted || name == null || name.trim().isEmpty) return;
+    setState(() {
+      _currentExpectedPreset.setName(name.trim());
+      _expectedPresetsDirty = true;
+    });
+  }
+
+  Future<void> _onDeleteExpectedPreset() async {
+    if (_expectedPresets.length < 2) return;
+    final confirm = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Delete expected attendance preset?',
+      content:
+          '“${_currentExpectedPreset.name}” will be removed from this template. '
+          'This does not change existing posts.',
+      confirmText: 'Delete',
+      icon: Icons.delete_outline,
+    );
+    if (!confirm || !mounted) return;
+    setState(() {
+      _expectedPresets.removeAt(_selectedExpectedPresetIndex);
+      _expectedPresetsDirty = true;
+      _loadExpectedPresetAt(
+          _selectedExpectedPresetIndex.clamp(0, _expectedPresets.length - 1));
+    });
+  }
+
+  void _onExpectedPresetMenuAction(_ExpectedPresetMenuAction action) {
+    switch (action) {
+      case _ExpectedPresetMenuAction.add:
+        _onAddEmptyExpectedPreset();
+        break;
+      case _ExpectedPresetMenuAction.rename:
+        _onRenameExpectedPreset();
+        break;
+      case _ExpectedPresetMenuAction.delete:
+        _onDeleteExpectedPreset();
+        break;
+      case _ExpectedPresetMenuAction.switchPreset:
+        _onSwitchExpectedPreset();
+        break;
+    }
   }
 
   Widget _buildCategoryCard() {
@@ -1191,9 +1388,11 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     onProgress(completed: 0, total: total, message: 'Preparing template…');
     debugPrint('---- begin converting to post template');
     _flushSelectedPreset();
+    _flushSelectedExpectedPreset();
     final first = _presets.first;
     final startTime = first.startTime?.millisecondsSinceEpoch;
     final finishTime = first.finishTime?.millisecondsSinceEpoch;
+    final firstExpected = _expectedPresets.first;
 
     final Map<String, dynamic> templateData = {
       'Title': _tecTitle.text.trim(),
@@ -1210,7 +1409,9 @@ class _EditTemplatePageState extends State<EditTemplatePage>
           : <String>[],
       'TagIDs': widget.eventContext.head.tagIDs,
       'CellGroupIDs': widget.eventContext.head.cellGroupIDs,
-      'ExpectedAttendeeUserIDs': widget.eventContext.expectedAttendeeUserIDs,
+      'ExpectedAttendeeUserIDs': List<String>.from(firstExpected.userIds),
+      'ExpectedAttendancePresets':
+          _expectedPresets.map((p) => p.toJson()).toList(),
       'Contributors': widget.eventContext.metadata.contributorUIDs,
       'LeadSpeakerUID': widget.eventContext.metadata.leadSpeakerUID,
       'LeadSpeakerUIDs': widget.eventContext.metadata.leadSpeakerUIDs,
@@ -1265,6 +1466,8 @@ class _EditTemplatePageState extends State<EditTemplatePage>
 }
 
 enum _PresetMenuAction { add, rename, delete, switchPreset }
+
+enum _ExpectedPresetMenuAction { add, rename, delete, switchPreset }
 
 class _SchedulePresetNameDialog extends StatefulWidget {
   const _SchedulePresetNameDialog({
