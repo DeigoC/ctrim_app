@@ -89,6 +89,7 @@ The app keeps a personal list of those posts on your profile. When you open My P
 **Admin / Leader tools** stay for catalogues that are still editor lists:
 
 - **Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services** *(leaders)*  
+- **Shared media folders** — the Google Drive folders people pick photos from when adding media to a post. **Services** and **Cell Groups** each have a folder for this month and for last month. *(area admins)*  
 - **Locations** *(area admins)*. Ministries and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional. A post tag can also have a short description and one image address; that image shows on the Post Tags list and at the top of the tag. Each location can have photos; choose one as the cover. That cover shows on the locations list and at the top of **Who's Who** when that place is selected.  
 
 See [People & roles](people-and-roles.md).

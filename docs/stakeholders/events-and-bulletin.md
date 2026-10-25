@@ -87,7 +87,7 @@ Programme lines can be marked so **guests do not see** staff-only items. Guests 
 
 ## Rearranging the running order
 
-Organisers who can edit a post get an **Arrange schedule** screen (from the Schedule tab or the edit menu). Press and hold an item, then drag it to a new time. Two modes decide what happens to everything else:
+Organisers who can edit a post get an **Arrange schedule** screen (from the Schedule tab, or from **Schedule** in the edit menu). Press and hold an item, then drag it to a new time. Two modes decide what happens to everything else:
 
 | Mode | What it does |
 |------|--------------|
@@ -98,7 +98,7 @@ Items that started before the point you drop into are left alone, so a long back
 
 Adding a role into a **free slot** on the timeline leaves everything else where it is. You are only asked about later items if the new time **overlaps** something already in the running order (not the all-event band). **Keep times** is the usual choice — items can run together — or you can push later items back to make room.
 
-On the Schedule tab, tap an empty time to add an item that starts then. You still choose the length on the form. The first item is added from the edit menu, because an empty schedule has no timeline to tap. Arrange schedule stays for dragging.
+On the Schedule tab, tap an empty time to add an item that starts then. You still choose the length on the form. The first item is added from **Schedule** in the edit menu, because an empty schedule has no timeline to tap. Arrange schedule stays for dragging.
 
 After you save a new item, you can add the next one starting at that finish time. The new form keeps that start and clears the title, people, and length, so each slot is filled in on its own. **Done** returns to the schedule. The item you just saved stays either way.
 
@@ -145,7 +145,7 @@ When **creating or editing a template**, leaders set its **category** (Services 
 
 **Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date. Pick one or more days of the week (the template’s default days are ticked to start with) and how many weeks to cover; you get a post on every chosen day in each of those weeks, up to 30 posts at a time. Starting from an existing post, the dates begin the day after it, so the rest of that week is included. When the template has several schedule presets, each date can use a different one, or **Apply schedule to all**. Programme slots for a ministry on those future dates show on Personal → **Ministry Schedule**, so departments can see what they are down for without those posts filling the bulletin.
 
-On an existing post, the author or a contributor can **Apply schedule preset** from the edit menu to replace the running order (and start/finish times) with a preset from **any** template. Attendance and expected people stay. Save the post to keep the change; people added or removed from roles are notified the same way as a normal schedule edit.
+On an existing post, the author or a contributor can **Apply schedule preset** from **Schedule** in the edit menu to replace the running order (and start/finish times) with a preset from **any** template. Attendance and expected people stay. Save the post to keep the change; people added or removed from roles are notified the same way as a normal schedule edit.
 
 ## Related posts & period parents
 
@@ -154,7 +154,7 @@ Posts can form a family:
 - **Related** tab — parent, sibling, and child posts for a series or meeting group  
 - **Period parent** — mark a post as a container for a term or season, then attach individual meeting posts underneath. You can switch this on while creating the post (the **Related posts** card on the Header tab) or later from **Title & details**  
 
-Organisers create or attach related posts from the post’s edit actions.
+Leaders open **Related posts** in the edit menu to create a child under this post, a sibling under the same parent, or several posts at once.
 
 ## Posts and cell groups
 

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../models/event/event_head.dart';
-import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/cache/local_data_manager.dart';
@@ -955,15 +953,12 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   void _onBulkAddMediaTap({
     BulkAddMediaTab initialTab = BulkAddMediaTab.driveFolder,
   }) {
-    final canEditFolders =
-        Provider.of<AppContext>(context, listen: false).currentUser.isAreaAdmin;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => BulkAddMediaPage(
           eventContext: widget.eventContext,
           initialTab: initialTab,
-          canEditFolders: canEditFolders,
         ),
       ),
     ).then((_) {

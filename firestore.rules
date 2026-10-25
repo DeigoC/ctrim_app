@@ -183,8 +183,9 @@ service cloud.firestore {
       allow read, create, update, delete: if isAreaAdmin() || isAdmin();
     }
 
-    // This month and last month's public Drive folder for post media.
-    // Signed-in editors read the links; area admins set them.
+    // Services and Cell Groups each have this month and last month's public
+    // Drive folder for post media. Signed-in editors read the links; area
+    // admins set them.
     match /shared_media/{docId} {
       allow read: if request.auth != null;
       allow create, update: if isAreaAdmin() || isAdmin();

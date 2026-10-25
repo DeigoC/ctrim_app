@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
@@ -25,6 +26,11 @@ class ViewEventsHome extends StatefulWidget {
   final Function() rebuildFunction;
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
   final ScrollController scrollController;
+
+  /// Wide bulletin. `true` lays cards out with [SliverMasonryGrid], which
+  /// builds only the posts near the viewport. `false` restores the previous
+  /// eager [TwoColumnMasonry] (every card measured on the first frame).
+  static final bool lazyWideFeed = true;
 
   @override
   State<ViewEventsHome> createState() => _ViewEventsHomeState();
@@ -264,24 +270,14 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                 ),
                 sliver: _ListingFeedFade(
                   motionKey: _feedMotionKey(query),
-                  sliver: itemCount == 0
-                      ? (_undatedSnippetLoading
-                          ? _buildTopUpPlaceholder(colorScheme)
-                          : _buildEmptyState(colorScheme, theme, l10n))
-                      : isWideScreen
-                          ? SliverToBoxAdapter(
-                              child: _buildWidePostRows(colorScheme, heads),
-                            )
-                          : SliverList.separated(
-                              itemCount: itemCount,
-                              itemBuilder: (_, index) => _buildPostCard(
-                                colorScheme,
-                                heads[index],
-                              ),
-                              separatorBuilder:
-                                  (BuildContext context, int index) =>
-                                      const SizedBox(height: 8),
-                            ),
+                  sliver: _buildListingSliver(
+                    isWideScreen: isWideScreen,
+                    itemCount: itemCount,
+                    heads: heads,
+                    colorScheme: colorScheme,
+                    theme: theme,
+                    l10n: l10n,
+                  ),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -292,13 +288,64 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     );
   }
 
-  /// Masonry so a text-only PostHead does not leave a gap beside an image post.
+  Widget _buildListingSliver({
+    required bool isWideScreen,
+    required int itemCount,
+    required List<EventHead> heads,
+    required ColorScheme colorScheme,
+    required ThemeData theme,
+    required AppLocalizations l10n,
+  }) {
+    if (itemCount == 0) {
+      return _undatedSnippetLoading
+          ? _buildTopUpPlaceholder(colorScheme)
+          : _buildEmptyState(colorScheme, theme, l10n);
+    }
+    if (!isWideScreen) {
+      return SliverList.separated(
+        itemCount: itemCount,
+        itemBuilder: (_, index) => _buildPostCard(
+          colorScheme,
+          heads[index],
+        ),
+        separatorBuilder: (context, index) => const SizedBox(height: 8),
+      );
+    }
+    if (ViewEventsHome.lazyWideFeed) {
+      return _buildLazyWideFeed(colorScheme, heads);
+    }
+    return SliverToBoxAdapter(
+      child: _buildWidePostRows(colorScheme, heads),
+    );
+  }
+
+  /// Previous wide layout. Every [PostHead] is a child, so every cover starts
+  /// loading on the first frame. Kept so [ViewEventsHome.lazyWideFeed] can
+  /// turn it back on.
   Widget _buildWidePostRows(ColorScheme colorScheme, List<EventHead> heads) {
     return TwoColumnMasonry(
+      spacing: 16,
+      runSpacing: 16,
       children: [
         for (final head in heads)
           _buildPostCard(colorScheme, head, verticalMargin: 0),
       ],
+    );
+  }
+
+  /// Same shorter-column placement as [_buildWidePostRows], built as a sliver
+  /// so cards outside the viewport are not created.
+  Widget _buildLazyWideFeed(ColorScheme colorScheme, List<EventHead> heads) {
+    return SliverMasonryGrid.count(
+      crossAxisCount: 2,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      childCount: heads.length,
+      itemBuilder: (_, index) => _buildPostCard(
+        colorScheme,
+        heads[index],
+        verticalMargin: 0,
+      ),
     );
   }
 

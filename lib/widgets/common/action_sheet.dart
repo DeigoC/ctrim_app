@@ -10,18 +10,26 @@ class ActionSheetShell extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.children,
+    this.onBack,
     this.scrollable = true,
     this.decorateSurface = true,
+    this.contentKey,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final List<Widget> children;
+
+  /// When set, a back control sits ahead of the icon and returns within the sheet.
+  final VoidCallback? onBack;
   final bool scrollable;
 
   /// When false, skips the surface fill and top-only radius (parent already clips).
   final bool decorateSurface;
+
+  /// Recreates the scroll view so a new page starts at the top.
+  final Key? contentKey;
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +41,15 @@ class ActionSheetShell extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          padding: EdgeInsets.fromLTRB(onBack == null ? 20 : 4, 8, 20, 16),
           child: Row(
             children: [
+              if (onBack != null)
+                IconButton(
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                  onPressed: onBack,
+                  icon: const Icon(Icons.arrow_back),
+                ),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -89,7 +103,7 @@ class ActionSheetShell extends StatelessWidget {
     );
 
     if (scrollable) {
-      content = SingleChildScrollView(child: content);
+      content = SingleChildScrollView(key: contentKey, child: content);
     }
 
     if (!decorateSurface) return content;

@@ -4708,6 +4708,42 @@ abstract class AppLocalizations {
   /// **'Drag items to reorder the running time'**
   String get scheduleArrangeSubtitle;
 
+  /// Edit-post sheet row and page title for schedule actions
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get postEditScheduleTitle;
+
+  /// What the schedule group on the edit-post sheet contains
+  ///
+  /// In en, this message translates to:
+  /// **'Add a slot, reorder, or apply a preset'**
+  String get postEditScheduleSubtitle;
+
+  /// Leader row on the edit-post sheet that opens related-post actions
+  ///
+  /// In en, this message translates to:
+  /// **'Create related posts'**
+  String get postEditRelatedTitle;
+
+  /// Title of the related-posts page inside the edit-post sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Related posts'**
+  String get postEditRelatedPageTitle;
+
+  /// Related-posts group subtitle when this post has no parent
+  ///
+  /// In en, this message translates to:
+  /// **'A child post, or several at once'**
+  String get postEditRelatedSubtitle;
+
+  /// Related-posts group subtitle when this post already has a parent
+  ///
+  /// In en, this message translates to:
+  /// **'A sibling, a child, or several at once'**
+  String get postEditRelatedWithSiblingSubtitle;
+
   /// Keeps the new arrangement and closes the arrange schedule page
   ///
   /// In en, this message translates to:

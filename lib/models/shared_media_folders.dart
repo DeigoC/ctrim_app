@@ -27,13 +27,29 @@ class SharedMediaFolder {
   }
 }
 
-/// This month’s shared media folder, and the previous month only.
+/// Services or Cell Groups. Each group has its own month pair.
+enum SharedMediaFolderKind {
+  service('Service', 'Services'),
+  cellGroup('CellGroup', 'Cell Groups');
+
+  const SharedMediaFolderKind(this.firestoreKey, this.label);
+
+  final String firestoreKey;
+  final String label;
+
+  /// Services first: that is where a document saved before groups still lands.
+  static const List<SharedMediaFolderKind> displayOrder = [
+    service,
+    cellGroup,
+  ];
+}
+
+/// This month’s folder and the previous month only, for one group.
 ///
-/// Stored at `shared_media/folders`. [startNewMonth] copies the current
-/// folder into the previous slot and clears the current one, so the month
-/// before last is no longer offered in the app.
-class SharedMediaFolders {
-  SharedMediaFolders({
+/// [startNewMonth] copies the current folder into the previous slot and
+/// clears the current one, so the month before last is no longer offered.
+class SharedMediaFolderPair {
+  SharedMediaFolderPair({
     String currentLabel = '',
     String currentFolderUrl = '',
     String previousLabel = '',
@@ -43,7 +59,7 @@ class SharedMediaFolders {
         previousLabel = previousLabel.trim(),
         previousFolderUrl = previousFolderUrl.trim();
 
-  static final SharedMediaFolders empty = SharedMediaFolders();
+  static final SharedMediaFolderPair empty = SharedMediaFolderPair();
 
   final String currentLabel;
   final String currentFolderUrl;
@@ -77,17 +93,26 @@ class SharedMediaFolders {
   }
 
   /// Drops a label when its URL is not a Drive folder link.
-  static SharedMediaFolders normalized({
+  static SharedMediaFolderPair normalized({
     required String currentLabel,
     required String currentFolderUrl,
     required String previousLabel,
     required String previousFolderUrl,
   }) {
-    return SharedMediaFolders(
+    return SharedMediaFolderPair(
       currentLabel: _labelFor(currentLabel, currentFolderUrl),
       currentFolderUrl: _urlFor(currentFolderUrl),
       previousLabel: _labelFor(previousLabel, previousFolderUrl),
       previousFolderUrl: _urlFor(previousFolderUrl),
+    );
+  }
+
+  SharedMediaFolderPair normalize() {
+    return SharedMediaFolderPair.normalized(
+      currentLabel: currentLabel,
+      currentFolderUrl: currentFolderUrl,
+      previousLabel: previousLabel,
+      previousFolderUrl: previousFolderUrl,
     );
   }
 
@@ -102,15 +127,15 @@ class SharedMediaFolders {
   }
 
   /// The current folder becomes last month. The month before that is dropped.
-  SharedMediaFolders startNewMonth() {
-    return SharedMediaFolders(
+  SharedMediaFolderPair startNewMonth() {
+    return SharedMediaFolderPair(
       previousLabel: currentLabel,
       previousFolderUrl: currentFolderUrl,
     );
   }
 
-  factory SharedMediaFolders.fromMap(Map<String, dynamic> data) {
-    return SharedMediaFolders(
+  factory SharedMediaFolderPair.fromMap(Map<String, dynamic> data) {
+    return SharedMediaFolderPair(
       currentLabel: data['CurrentLabel'] as String? ?? '',
       currentFolderUrl: data['CurrentFolderUrl'] as String? ?? '',
       previousLabel: data['PreviousLabel'] as String? ?? '',
@@ -124,6 +149,71 @@ class SharedMediaFolders {
       'CurrentFolderUrl': currentFolderUrl,
       'PreviousLabel': previousLabel,
       'PreviousFolderUrl': previousFolderUrl,
+    };
+  }
+}
+
+/// Services and Cell Groups month folders.
+///
+/// Stored at `shared_media/folders`. A document written before groups
+/// (flat `Current*` / `Previous*` fields only) is read as [service].
+/// [toJson] still writes those flat fields from Services so an older
+/// install keeps showing that group.
+class SharedMediaFolders {
+  SharedMediaFolders({
+    SharedMediaFolderPair? service,
+    SharedMediaFolderPair? cellGroup,
+  })  : service = service ?? SharedMediaFolderPair.empty,
+        cellGroup = cellGroup ?? SharedMediaFolderPair.empty;
+
+  static final SharedMediaFolders empty = SharedMediaFolders();
+
+  final SharedMediaFolderPair service;
+  final SharedMediaFolderPair cellGroup;
+
+  SharedMediaFolderPair pairFor(SharedMediaFolderKind kind) {
+    switch (kind) {
+      case SharedMediaFolderKind.service:
+        return service;
+      case SharedMediaFolderKind.cellGroup:
+        return cellGroup;
+    }
+  }
+
+  SharedMediaFolders replacing(
+    SharedMediaFolderKind kind,
+    SharedMediaFolderPair pair,
+  ) {
+    switch (kind) {
+      case SharedMediaFolderKind.service:
+        return SharedMediaFolders(service: pair, cellGroup: cellGroup);
+      case SharedMediaFolderKind.cellGroup:
+        return SharedMediaFolders(service: service, cellGroup: pair);
+    }
+  }
+
+  factory SharedMediaFolders.fromMap(Map<String, dynamic> data) {
+    final hasNested = data['Service'] is Map || data['CellGroup'] is Map;
+    if (!hasNested) {
+      return SharedMediaFolders(service: SharedMediaFolderPair.fromMap(data));
+    }
+    return SharedMediaFolders(
+      service: _pairFromField(data['Service']),
+      cellGroup: _pairFromField(data['CellGroup']),
+    );
+  }
+
+  static SharedMediaFolderPair _pairFromField(dynamic raw) {
+    if (raw is! Map) return SharedMediaFolderPair.empty;
+    return SharedMediaFolderPair.fromMap(Map<String, dynamic>.from(raw));
+  }
+
+  Map<String, dynamic> toJson() {
+    final serviceJson = service.toJson();
+    return {
+      'Service': serviceJson,
+      'CellGroup': cellGroup.toJson(),
+      ...serviceJson,
     };
   }
 }

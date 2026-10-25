@@ -14,7 +14,6 @@ import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/app_dialog.dart';
 import 'add_media_drive_helpers.dart';
-import 'edit_shared_media_folders_page.dart';
 
 /// Which add-media method [BulkAddMediaPage] opens on.
 enum BulkAddMediaTab {
@@ -35,7 +34,6 @@ class BulkAddMediaPage extends StatefulWidget {
     this.initialTab = BulkAddMediaTab.thisMonth,
     this.folders,
     this.loadFolders,
-    this.canEditFolders = false,
   });
 
   final EventContext eventContext;
@@ -50,9 +48,6 @@ class BulkAddMediaPage extends StatefulWidget {
 
   /// Override for the settings fetch. Ignored when [folders] is set.
   final Future<SharedMediaFolders> Function()? loadFolders;
-
-  /// Area admins can set the shared month folders.
-  final bool canEditFolders;
 
   @override
   State<BulkAddMediaPage> createState() => _BulkAddMediaPageState();
@@ -72,6 +67,7 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
   final Set<String> _selectedIds = {};
 
   SharedMediaFolders? _folders;
+  SharedMediaFolderKind _kind = SharedMediaFolderKind.service;
   bool _loadingSettings = false;
   String? _settingsError;
   bool _showingPrevious = false;
@@ -114,10 +110,12 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
     };
   }
 
+  SharedMediaFolderPair? get _activePair => _folders?.pairFor(_kind);
+
   SharedMediaFolder? get _activeMonthFolder {
-    final folders = _folders;
-    if (folders == null) return null;
-    return _showingPrevious ? folders.previous : folders.current;
+    final pair = _activePair;
+    if (pair == null) return null;
+    return _showingPrevious ? pair.previous : pair.current;
   }
 
   void _onBulkTabChanged() {
@@ -176,14 +174,8 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
     try {
       final entries = await _listing.listPublicFolder(folderId);
       if (!mounted || generation != _monthListGeneration) return;
-      final media = entries.where((e) => e.isImportableMedia).toList();
       setState(() {
         _monthEntries = entries;
-        _selectedMonthIds.addAll(
-          media
-              .where((e) => !_existingSrcs.contains(e.directMediaUrl))
-              .map((e) => e.id),
-        );
         _loadingMonth = false;
       });
     } on DriveFolderListingException catch (e) {
@@ -204,6 +196,19 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
   void _onShowPreviousMonth(bool previous) {
     if (previous == _showingPrevious || _importing) return;
     setState(() => _showingPrevious = previous);
+    _showActiveMonth();
+  }
+
+  void _onSelectGroup(SharedMediaFolderKind kind) {
+    if (kind == _kind || _importing) return;
+    setState(() {
+      _kind = kind;
+      if (_activePair?.previous == null) _showingPrevious = false;
+    });
+    _showActiveMonth();
+  }
+
+  void _showActiveMonth() {
     final folder = _activeMonthFolder;
     if (folder == null) {
       setState(() {
@@ -224,42 +229,14 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
     await launchUrlString(url, mode: LaunchMode.externalApplication);
   }
 
-  Future<void> _onEditSharedFolders() async {
-    final saved = await Navigator.push<SharedMediaFolders>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditSharedMediaFoldersPage(
-          initial: _folders ?? SharedMediaFolders.empty,
-        ),
-      ),
-    );
-    if (!mounted || saved == null) return;
-    setState(() {
-      _folders = saved;
-      if (saved.previous == null) _showingPrevious = false;
-    });
-    final folder = _activeMonthFolder;
-    if (folder == null) {
-      setState(() {
-        _monthListGeneration++;
-        _monthEntries = const [];
-        _selectedMonthIds.clear();
-        _monthError = null;
-        _loadingMonth = false;
-      });
-      return;
-    }
-    await _listMonthFolder(folder.folderId);
-  }
-
   String _monthChipLabel({required bool previous}) {
-    final folders = _folders;
-    if (folders == null) return previous ? 'Last month' : 'This month';
-    final slot = previous ? folders.previous : folders.current;
+    final pair = _activePair;
+    if (pair == null) return previous ? 'Last month' : 'This month';
+    final slot = previous ? pair.previous : pair.current;
     if (slot != null) {
       return slot.displayLabel(previous ? 'Last month' : 'This month');
     }
-    final stored = previous ? folders.previousLabel : folders.currentLabel;
+    final stored = previous ? pair.previousLabel : pair.currentLabel;
     final trimmed = stored.trim();
     if (trimmed.isNotEmpty) return trimmed;
     return previous ? 'Last month' : 'This month';
@@ -511,11 +488,11 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
   Widget _buildMonthTab(double gutter) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final folders = _folders;
     final active = _activeMonthFolder;
     final mediaEntries =
         _monthEntries.where((e) => e.isImportableMedia).toList();
-    final showMonthSwitch = folders?.previous != null;
+    final showGroupChoice = !_loadingSettings && _settingsError == null;
+    final showMonthSwitch = _activePair?.previous != null;
 
     return Column(
       children: [
@@ -530,6 +507,26 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
+              if (showGroupChoice) ...[
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SegmentedButton<SharedMediaFolderKind>(
+                    showSelectedIcon: false,
+                    segments: [
+                      for (final kind in SharedMediaFolderKind.displayOrder)
+                        ButtonSegment<SharedMediaFolderKind>(
+                          value: kind,
+                          label: Text(kind.label),
+                        ),
+                    ],
+                    selected: {_kind},
+                    onSelectionChanged: _importing
+                        ? null
+                        : (selection) => _onSelectGroup(selection.first),
+                  ),
+                ),
+              ],
               if (showMonthSwitch) ...[
                 const SizedBox(height: 16),
                 Align(
@@ -560,24 +557,15 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
-              if (active != null || widget.canEditFolders) ...[
+              if (active != null) ...[
                 const SizedBox(height: 4),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    if (active != null)
-                      TextButton.icon(
-                        onPressed: _openActiveMonthInDrive,
-                        icon: const Icon(Icons.open_in_new, size: 18),
-                        label: const Text('Open in Google Drive'),
-                      ),
-                    if (widget.canEditFolders && active != null)
-                      TextButton.icon(
-                        onPressed: _importing ? null : _onEditSharedFolders,
-                        icon: const Icon(Icons.edit_outlined, size: 18),
-                        label: const Text('Edit folders'),
-                      ),
-                  ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _openActiveMonthInDrive,
+                    icon: const Icon(Icons.open_in_new, size: 18),
+                    label: const Text('Open in Google Drive'),
+                  ),
                 ),
               ],
               if (_loadingSettings) ...[
@@ -603,25 +591,14 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
                 const SizedBox(height: 16),
                 Text(
                   _showingPrevious
-                      ? 'Last month’s folder isn’t set.'
-                      : 'This month’s shared folder isn’t set yet. An area '
-                          'admin can add the Google Drive link.',
+                      ? 'Last month’s ${_kind.label} folder isn’t set.'
+                      : 'This month’s ${_kind.label} folder isn’t set yet. '
+                          'An area admin can add the Google Drive link from '
+                          'Personal.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-                if (widget.canEditFolders) ...[
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton.tonalIcon(
-                      onPressed: _onEditSharedFolders,
-                      icon: const Icon(Icons.create_new_folder_outlined,
-                          size: 18),
-                      label: const Text('Set folder'),
-                    ),
-                  ),
-                ],
               ] else if (_loadingMonth) ...[
                 const SizedBox(height: 24),
                 const Center(child: CircularProgressIndicator()),

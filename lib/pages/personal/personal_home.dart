@@ -26,6 +26,7 @@ import '../../widgets/personal/personal_ministry_schedule_preview_card.dart';
 import '../../widgets/personal/personal_schedule_preview_card.dart';
 import '../../widgets/personal/personal_settings_section.dart';
 import '../../widgets/two_column_masonry.dart';
+import '../events/edit_shared_media_folders_page.dart';
 import '../events/post_templates/view_templates_page.dart';
 import 'guest_registration_page.dart';
 import 'edit_profile_picture_page.dart';
@@ -189,6 +190,7 @@ class _PersonalHomeState extends State<PersonalHome> {
             onViewTemplates: _openViewTemplatesClick,
             onManageUserLocations: _openManageUserLocationsClick,
             onNotificationSchedules: _openNotificationSchedulesClick,
+            onSharedMediaFolders: _openSharedMediaFoldersClick,
           ),
         ],
         const SizedBox(height: 24),
@@ -247,6 +249,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   onViewTemplates: _openViewTemplatesClick,
                   onManageUserLocations: _openManageUserLocationsClick,
                   onNotificationSchedules: _openNotificationSchedulesClick,
+                  onSharedMediaFolders: _openSharedMediaFoldersClick,
                 ),
               ),
               const SizedBox(width: 20),
@@ -588,6 +591,15 @@ class _PersonalHomeState extends State<PersonalHome> {
   void _openViewTemplatesClick() {
     Navigator.push(
         context, MaterialPageRoute(builder: (_) => const ViewTemplatesPage()));
+  }
+
+  void _openSharedMediaFoldersClick() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const EditSharedMediaFoldersPage(),
+      ),
+    );
   }
 
   void _openManageUserTagsClick() {

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _currentId = 'currentfolderid0000000000001';
 const _previousId = 'previousfolderid000000000001';
+const _cellId = 'cellgroupfolderid000000000001';
 
 void main() {
   testWidgets('shows This month, Drive folder, and Paste URLs tabs',
@@ -29,9 +30,11 @@ void main() {
     expect(find.text('Drive folder'), findsOneWidget);
     expect(find.text('Paste URLs'), findsOneWidget);
     expect(
-      find.textContaining('This month’s shared folder isn’t set yet'),
+      find.textContaining('This month’s Services folder isn’t set yet'),
       findsOneWidget,
     );
+    expect(find.text('Services'), findsOneWidget);
+    expect(find.text('Cell Groups'), findsOneWidget);
 
     await tester.tap(find.text('Drive folder'));
     await tester.pumpAndSettle();
@@ -67,6 +70,14 @@ void main() {
           isFolder: false,
         ),
       ],
+      _cellId: const [
+        DriveFolderEntry(
+          id: 'cellimageid000000000000000001',
+          name: 'meeting.jpg',
+          mimeType: 'image/jpeg',
+          isFolder: false,
+        ),
+      ],
     });
     final eventContext = EventContext.adding(currentUserID: 'author-1');
 
@@ -76,12 +87,19 @@ void main() {
           eventContext: eventContext,
           listing: listing,
           folders: SharedMediaFolders(
-            currentLabel: 'October 2026',
-            currentFolderUrl:
-                'https://drive.google.com/drive/folders/$_currentId',
-            previousLabel: 'September 2026',
-            previousFolderUrl:
-                'https://drive.google.com/drive/folders/$_previousId',
+            service: SharedMediaFolderPair(
+              currentLabel: 'October 2026',
+              currentFolderUrl:
+                  'https://drive.google.com/drive/folders/$_currentId',
+              previousLabel: 'September 2026',
+              previousFolderUrl:
+                  'https://drive.google.com/drive/folders/$_previousId',
+            ),
+            cellGroup: SharedMediaFolderPair(
+              currentLabel: 'October meetings',
+              currentFolderUrl:
+                  'https://drive.google.com/drive/folders/$_cellId',
+            ),
           ),
         ),
       ),
@@ -91,6 +109,7 @@ void main() {
 
     expect(listing.requested, [_currentId]);
     expect(find.text('welcome.jpg'), findsOneWidget);
+    expect(find.text('0 of 1 selected'), findsOneWidget);
     expect(find.text('Sunday service'), findsNothing);
     expect(
       find.textContaining('Bulk add from a folder'),
@@ -104,6 +123,16 @@ void main() {
     expect(listing.requested, [_currentId, _previousId]);
     expect(find.text('prayer.jpg'), findsOneWidget);
     expect(find.text('welcome.jpg'), findsNothing);
+    expect(find.text('0 of 1 selected'), findsOneWidget);
+
+    await tester.tap(find.text('Cell Groups'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(listing.requested, [_currentId, _previousId, _cellId]);
+    expect(find.text('meeting.jpg'), findsOneWidget);
+    expect(find.text('prayer.jpg'), findsNothing);
+    expect(find.text('0 of 1 selected'), findsOneWidget);
   });
 }
 

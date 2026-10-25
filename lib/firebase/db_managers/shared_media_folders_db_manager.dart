@@ -4,8 +4,9 @@ import '../../models/shared_media_folders.dart';
 
 /// The single `shared_media/folders` document.
 ///
-/// Not loaded at startup. The gallery month tab and the area-admin editor
-/// read it when they open.
+/// Services and Cell Groups each keep this month and last month. Not loaded
+/// at startup. The gallery month tab and the area-admin editor read it when
+/// they open.
 class SharedMediaFoldersDBManager {
   static const String documentId = 'folders';
 

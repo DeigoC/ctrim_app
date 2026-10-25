@@ -31,6 +31,8 @@ Work through whichever sections apply. Add a screenshot under each heading as yo
 
 ### Schedule & roles
 
+In the edit menu, **Schedule** holds add, reorder, and apply a preset.
+
 1. Open the **Schedule** tab on the post (day timeline with overlapping items side by side).  
 2. Add or change roles / assignments, or open **Arrange schedule** to drag items to new times (cascade or parallel mode). On the Schedule tab, tap an empty time to add an item that starts then. Press and hold an item to open its editor. Adding into a **free slot** keeps other times; overlapping a timed item asks whether to **keep times** (run together) or push later items. After a new item is saved, you can start the next one at that finish time. Changing the event **start time** (date & location) asks whether the whole schedule should **move with the start** or **keep current times**.  
 3. Save.  
@@ -40,7 +42,7 @@ See [Reading the schedule](../../events-and-bulletin.md#reading-the-schedule) an
 ### Media
 
 1. Open **media**.  
-2. Add, reorder, or replace images and video. In **Key media**, use **Earlier**, **Later**, and **Make cover** (on a phone you can also drag the handle). The first image is the cover on the post card. **Post media** uses the same arrows, and a drag handle on a phone; that order is the gallery on the Media tab. A new image or video is marked as key media while fewer than four are set. **Choose from this month** lists the loose photos in the shared folder for this month, and you can switch to last month. Photos kept inside an event folder are not in that list — use **Bulk add from a folder**, paste that event folder’s link, and pick the files. **Add image** or **Add video** is for a single link, and pasting a link checks it straight away. An area admin sets the shared folder for this month and for last month. Starting a new month keeps only those two; anything older stays in Google Drive but is no longer offered in the app.  
+2. Add, reorder, or replace images and video. In **Key media**, use **Earlier**, **Later**, and **Make cover** (on a phone you can also drag the handle). The first image is the cover on the post card. **Post media** uses the same arrows, and a drag handle on a phone; that order is the gallery on the Media tab. A new image or video is marked as key media while fewer than four are set. **Choose from this month** lists the loose photos in a shared folder. Choose **Services** or **Cell Groups**, then this month or last month. Nothing is selected until you pick the photos. Photos kept inside an event folder are not in that list — use **Bulk add from a folder**, paste that event folder’s link, and pick the files. **Add image** or **Add video** is for a single link, and pasting a link checks it straight away. An area admin sets those folders from Personal → **Admin Tools** → **Shared media folders**. Starting a new month on a group keeps only that group’s two folders; anything older stays in Google Drive but is no longer offered in the app.  
 3. Save.  
 
 ### People on the post
@@ -61,7 +63,7 @@ Interest (“Mark interest”) saves immediately for the signed-in person; staff
 
 ### Related posts
 
-1. Use related-post actions to create or attach **child / sibling** posts, or attach under a **period parent** for a term or season.  
+1. Leaders open **Related posts** in the edit menu, then create a **child** under this post, a **sibling** when this post already has a parent, or several at once. A **period parent** is set on **Title & details**, or while creating the post.  
 2. Readers see links on the post’s **Related** tab.  
 
 ### Notify / broadcast

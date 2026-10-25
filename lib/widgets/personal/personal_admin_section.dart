@@ -13,6 +13,7 @@ class PersonalAdminSection extends StatelessWidget {
     required this.onViewTemplates,
     required this.onManageUserLocations,
     required this.onNotificationSchedules,
+    required this.onSharedMediaFolders,
   });
 
   final AppContext appContext;
@@ -21,6 +22,7 @@ class PersonalAdminSection extends StatelessWidget {
   final VoidCallback onViewTemplates;
   final VoidCallback onManageUserLocations;
   final VoidCallback onNotificationSchedules;
+  final VoidCallback onSharedMediaFolders;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +55,15 @@ class PersonalAdminSection extends StatelessWidget {
       );
     }
     if (appContext.currentUser.canManageVolunteers) {
+      actions.add(
+        PersonalAction(
+          icon: Icons.folder_shared_outlined,
+          title: 'Shared media folders',
+          subtitle: 'Services and cell group Drive links',
+          onTap: onSharedMediaFolders,
+          iconColor: colorScheme.primary,
+        ),
+      );
       actions.add(
         PersonalAction(
           icon: Icons.location_on_rounded,

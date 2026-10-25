@@ -3483,6 +3483,30 @@
   "@scheduleArrangeSubtitle": {
     "description": "Edit sheet subtitle for the arrange schedule action"
   },
+  "postEditScheduleTitle": "Schedule",
+  "@postEditScheduleTitle": {
+    "description": "Edit-post sheet row and page title for schedule actions"
+  },
+  "postEditScheduleSubtitle": "Add a slot, reorder, or apply a preset",
+  "@postEditScheduleSubtitle": {
+    "description": "What the schedule group on the edit-post sheet contains"
+  },
+  "postEditRelatedTitle": "Create related posts",
+  "@postEditRelatedTitle": {
+    "description": "Leader row on the edit-post sheet that opens related-post actions"
+  },
+  "postEditRelatedPageTitle": "Related posts",
+  "@postEditRelatedPageTitle": {
+    "description": "Title of the related-posts page inside the edit-post sheet"
+  },
+  "postEditRelatedSubtitle": "A child post, or several at once",
+  "@postEditRelatedSubtitle": {
+    "description": "Related-posts group subtitle when this post has no parent"
+  },
+  "postEditRelatedWithSiblingSubtitle": "A sibling, a child, or several at once",
+  "@postEditRelatedWithSiblingSubtitle": {
+    "description": "Related-posts group subtitle when this post already has a parent"
+  },
   "scheduleArrangeDone": "Done",
   "@scheduleArrangeDone": {
     "description": "Keeps the new arrangement and closes the arrange schedule page"

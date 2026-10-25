@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +9,7 @@ import 'package:ctrim_app/pages/events/events_home.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/widgets/posts/post_head.dart';
+import 'package:ctrim_app/widgets/two_column_masonry.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -27,10 +29,10 @@ void main() {
     scrollController.dispose();
   });
 
-  List<EventHead> _tallFeed() {
+  List<EventHead> _tallFeed({int count = 12}) {
     final now = DateTime(2026, 10, 4, 12);
     return [
-      for (var i = 0; i < 12; i++)
+      for (var i = 0; i < count; i++)
         EventHead(
           id: 'post-$i',
           title: 'Bulletin post $i',
@@ -42,8 +44,12 @@ void main() {
     ];
   }
 
-  Future<void> pumpBulletin(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(390, 844);
+  Future<void> pumpBulletin(
+    WidgetTester tester, {
+    Size viewSize = const Size(390, 844),
+    int headCount = 12,
+  }) async {
+    tester.view.physicalSize = viewSize;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -52,7 +58,7 @@ void main() {
       prefInstance: prefs,
       cacheDir: null,
       appDir: null,
-      heads: _tallFeed(),
+      heads: _tallFeed(count: headCount),
     );
 
     await tester.pumpWidget(
@@ -78,7 +84,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
-  testWidgets('bulletin scroll view stays always-scrollable without snap expand',
+  testWidgets(
+      'bulletin scroll view stays always-scrollable without snap expand',
       (tester) async {
     await pumpBulletin(tester);
 
@@ -105,7 +112,8 @@ void main() {
     );
   });
 
-  testWidgets('bulletin list can scroll down and back up without clamping mid-way',
+  testWidgets(
+      'bulletin list can scroll down and back up without clamping mid-way',
       (tester) async {
     await pumpBulletin(tester);
 
@@ -121,5 +129,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(scrollController.offset, lessThan(afterDown));
     expect(scrollController.offset, greaterThanOrEqualTo(0));
+  });
+
+  testWidgets('wide bulletin builds only the cards near the viewport',
+      (tester) async {
+    const headCount = 30;
+    await pumpBulletin(
+      tester,
+      viewSize: const Size(1200, 700),
+      headCount: headCount,
+    );
+
+    expect(find.byType(SliverMasonryGrid), findsOneWidget);
+    expect(find.byType(TwoColumnMasonry), findsNothing);
+    expect(find.byType(PostHead), findsWidgets);
+    expect(find.byType(PostHead).evaluate().length, lessThan(headCount));
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
+    await tester.pumpAndSettle();
+    expect(scrollController.offset, greaterThan(100));
   });
 }

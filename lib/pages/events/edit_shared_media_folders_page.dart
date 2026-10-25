@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import '../../firebase/db_managers/shared_media_folders_db_manager.dart';
 import '../../models/shared_media_folders.dart';
 import '../../utility/dialog_manager.dart';
-import 'add_media_drive_helpers.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/role_access_gate.dart';
+import 'add_media_drive_helpers.dart';
 
-/// Area-admin editor for this month’s shared Drive folder and the previous one.
+/// Area-admin editor for the Services and Cell Groups shared Drive folders.
 class EditSharedMediaFoldersPage extends StatefulWidget {
   const EditSharedMediaFoldersPage({
     super.key,
@@ -35,6 +36,8 @@ class _EditSharedMediaFoldersPageState
   final TextEditingController _previousUrl = TextEditingController();
 
   SharedMediaFolders _baseline = SharedMediaFolders.empty;
+  SharedMediaFolders _draft = SharedMediaFolders.empty;
+  SharedMediaFolderKind _kind = SharedMediaFolderKind.service;
   bool _loading = false;
   Object? _loadError;
   bool _saving = false;
@@ -65,8 +68,8 @@ class _EditSharedMediaFoldersPageState
     _previousUrl.removeListener(_onFieldChanged);
     _currentLabel.dispose();
     _currentUrl.dispose();
-    _previousUrl.dispose();
     _previousLabel.dispose();
+    _previousUrl.dispose();
     super.dispose();
   }
 
@@ -98,20 +101,50 @@ class _EditSharedMediaFoldersPageState
 
   void _applyFolders(SharedMediaFolders folders) {
     _baseline = folders;
-    _currentLabel.text = folders.currentLabel;
-    _currentUrl.text = folders.currentFolderUrl;
-    _previousLabel.text = folders.previousLabel;
-    _previousUrl.text = folders.previousFolderUrl;
+    _draft = folders;
+    _loadControllers();
+  }
+
+  void _loadControllers() {
+    final pair = _draft.pairFor(_kind);
+    _currentLabel.text = pair.currentLabel;
+    _currentUrl.text = pair.currentFolderUrl;
+    _previousLabel.text = pair.previousLabel;
+    _previousUrl.text = pair.previousFolderUrl;
+  }
+
+  void _rememberControllers() {
+    _draft = _draft.replacing(
+      _kind,
+      SharedMediaFolderPair(
+        currentLabel: _currentLabel.text,
+        currentFolderUrl: _currentUrl.text,
+        previousLabel: _previousLabel.text,
+        previousFolderUrl: _previousUrl.text,
+      ),
+    );
   }
 
   bool get _canStartNewMonth =>
       !_saving && extractDriveFolderId(_currentUrl.text) != null;
 
+  String get _otherGroupLabel {
+    return _kind == SharedMediaFolderKind.service
+        ? SharedMediaFolderKind.cellGroup.label
+        : SharedMediaFolderKind.service.label;
+  }
+
   bool _isDirty() {
-    return _currentLabel.text.trim() != _baseline.currentLabel ||
-        _currentUrl.text.trim() != _baseline.currentFolderUrl ||
-        _previousLabel.text.trim() != _baseline.previousLabel ||
-        _previousUrl.text.trim() != _baseline.previousFolderUrl;
+    _rememberControllers();
+    return !_samePair(_draft.service, _baseline.service) ||
+        !_samePair(_draft.cellGroup, _baseline.cellGroup);
+  }
+
+  bool _samePair(SharedMediaFolderPair a, SharedMediaFolderPair b) {
+    return a.currentLabel == b.currentLabel &&
+        a.currentFolderUrl == b.currentFolderUrl &&
+        a.previousLabel == b.previousLabel &&
+        a.previousFolderUrl == b.previousFolderUrl;
   }
 
   void _popRoute([SharedMediaFolders? result]) {
@@ -121,28 +154,33 @@ class _EditSharedMediaFoldersPageState
     });
   }
 
+  void _onSelectGroup(Set<SharedMediaFolderKind> selection) {
+    final next = selection.first;
+    if (next == _kind || _saving) return;
+    _rememberControllers();
+    setState(() {
+      _kind = next;
+      _currentUrlError = null;
+      _previousUrlError = null;
+    });
+    _loadControllers();
+  }
+
   Future<void> _onStartNewMonth() async {
     if (!_canStartNewMonth) return;
     final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
       title: 'Start a new month',
-      content:
-          'Last month will become the folder that is current now. The month '
-          'before that will no longer appear in the app. Paste the new '
+      content: 'Last month will become the folder that is current now for '
+          '${_kind.label}. The month before that will no longer appear in '
+          'the app. $_otherGroupLabel is left as it is. Paste the new '
           'month’s folder link before you save.',
       confirmText: 'Start new month',
     );
     if (!confirmed || !mounted) return;
-    final next = SharedMediaFolders(
-      currentLabel: _currentLabel.text,
-      currentFolderUrl: _currentUrl.text,
-      previousLabel: _previousLabel.text,
-      previousFolderUrl: _previousUrl.text,
-    ).startNewMonth();
-    _currentLabel.text = next.currentLabel;
-    _currentUrl.text = next.currentFolderUrl;
-    _previousLabel.text = next.previousLabel;
-    _previousUrl.text = next.previousFolderUrl;
+    _rememberControllers();
+    _draft = _draft.replacing(_kind, _draft.pairFor(_kind).startNewMonth());
+    _loadControllers();
     setState(() {
       _currentUrlError = null;
       _previousUrlError = null;
@@ -150,21 +188,40 @@ class _EditSharedMediaFoldersPageState
   }
 
   Future<void> _onSave() async {
-    final currentUrlError =
-        SharedMediaFolders.validateFolderUrl(_currentUrl.text);
-    final previousUrlError =
-        SharedMediaFolders.validateFolderUrl(_previousUrl.text);
-    setState(() {
-      _currentUrlError = currentUrlError;
-      _previousUrlError = previousUrlError;
-    });
-    if (currentUrlError != null || previousUrlError != null) return;
+    _rememberControllers();
+    final serviceCurrent = SharedMediaFolderPair.validateFolderUrl(
+        _draft.service.currentFolderUrl);
+    final servicePrevious = SharedMediaFolderPair.validateFolderUrl(
+      _draft.service.previousFolderUrl,
+    );
+    final cellCurrent = SharedMediaFolderPair.validateFolderUrl(
+      _draft.cellGroup.currentFolderUrl,
+    );
+    final cellPrevious = SharedMediaFolderPair.validateFolderUrl(
+      _draft.cellGroup.previousFolderUrl,
+    );
+    final serviceBad = serviceCurrent != null || servicePrevious != null;
+    final cellBad = cellCurrent != null || cellPrevious != null;
+    if (serviceBad || cellBad) {
+      final show = serviceBad
+          ? SharedMediaFolderKind.service
+          : SharedMediaFolderKind.cellGroup;
+      setState(() {
+        _kind = show;
+        _currentUrlError = show == SharedMediaFolderKind.service
+            ? serviceCurrent
+            : cellCurrent;
+        _previousUrlError = show == SharedMediaFolderKind.service
+            ? servicePrevious
+            : cellPrevious;
+      });
+      _loadControllers();
+      return;
+    }
 
-    final folders = SharedMediaFolders.normalized(
-      currentLabel: _currentLabel.text,
-      currentFolderUrl: _currentUrl.text,
-      previousLabel: _previousLabel.text,
-      previousFolderUrl: _previousUrl.text,
+    final folders = SharedMediaFolders(
+      service: _draft.service.normalize(),
+      cellGroup: _draft.cellGroup.normalize(),
     );
 
     setState(() => _saving = true);
@@ -187,6 +244,15 @@ class _EditSharedMediaFoldersPageState
 
   @override
   Widget build(BuildContext context) {
+    return RoleAccessGate(
+      allow: (user) => user.canManageVolunteers,
+      deniedMessage: 'Only area admins can edit shared media folders.',
+      title: 'Shared media folders',
+      child: _buildEditor(),
+    );
+  }
+
+  Widget _buildEditor() {
     final colorScheme = Theme.of(context).colorScheme;
 
     return PopScope(
@@ -235,10 +301,27 @@ class _EditSharedMediaFoldersPageState
       children: [
         Text(
           'People adding photos to a post can pick loose files from this '
-          'month’s folder, or from last month. Event folders inside the month '
-          'are added with Bulk add from a folder.',
+          'month’s folder, or from last month, for Services or for Cell '
+          'Groups. Event folders inside the month are added with Bulk add '
+          'from a folder.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SegmentedButton<SharedMediaFolderKind>(
+            showSelectedIcon: false,
+            segments: [
+              for (final kind in SharedMediaFolderKind.displayOrder)
+                ButtonSegment<SharedMediaFolderKind>(
+                  value: kind,
+                  label: Text(kind.label),
+                ),
+            ],
+            selected: {_kind},
+            onSelectionChanged: _saving ? null : _onSelectGroup,
           ),
         ),
         const SizedBox(height: 20),
@@ -280,8 +363,9 @@ class _EditSharedMediaFoldersPageState
         ),
         const SizedBox(height: 8),
         Text(
-          'Starting a new month moves the current folder to last month. '
-          'Anything older than that is no longer offered in the app.',
+          'Starting a new month moves this group’s current folder to last '
+          'month. Anything older than that is no longer offered in the app. '
+          '$_otherGroupLabel stays as it is.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),

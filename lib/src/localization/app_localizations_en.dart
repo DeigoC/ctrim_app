@@ -2685,6 +2685,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'Drag items to reorder the running time';
 
   @override
+  String get postEditScheduleTitle => 'Schedule';
+
+  @override
+  String get postEditScheduleSubtitle =>
+      'Add a slot, reorder, or apply a preset';
+
+  @override
+  String get postEditRelatedTitle => 'Create related posts';
+
+  @override
+  String get postEditRelatedPageTitle => 'Related posts';
+
+  @override
+  String get postEditRelatedSubtitle => 'A child post, or several at once';
+
+  @override
+  String get postEditRelatedWithSiblingSubtitle =>
+      'A sibling, a child, or several at once';
+
+  @override
   String get scheduleArrangeDone => 'Done';
 
   @override

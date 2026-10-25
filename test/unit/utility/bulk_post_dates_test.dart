@@ -87,6 +87,36 @@ void main() {
       expect(computeBulkPostDates(daysOfWeek: const [], weeks: 4), isEmpty);
       expect(computeBulkPostDates(daysOfWeek: [1], weeks: 0), isEmpty);
     });
+
+    test('does not repeat the Sunday the clocks go back', () {
+      // UK clocks go back on Sunday 25 Oct 2026 (a 25-hour day). A 24-hour
+      // step from midnight that Sunday is still Sunday.
+      final dates = computeBulkPostDates(
+        daysOfWeek: [7],
+        weeks: 3,
+        anchorDate: DateTime(2026, 10, 24),
+      );
+
+      expect(dates, [
+        DateTime(2026, 10, 25),
+        DateTime(2026, 11, 1),
+        DateTime(2026, 11, 8),
+      ]);
+    });
+
+    test('leaves the clock-change Sunday when that day is the source post', () {
+      final dates = computeBulkPostDates(
+        daysOfWeek: [7],
+        weeks: 3,
+        anchorDate: DateTime(2026, 10, 25),
+      );
+
+      expect(dates, [
+        DateTime(2026, 11, 1),
+        DateTime(2026, 11, 8),
+        DateTime(2026, 11, 15),
+      ]);
+    });
   });
 
   group('maxBulkWeeksFor', () {
@@ -126,6 +156,14 @@ void main() {
 
     test('returns null without days', () {
       expect(nextDateForDaysOfWeek(daysOfWeek: const []), isNull);
+    });
+
+    test('steps off the Sunday the clocks go back', () {
+      final clockChangeSunday = DateTime(2026, 10, 25);
+      expect(
+        nextDateForDaysOfWeek(daysOfWeek: [1], now: clockChangeSunday),
+        DateTime(2026, 10, 26),
+      );
     });
   });
 

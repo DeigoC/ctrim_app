@@ -1,5 +1,10 @@
 DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
+/// Calendar days. A [Duration] of one day is 24 hours, so on the Sunday the
+/// clocks go back that step is still the same date.
+DateTime _addCalendarDays(DateTime date, int days) =>
+    DateTime(date.year, date.month, date.day + days);
+
 /// Most posts one bulk run may create.
 const int maxBulkPosts = 30;
 
@@ -26,7 +31,7 @@ DateTime? nextDateForDaysOfWeek({
   DateTime? soonest;
   for (final day in daysOfWeek) {
     final daysUntil = (day - reference.weekday + 7) % 7;
-    final candidate = reference.add(Duration(days: daysUntil));
+    final candidate = _addCalendarDays(reference, daysUntil);
     if (soonest == null || candidate.isBefore(soonest)) soonest = candidate;
   }
   return soonest;
@@ -45,12 +50,12 @@ List<DateTime> computeBulkPostDates({
 }) {
   final days = daysOfWeek.toSet();
   if (days.isEmpty || weeks <= 0) return const [];
-  final start = _dateOnly(anchorDate ?? now ?? DateTime.now())
-      .add(const Duration(days: 1));
+  final start =
+      _addCalendarDays(_dateOnly(anchorDate ?? now ?? DateTime.now()), 1);
   return [
     for (var offset = 0; offset < weeks * 7; offset++)
-      if (days.contains(start.add(Duration(days: offset)).weekday))
-        start.add(Duration(days: offset)),
+      if (days.contains(_addCalendarDays(start, offset).weekday))
+        _addCalendarDays(start, offset),
   ];
 }
 
