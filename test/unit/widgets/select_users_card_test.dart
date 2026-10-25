@@ -80,8 +80,7 @@ void main() {
             brightness: Brightness.dark,
           ),
           home: SelectUsersPage(
-            selectedUIDs:
-                selectedUIDs ?? users.map((user) => user.id).toList(),
+            selectedUIDs: selectedUIDs ?? users.map((user) => user.id).toList(),
             maxSelection: maxSelection,
           ),
         ),

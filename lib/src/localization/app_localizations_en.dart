@@ -1154,6 +1154,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectUsersUnselectAll => 'Unselect all';
 
   @override
+  String selectUsersSelectSurname(String surname) {
+    return 'Select $surname';
+  }
+
+  @override
+  String selectUsersUnselectSurname(String surname) {
+    return 'Unselect $surname';
+  }
+
+  @override
   String selectCatalogSelected(int count) {
     return '$count selected';
   }

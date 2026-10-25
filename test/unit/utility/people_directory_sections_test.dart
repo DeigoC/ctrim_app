@@ -8,16 +8,28 @@ void main() {
 
   group('PeopleDirectorySections', () {
     test('letterForUser prefers surname initial', () {
-      expect(PeopleDirectorySections.letterForUser(u(id: '1', forname: 'Z', surname: 'Abatayo')), 'A');
+      expect(
+          PeopleDirectorySections.letterForUser(
+              u(id: '1', forname: 'Z', surname: 'Abatayo')),
+          'A');
     });
 
     test('letterForUser falls back to forename', () {
-      expect(PeopleDirectorySections.letterForUser(u(id: '1', forname: 'Mia', surname: '')), 'M');
+      expect(
+          PeopleDirectorySections.letterForUser(
+              u(id: '1', forname: 'Mia', surname: '')),
+          'M');
     });
 
     test('letterForUser uses hash for empty or non-alpha', () {
-      expect(PeopleDirectorySections.letterForUser(u(id: '1', forname: '', surname: '')), '#');
-      expect(PeopleDirectorySections.letterForUser(u(id: '2', forname: '1st', surname: '')), '#');
+      expect(
+          PeopleDirectorySections.letterForUser(
+              u(id: '1', forname: '', surname: '')),
+          '#');
+      expect(
+          PeopleDirectorySections.letterForUser(
+              u(id: '2', forname: '1st', surname: '')),
+          '#');
     });
 
     test('bySurnameLetter groups consecutive letters', () {
@@ -87,7 +99,8 @@ void main() {
 
       final blocks = PeopleDirectorySections.bySurname(users);
 
-      expect(blocks.map((block) => block.surnameLabel), [ 'Adams', null, 'Cole']);
+      expect(
+          blocks.map((block) => block.surnameLabel), ['Adams', null, 'Cole']);
       expect(blocks[1].users.map((e) => e.id), ['b']);
     });
   });

@@ -1135,8 +1135,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   }
 
   void _toggleSurnameGroup(List<User> users, AppContext appContext) {
-    final allSelected =
-        users.every((user) => _selectedUIDs.contains(user.id));
+    final allSelected = users.every((user) => _selectedUIDs.contains(user.id));
     if (allSelected) {
       _unselectAllFiltered(users);
     } else {

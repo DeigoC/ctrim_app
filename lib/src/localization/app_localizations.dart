@@ -1948,6 +1948,18 @@ abstract class AppLocalizations {
   /// **'Unselect all'**
   String get selectUsersUnselectAll;
 
+  /// Select every visible person who shares this surname on the people picker
+  ///
+  /// In en, this message translates to:
+  /// **'Select {surname}'**
+  String selectUsersSelectSurname(String surname);
+
+  /// Clear every visible person who shares this surname on the people picker
+  ///
+  /// In en, this message translates to:
+  /// **'Unselect {surname}'**
+  String selectUsersUnselectSurname(String surname);
+
   /// Selected count on a catalog tag/group picker page
   ///
   /// In en, this message translates to:

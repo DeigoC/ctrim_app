@@ -53,7 +53,8 @@ class PeopleDirectorySections {
 
     void flush() {
       if (bucket.isEmpty) return;
-      sections.add(PeopleDirectorySection(letter: currentLetter, users: bucket));
+      sections
+          .add(PeopleDirectorySection(letter: currentLetter, users: bucket));
       bucket = <User>[];
     }
 
