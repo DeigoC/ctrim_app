@@ -10,6 +10,7 @@ class UserActivityMessages {
   static const updatedProfilePhoto = 'Updated profile photo';
   static const linkedVolunteerAccount = 'Linked an account';
   static const unlinkedVolunteerAccount = 'Unlinked an account';
+  static const mergedPlaceholderIntoUser = 'Merged a placeholder into a profile';
 
   static const createdChurchRecord = 'Created a church record';
   static const createdOutreachRecord = 'Created an outreach record';

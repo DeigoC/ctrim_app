@@ -21,7 +21,7 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 | **Signed-in person** | Someone with an account. Unlocks interest, fuller personal options, and (when they have a profile) schedule and directory features. |
 | **Community profile** | A person listed in the **People** directory — the record organisers assign to programmes, attendance, and cell groups. Registering creates this; it does not mean they serve. |
 | **Serving** | Optional People-directory refine: Leader or Admin, a **ministry**, or cell-group leadership. Off by default so the list shows everyone; turn it on to narrow. |
-| **Placeholder** | A temporary directory entry created by organisers **before** someone has signed in — so they can still be listed on posts or in a cell group. |
+| **Placeholder** | A temporary directory entry created by organisers **before** someone has signed in — so they can still be listed on posts or in a cell group. If one was created by mistake when a real profile already exists, an area admin can **merge** it into that profile so posts keep working. |
 | **Leader** | Elevated access to create posts/templates, register people, and edit Information content. Covers hats such as department and cell group leaders. |
 | **Area admin** | A **Leader** plus admin for assigned **area(s)** — people, tags, locations, and cell groups. Every area admin is a Leader. |
 | **Site admin** *(planned)* | Admin without the area location restriction. |

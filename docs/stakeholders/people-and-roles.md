@@ -123,6 +123,8 @@ When you pick people (programmes, attendance, cell members, and similar), **plac
 
 The person who created a placeholder can later correct the name and **link** it to a real account. **Any area admin** can do the same for every placeholder. If that placeholder is a member of a cell group, **any listed leader of that group** can also edit the name and link an account — even if they did not create it, and even if the person belongs to more than one group. After the account is linked, only area admins can change the login link.
 
+If a placeholder was created by mistake when the person already has a proper profile, an **area admin** can **merge** the placeholder into that existing profile. Posts, attendance, cell groups, and similar lists that used the placeholder are updated to the real profile automatically, and the placeholder is removed — so you do not have to edit each post by hand.
+
 ## Related pages
 
 - [Key concepts](key-concepts.md)  

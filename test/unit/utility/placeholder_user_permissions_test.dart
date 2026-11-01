@@ -149,6 +149,63 @@ void main() {
       });
     });
 
+    group('canMergePlaceholderIntoUser', () {
+      test('allows area admin for placeholder without survivor check', () {
+        expect(
+          canMergePlaceholderIntoUser(actor: admin, placeholder: placeholder),
+          isTrue,
+        );
+      });
+
+      test('allows area admin when survivor is linked', () {
+        expect(
+          canMergePlaceholderIntoUser(
+            actor: admin,
+            placeholder: placeholder,
+            survivor: linked,
+          ),
+          isTrue,
+        );
+      });
+
+      test('denies merging into another placeholder', () {
+        final otherPlaceholder = User(
+          id: '12',
+          forname: 'Other',
+          surname: 'Temp',
+          isPlaceholder: true,
+          createdByUserID: '2',
+        );
+        expect(
+          canMergePlaceholderIntoUser(
+            actor: admin,
+            placeholder: placeholder,
+            survivor: otherPlaceholder,
+          ),
+          isFalse,
+        );
+      });
+
+      test('denies non-admin and linked source', () {
+        expect(
+          canMergePlaceholderIntoUser(
+            actor: author,
+            placeholder: placeholder,
+            survivor: linked,
+          ),
+          isFalse,
+        );
+        expect(
+          canMergePlaceholderIntoUser(
+            actor: admin,
+            placeholder: linked,
+            survivor: author,
+          ),
+          isFalse,
+        );
+      });
+    });
+
     group('isTransientVolunteerPlaceholder', () {
       test('true only for placeholders with a creator', () {
         expect(isTransientVolunteerPlaceholder(placeholder), isTrue);

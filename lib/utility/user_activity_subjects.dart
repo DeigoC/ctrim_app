@@ -55,6 +55,7 @@ class UserActivitySubjects {
     UserActivityMessages.updatedProfilePhoto: UserActivityKind.person,
     UserActivityMessages.linkedVolunteerAccount: UserActivityKind.person,
     UserActivityMessages.unlinkedVolunteerAccount: UserActivityKind.person,
+    UserActivityMessages.mergedPlaceholderIntoUser: UserActivityKind.person,
     UserActivityMessages.createdChurchRecord: UserActivityKind.church,
     UserActivityMessages.createdOutreachRecord: UserActivityKind.church,
     UserActivityMessages.editedChurchRecord: UserActivityKind.church,

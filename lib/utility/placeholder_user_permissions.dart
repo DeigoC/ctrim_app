@@ -65,6 +65,21 @@ bool canLinkPlaceholderAuth({
 /// Whether [actor] may unlink Auth from [target] (area admin only).
 bool canUnlinkUserAuth({required User actor}) => actor.isAreaAdmin;
 
+/// Whether [actor] may merge [placeholder] into an existing non-placeholder.
+///
+/// Area admin only. Source must still be a placeholder; destination must not.
+bool canMergePlaceholderIntoUser({
+  required User actor,
+  required User placeholder,
+  User? survivor,
+}) {
+  if (!actor.isAreaAdmin) return false;
+  if (!placeholder.isPlaceholder) return false;
+  if (survivor == null) return true;
+  if (survivor.id == placeholder.id) return false;
+  return !survivor.isPlaceholder;
+}
+
 /// Picker-minted placeholders (have a creator). Used to decide whether a
 /// non-admin should see the People directory "Placeholders" filter chip.
 bool isTransientVolunteerPlaceholder(User user) {
