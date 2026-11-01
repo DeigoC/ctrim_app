@@ -28,6 +28,12 @@ void main() {
       expect(AppLinks.infoPath('core_values'), '/info/core_values');
       expect(AppLinks.testimonialPath('t-1'), '/testimonials/t-1');
       expect(AppLinks.personPath('u-1'), '/people/u-1');
+      expect(AppLinks.ministriesPath, '/ministries');
+      expect(AppLinks.ministryPath('worship'), '/ministries/worship');
+      expect(
+        AppLinks.ministryPath('worship', locationId: 'belfast'),
+        '/ministries/worship?location=belfast',
+      );
     });
 
     test('uses the public web origin', () {
@@ -45,6 +51,11 @@ void main() {
         'https://ctrim.org/testimonials/t-1',
       );
       expect(AppLinks.personUrl('u-1'), 'https://ctrim.org/people/u-1');
+      expect(AppLinks.ministriesUrl(), 'https://ctrim.org/ministries');
+      expect(
+        AppLinks.ministryUrl('worship'),
+        'https://ctrim.org/ministries/worship',
+      );
     });
   });
 
@@ -170,7 +181,16 @@ void main() {
       expect(AppLinks.upPath('/info/core_values'), '/ctrim');
       expect(AppLinks.upPath('/testimonials/t-1'), '/ctrim');
       expect(AppLinks.upPath('/people/u-1'), '/personal');
+      expect(AppLinks.upPath('/ministries'), '/personal');
       expect(AppLinks.upPath('/donations'), '/ctrim');
+    });
+
+    test('steps a nested ministry page up to View Ministries', () {
+      expect(AppLinks.upPath('/ministries/worship'), '/ministries');
+      expect(
+        AppLinks.upPath('/ministries/worship?location=belfast'),
+        '/ministries',
+      );
     });
 
     test('steps a nested church page up to that church', () {

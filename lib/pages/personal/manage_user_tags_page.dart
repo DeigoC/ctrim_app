@@ -12,13 +12,14 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
+import '../../utility/app_links.dart';
 import '../../widgets/catalog/manage_catalog_page.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/catalog/user_tag_graphic.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/two_column_masonry.dart';
-import 'view_user_tag_page.dart';
 
 class ManageUserTagsPage extends StatefulWidget {
   const ManageUserTagsPage({super.key});
@@ -67,6 +68,7 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
         );
         return Scaffold(
           appBar: AppBar(
+            leading: PermalinkAppBarLeading.homeOrNull(context),
             title: Text(l10n.manageUserTagsMenuTitle),
             actions: [
               if (canManage)
@@ -184,22 +186,18 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
   }
 
   void _openTag(UserTag tag, bool canManage) {
-    Navigator.push(
+    AppLinks.openMinistry(
       context,
-      MaterialPageRoute(
-        builder: (_) => ViewUserTagPage(
-          tagId: tag.id,
-          onEdit: canManage
-              ? () {
-                  final current =
-                      Provider.of<AppContext>(context, listen: false)
-                          .tagById(tag.id);
-                  if (current == null) return;
-                  _showTagDialog(existing: current);
-                }
-              : null,
-        ),
-      ),
+      id: tag.id,
+      tag: tag,
+      onEdit: canManage
+          ? () {
+              final current = Provider.of<AppContext>(context, listen: false)
+                  .tagById(tag.id);
+              if (current == null) return;
+              _showTagDialog(existing: current);
+            }
+          : null,
     );
   }
 

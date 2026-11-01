@@ -37,7 +37,6 @@ import 'view_all_users_page.dart';
 import 'view_my_posts_page.dart';
 import 'view_team_rota_page.dart';
 import 'manage_user_locations_page.dart';
-import 'manage_user_tags_page.dart';
 import 'manage_post_tags_page.dart';
 import 'notification_schedules_page.dart';
 import '../../utility/responsive_layout.dart';
@@ -603,8 +602,7 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   void _openManageUserTagsClick() {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (_) => const ManageUserTagsPage()));
+    AppLinks.openMinistries(context);
   }
 
   void _openManageUserLocationsClick() {

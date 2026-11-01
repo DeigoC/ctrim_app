@@ -16,7 +16,6 @@ import '../../utility/church_location_stats.dart';
 import '../../utility/info_repository.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
-import '../personal/view_user_tag_page.dart';
 import '../../widgets/common/activity_trend_section.dart';
 import '../../widgets/common/permalink_app_bar_leading.dart';
 import '../../widgets/common/load_progress_body.dart';
@@ -455,14 +454,10 @@ class _PeopleCard extends StatelessWidget {
                   _CountRows(
                     rows: section.ministries,
                     onOpen: (row) {
-                      Navigator.push(
+                      AppLinks.openMinistry(
                         context,
-                        MaterialPageRoute<void>(
-                          builder: (_) => ViewUserTagPage(
-                            tagId: row.id,
-                            initialLocationId: locationId,
-                          ),
-                        ),
+                        id: row.id,
+                        locationId: locationId,
                       );
                     },
                   ),
