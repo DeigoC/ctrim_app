@@ -127,6 +127,49 @@ void main() {
     );
     final allTags = [worship, hidden, paused];
 
+    test('canBrowseTag matches guest, signed-in, and admin rules', () {
+      expect(
+        UserTagHelpers.canBrowseTag(
+          tag: worship,
+          isGuest: true,
+          canManage: false,
+        ),
+        isTrue,
+      );
+      expect(
+        UserTagHelpers.canBrowseTag(
+          tag: hidden,
+          isGuest: true,
+          canManage: false,
+        ),
+        isFalse,
+      );
+      expect(
+        UserTagHelpers.canBrowseTag(
+          tag: hidden,
+          isGuest: false,
+          canManage: false,
+        ),
+        isTrue,
+      );
+      expect(
+        UserTagHelpers.canBrowseTag(
+          tag: paused,
+          isGuest: false,
+          canManage: false,
+        ),
+        isFalse,
+      );
+      expect(
+        UserTagHelpers.canBrowseTag(
+          tag: paused,
+          isGuest: false,
+          canManage: true,
+        ),
+        isTrue,
+      );
+    });
+
     test('guests see active tags that are visible to guests', () {
       final tags = UserTagHelpers.browseTags(
         allTags: allTags,

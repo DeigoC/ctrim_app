@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../models/user_activity_record.dart';
 import '../../pages/personal/view_post_tag_page.dart';
-import '../../pages/personal/view_user_tag_page.dart';
 import '../../utility/app_context.dart';
 import '../../utility/app_links.dart';
 import '../../utility/user_activity_lookups.dart';
@@ -81,9 +80,10 @@ class UserActivityTile extends StatelessWidget {
       case UserActivityKind.cellGroup:
         AppLinks.openCellGroup(context, id: id);
       case UserActivityKind.ministry:
-        Navigator.push(
+        AppLinks.openMinistry(
           context,
-          MaterialPageRoute(builder: (_) => ViewUserTagPage(tagId: id)),
+          id: id,
+          tag: appContext.tagById(id),
         );
       case UserActivityKind.postTag:
         Navigator.push(
