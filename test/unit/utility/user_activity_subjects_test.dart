@@ -28,6 +28,10 @@ void main() {
           UserActivitySubjects.kindOf(
               UserActivityMessages.editedVolunteerProfile),
           UserActivityKind.person);
+      expect(
+          UserActivitySubjects.kindOf(
+              UserActivityMessages.mergedPlaceholderIntoUser),
+          UserActivityKind.person);
       expect(UserActivitySubjects.kindOf(UserActivityMessages.editedChurchPage),
           UserActivityKind.churchPage);
       expect(UserActivitySubjects.kindOf(UserActivityMessages.editedUserTag),
