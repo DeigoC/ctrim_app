@@ -41,6 +41,7 @@ void main() {
     required List<User> users,
     List<String>? selectedUIDs,
     int? maxSelection,
+    bool includeCurrentUser = false,
   }) async {
     final tags = [
       UserTag(id: 'worship', name: 'Worship Team', color: '#6B4EAA'),
@@ -48,19 +49,20 @@ void main() {
       UserTag(id: 'usher', name: 'Usher', color: '#3D5A80'),
       UserTag(id: 'kids', name: 'Kids Ministry', color: '#C45C7A'),
     ];
+    final me = User(
+      id: 'me',
+      forname: 'Pat',
+      surname: 'Admin',
+      location: 'Belfast',
+      authID: 'me',
+    );
     final appContext = AppContext(
       prefInstance: prefs,
       cacheDir: null,
       appDir: null,
       allUsers: users,
       allTags: tags,
-      user: User(
-        id: 'me',
-        forname: 'Pat',
-        surname: 'Admin',
-        location: 'Belfast',
-        authID: 'me',
-      ),
+      user: me,
     );
 
     tester.view.physicalSize = Size(width, 900);
@@ -82,11 +84,19 @@ void main() {
           home: SelectUsersPage(
             selectedUIDs: selectedUIDs ?? users.map((user) => user.id).toList(),
             maxSelection: maxSelection,
+            includeCurrentUser: includeCurrentUser,
           ),
         ),
       ),
     );
     await tester.pumpAndSettle();
+  }
+
+  Checkbox checkboxFor(WidgetTester tester, String name) {
+    final tile = find.widgetWithText(ListTile, name);
+    return tester.widget<Checkbox>(
+      find.descendant(of: tile, matching: find.byType(Checkbox)),
+    );
   }
 
   testWidgets('wide picker card fits a person with tags', (tester) async {
@@ -100,6 +110,37 @@ void main() {
     expect(find.text('Jean Estareja'), findsOneWidget);
     expect(find.text('Speaker'), findsOneWidget);
     expect(find.text('+1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('hides the signed-in user unless includeCurrentUser is on', (
+    tester,
+  ) async {
+    final me = person(id: 'me', forname: 'Pat', surname: 'Admin', tagIDs: []);
+    final jean = person(id: 'jean', forname: 'Jean', tagIDs: []);
+
+    await pumpPicker(
+      tester,
+      width: 400,
+      selectedUIDs: const [],
+      users: [me, jean],
+    );
+    expect(find.text('Jean Estareja'), findsOneWidget);
+    expect(find.text('Pat Admin'), findsNothing);
+
+    await pumpPicker(
+      tester,
+      width: 400,
+      selectedUIDs: const [],
+      includeCurrentUser: true,
+      users: [me, jean],
+    );
+    expect(find.text('Jean Estareja'), findsOneWidget);
+    expect(find.text('Pat Admin'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ListTile, 'Pat Admin'));
+    await tester.pumpAndSettle();
+    expect(checkboxFor(tester, 'Pat Admin').value, isTrue);
     expect(tester.takeException(), isNull);
   });
 
@@ -178,13 +219,6 @@ void main() {
     expect(find.text('Worship Team'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
-
-  Checkbox checkboxFor(WidgetTester tester, String name) {
-    final tile = find.widgetWithText(ListTile, name);
-    return tester.widget<Checkbox>(
-      find.descendant(of: tile, matching: find.byType(Checkbox)),
-    );
-  }
 
   testWidgets('surname header selects and clears that family only', (
     tester,

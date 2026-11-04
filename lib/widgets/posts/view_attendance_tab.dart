@@ -908,6 +908,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         builder: (_) => SelectUsersPage(
           selectedUIDs: List<String>.from(attendance.expectedUserIds),
           title: 'Expected attendees',
+          includeCurrentUser: true,
           includePlaceholders: true,
           allowCellGroupBulkSelect: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
@@ -968,6 +969,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         builder: (_) => SelectUsersPage(
           selectedUIDs: selected,
           title: 'Select attendees',
+          includeCurrentUser: true,
           includePlaceholders: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,

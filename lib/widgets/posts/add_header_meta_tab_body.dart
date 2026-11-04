@@ -1015,6 +1015,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           selectedUIDs:
               List<String>.from(widget.eventContext.expectedAttendeeUserIDs),
           title: 'Expected attendees',
+          includeCurrentUser: true,
           includePlaceholders: true,
           allowCellGroupBulkSelect: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
@@ -1044,6 +1045,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
         builder: (_) => SelectUsersPage(
           selectedUIDs: selected,
           title: 'Who attended',
+          includeCurrentUser: true,
           includePlaceholders: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,
