@@ -32,6 +32,17 @@
 3. Fill in forename and surname. The new profile is created and selected so you can assign them immediately.  
 4. Later, when they sign in, their account can be linked — describe that flow here once screenshots exist.  
 
+## Merge a mistaken placeholder into an existing profile
+
+When a placeholder was added even though the person already has a proper profile:
+
+1. Open the placeholder in **Who's Who** and choose **Edit**.  
+2. Under the email / account section, choose **Merge into existing** (area admins only).  
+3. Pick the real profile.  
+4. Confirm. Posts, attendance, and other lists that used the placeholder now point at that profile, and the placeholder is removed.
+
+Prefer **Link account** when the person registered and the placeholder itself should become their login. Use **Merge into existing** when a second, temporary profile was created by mistake.
+
 ## Related
 
 - [People & roles](../../people-and-roles.md)  
