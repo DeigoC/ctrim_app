@@ -55,6 +55,14 @@ from merge_placeholder_user import (  # noqa: E402
 )
 
 
+def _error_text(exc: BaseException) -> str:
+    """Real firebase_functions.HttpsError leaves str(exc) empty; message is on .message."""
+    message = getattr(exc, 'message', None)
+    if isinstance(message, str) and message:
+        return message
+    return str(exc)
+
+
 class RewriteHelperTests(unittest.TestCase):
     def test_effective_placeholder(self):
         self.assertTrue(
@@ -246,7 +254,7 @@ class MergeImplGateTests(unittest.TestCase):
                 db,
                 self._req(PlaceholderUserID='9', SurvivorUserID='7'),
             )
-        self.assertIn('Area admin', str(ctx.exception))
+        self.assertIn('Area admin', _error_text(ctx.exception))
 
     def test_rejects_non_placeholder_source(self):
         db = MagicMock()
@@ -295,7 +303,7 @@ class MergeImplGateTests(unittest.TestCase):
                 db,
                 self._req(PlaceholderUserID='9', SurvivorUserID='7'),
             )
-        self.assertIn('not a placeholder', str(ctx.exception))
+        self.assertIn('not a placeholder', _error_text(ctx.exception))
 
     def test_rejects_placeholder_survivor(self):
         db = MagicMock()
@@ -344,7 +352,7 @@ class MergeImplGateTests(unittest.TestCase):
                 db,
                 self._req(PlaceholderUserID='9', SurvivorUserID='7'),
             )
-        self.assertIn('non-placeholder', str(ctx.exception))
+        self.assertIn('non-placeholder', _error_text(ctx.exception))
 
 
 if __name__ == '__main__':
