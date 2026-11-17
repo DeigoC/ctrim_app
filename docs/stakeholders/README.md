@@ -4,7 +4,7 @@ Audience-facing docs for CTRIM Community (`ctrim_app`): what the product is, who
 
 ## Published site
 
-These files are built with **MkDocs Material** and deployed to **GitHub Pages** on push to `main` (when this folder or `mkdocs.yml` changes).
+These files are built with **MkDocs Material** and deployed to **GitHub Pages** on push to `main` or a `*_development*` branch (when this folder or `mkdocs.yml` changes). The last push wins, whichever branch it came from.
 
 | | |
 |--|--|
@@ -29,6 +29,7 @@ Open http://127.0.0.1:8000 — only files under this folder are published (`docs
 | Doc | Status | Purpose |
 |-----|--------|---------|
 | [index.md](index.md) | Current | Site home |
+| [servers-and-leaders.md](servers-and-leaders.md) | Current | Short start for people who serve or lead a ministry |
 | [overview.md](overview.md) | Current | Product overview |
 | [key-concepts.md](key-concepts.md) | Current | Glossary (post, serving, interest, …) |
 | [events-and-bulletin.md](events-and-bulletin.md) | Current | Events & bulletin (filters, bookmarks, related) |
@@ -70,5 +71,6 @@ After the workflow has run once on `main`:
 1. Repo **Settings → Pages**
 2. **Source:** GitHub Actions
 3. Confirm the deploy succeeded under **Actions**
+4. **Settings → Environments → github-pages → Deployment branches:** add `*_development*` next to `main`, or development pushes fail with "not allowed to deploy to github-pages"
 
 Private repos need a plan that includes GitHub Pages.

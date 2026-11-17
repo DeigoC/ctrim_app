@@ -32,7 +32,7 @@ When creating or editing a post, organisers can:
 - Choose the audience: people who opted into **All {location} updates** for that post’s location (for example All Belfast updates)  
 - Optionally notify people already **scheduled on roles** for that post  
 
-**Post tags** help members **browse and filter** the bulletin (for example Sunday Worship or Midweek). They do **not** control who receives push notifications anymore — broadcasts go to the location audience only.
+**Post Tags** help members **browse and filter** the bulletin (for example Sunday Worship or Midweek). They do **not** control who receives push notifications anymore — broadcasts go to the location audience only.
 
 **Templates** can set a **default broadcast audience** for new posts (see [Events & bulletin](events-and-bulletin.md) → Templates). The default follows the template’s **location** on the Schedule tab.
 
@@ -40,7 +40,7 @@ Saving edits with an **update log** can notify people who **bookmarked** that po
 
 ## For area admins
 
-From Personal → **Admin Tools → Scheduled notifications**, an area admin can keep a list of reminders that go out on their own.
+From Personal → **Admin Tools → Scheduled Notifications**, an area admin can keep a list of reminders that go out on their own.
 
 Each reminder watches **one post tag at one location** (for example Sunday Worship in Belfast). When a post with that tag is coming up, it is sent to people who turned on **All {location} updates** for that site. The notification shows that post’s title and subtitle.
 

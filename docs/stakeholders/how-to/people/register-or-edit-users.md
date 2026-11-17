@@ -2,7 +2,7 @@
 
 > **Status:** In progress  
 > **Who:** Leaders (people they work with), area admins (area scope), later site admins  
-> **Where:** Personal → **People & teams** → **Who's who** / register & edit flows
+> **Where:** Personal → **People & Teams** → **Who's Who** / register & edit flows
 
 ## Before you start
 
@@ -12,7 +12,7 @@
 ## Register someone
 
 1. Open **Personal**.  
-2. Open **Who's who** (under **People & teams**). The list starts on people who **serve** at your location — turn **Serving** off in **Refine & sort** to see everyone.  
+2. Open **Who's Who** (under **People & Teams**). The list starts with **Everyone** at your location. In **Refine & sort**, **Serving** narrows to people who serve, and **Serving** with **Placeholders** shows both of those groups.  
 3. Choose **Register** / **Add**.  
 4. Enter name and other required details (location, tags, roles as applicable).  
 5. Save.  
@@ -20,7 +20,7 @@
 
 ## Edit someone
 
-1. Find the person in **Who's who** (search / filters by location, Serving, or tags).  
+1. Find the person in **Who's Who** (search / filters by location, Serving, or tags).  
 2. Open their profile.  
 3. **Edit** the fields you need.  
 4. Save.  
@@ -31,6 +31,17 @@
 2. If they are not listed yet, search for their name; when nothing matches, tap **Create placeholder**.  
 3. Fill in forename and surname. The new profile is created and selected so you can assign them immediately.  
 4. Later, when they sign in, their account can be linked — describe that flow here once screenshots exist.  
+
+## Merge a mistaken placeholder into an existing profile
+
+When a placeholder was added even though the person already has a proper profile:
+
+1. Open the placeholder in **Who's Who** and choose **Edit**.  
+2. Under the email / account section, choose **Merge into existing** (area admins only).  
+3. Pick the real profile.  
+4. Confirm. Posts, attendance, and other lists that used the placeholder now point at that profile, and the placeholder is removed.
+
+Prefer **Link account** when the person registered and the placeholder itself should become their login. Use **Merge into existing** when a second, temporary profile was created by mistake.
 
 ## Related
 

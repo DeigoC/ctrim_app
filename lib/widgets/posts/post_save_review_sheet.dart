@@ -186,11 +186,24 @@ class _ReadySectionState extends State<_ReadySection> {
             ),
           ),
         ),
-        if (_expanded)
-          ...widget.items.map((item) => _ReviewRow(
-                item: item,
-                onTap: item.isTappable ? () => widget.onItemTap(item) : null,
-              )),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: _expanded
+              ? Column(
+                  children: [
+                    for (final item in widget.items)
+                      _ReviewRow(
+                        item: item,
+                        onTap: item.isTappable
+                            ? () => widget.onItemTap(item)
+                            : null,
+                      ),
+                  ],
+                )
+              : const SizedBox(width: double.infinity),
+        ),
       ],
     );
   }

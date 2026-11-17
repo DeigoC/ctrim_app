@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
@@ -25,6 +26,11 @@ class ViewEventsHome extends StatefulWidget {
   final Function() rebuildFunction;
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
   final ScrollController scrollController;
+
+  /// Wide bulletin. `true` lays cards out with [SliverMasonryGrid], which
+  /// builds only the posts near the viewport. `false` restores the previous
+  /// eager [TwoColumnMasonry] (every card measured on the first frame).
+  static final bool lazyWideFeed = true;
 
   @override
   State<ViewEventsHome> createState() => _ViewEventsHomeState();
@@ -63,6 +69,12 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
         _showBulletinFirstTimeDialog();
       }
     });
+  }
+
+  String _feedMotionKey(BulletinListingQuery query) {
+    final tags = query.selectedTagIDs.toList()..sort();
+    return '${query.sort.name}|${query.timeFilter.name}|'
+        '${query.bookmarksOnly}|${query.locationFilter}|${tags.join(',')}';
   }
 
   BulletinListingQuery _listingQuery() {
@@ -233,41 +245,40 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                   ),
                 ),
               ),
-              if (query.showsNonDefaultBanner)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: _buildFilterIndicator(
-                      appContext,
-                      colorScheme,
-                      l10n,
-                      query,
-                    ),
-                  ),
+              SliverToBoxAdapter(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: query.showsNonDefaultBanner
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                          child: _buildFilterIndicator(
+                            appContext,
+                            colorScheme,
+                            l10n,
+                            query,
+                          ),
+                        )
+                      : const SizedBox(width: double.infinity),
                 ),
+              ),
               SliverPadding(
                 padding: EdgeInsets.symmetric(
                   horizontal: horizontalPadding,
                   vertical: 8,
                 ),
-                sliver: itemCount == 0
-                    ? (_undatedSnippetLoading
-                        ? _buildTopUpPlaceholder(colorScheme)
-                        : _buildEmptyState(colorScheme, theme, l10n))
-                    : isWideScreen
-                        ? SliverToBoxAdapter(
-                            child: _buildWidePostRows(colorScheme, heads),
-                          )
-                        : SliverList.separated(
-                            itemCount: itemCount,
-                            itemBuilder: (_, index) => _buildPostCard(
-                              colorScheme,
-                              heads[index],
-                            ),
-                            separatorBuilder:
-                                (BuildContext context, int index) =>
-                                    const SizedBox(height: 8),
-                          ),
+                sliver: _ListingFeedFade(
+                  motionKey: _feedMotionKey(query),
+                  sliver: _buildListingSliver(
+                    isWideScreen: isWideScreen,
+                    itemCount: itemCount,
+                    heads: heads,
+                    colorScheme: colorScheme,
+                    theme: theme,
+                    l10n: l10n,
+                  ),
+                ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
@@ -277,13 +288,64 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     );
   }
 
-  /// Masonry so a text-only PostHead does not leave a gap beside an image post.
+  Widget _buildListingSliver({
+    required bool isWideScreen,
+    required int itemCount,
+    required List<EventHead> heads,
+    required ColorScheme colorScheme,
+    required ThemeData theme,
+    required AppLocalizations l10n,
+  }) {
+    if (itemCount == 0) {
+      return _undatedSnippetLoading
+          ? _buildTopUpPlaceholder(colorScheme)
+          : _buildEmptyState(colorScheme, theme, l10n);
+    }
+    if (!isWideScreen) {
+      return SliverList.separated(
+        itemCount: itemCount,
+        itemBuilder: (_, index) => _buildPostCard(
+          colorScheme,
+          heads[index],
+        ),
+        separatorBuilder: (context, index) => const SizedBox(height: 8),
+      );
+    }
+    if (ViewEventsHome.lazyWideFeed) {
+      return _buildLazyWideFeed(colorScheme, heads);
+    }
+    return SliverToBoxAdapter(
+      child: _buildWidePostRows(colorScheme, heads),
+    );
+  }
+
+  /// Previous wide layout. Every [PostHead] is a child, so every cover starts
+  /// loading on the first frame. Kept so [ViewEventsHome.lazyWideFeed] can
+  /// turn it back on.
   Widget _buildWidePostRows(ColorScheme colorScheme, List<EventHead> heads) {
     return TwoColumnMasonry(
+      spacing: 16,
+      runSpacing: 16,
       children: [
         for (final head in heads)
           _buildPostCard(colorScheme, head, verticalMargin: 0),
       ],
+    );
+  }
+
+  /// Same shorter-column placement as [_buildWidePostRows], built as a sliver
+  /// so cards outside the viewport are not created.
+  Widget _buildLazyWideFeed(ColorScheme colorScheme, List<EventHead> heads) {
+    return SliverMasonryGrid.count(
+      crossAxisCount: 2,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      childCount: heads.length,
+      itemBuilder: (_, index) => _buildPostCard(
+        colorScheme,
+        heads[index],
+        verticalMargin: 0,
+      ),
     );
   }
 
@@ -376,33 +438,37 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                 width: 1,
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  query.bookmarksOnly
-                      ? Icons.bookmark
-                      : switch (query.timeFilter) {
-                          BulletinTimeFilter.upcoming => Icons.upcoming,
-                          BulletinTimeFilter.past => Icons.history,
-                          BulletinTimeFilter.undated => Icons.event_busy,
-                          BulletinTimeFilter.all => Icons.filter_alt,
-                        },
-                  size: 16,
-                  color: accent,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    l10n.bulletinShowing(parts.join(' · ')),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: accent,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Row(
+                key: ValueKey<String>(parts.join(' · ')),
+                children: [
+                  Icon(
+                    query.bookmarksOnly
+                        ? Icons.bookmark
+                        : switch (query.timeFilter) {
+                            BulletinTimeFilter.upcoming => Icons.upcoming,
+                            BulletinTimeFilter.past => Icons.history,
+                            BulletinTimeFilter.undated => Icons.event_busy,
+                            BulletinTimeFilter.all => Icons.filter_alt,
+                          },
+                    size: 16,
+                    color: accent,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.bulletinShowing(parts.join(' · ')),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: accent,
+                      ),
                     ),
                   ),
-                ),
-                Icon(Icons.close, size: 16, color: accent),
-              ],
+                  Icon(Icons.close, size: 16, color: accent),
+                ],
+              ),
             ),
           ),
         ),
@@ -632,5 +698,59 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
       _undatedSnippetLoaded = true;
       _undatedSnippetLoading = false;
     });
+  }
+}
+
+/// Fades the bulletin feed in when the filter signature changes.
+///
+/// The first frame stays fully visible. Head-list updates keep the same
+/// [motionKey], so a refresh does not replay the fade.
+class _ListingFeedFade extends StatefulWidget {
+  const _ListingFeedFade({
+    required this.motionKey,
+    required this.sliver,
+  });
+
+  final String motionKey;
+  final Widget sliver;
+
+  @override
+  State<_ListingFeedFade> createState() => _ListingFeedFadeState();
+}
+
+class _ListingFeedFadeState extends State<_ListingFeedFade>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+      value: 1,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _ListingFeedFade oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.motionKey != widget.motionKey) {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverFadeTransition(
+      opacity: _controller,
+      sliver: widget.sliver,
+    );
   }
 }

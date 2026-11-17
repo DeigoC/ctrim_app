@@ -150,6 +150,7 @@ class _EditCtrimInfoBodyState extends State<EditCtrimInfoBody>
           ? UserActivityMessages.createdCtrimInfo
           : UserActivityMessages.editedCtrimInfo,
       documentId: info.id,
+      title: info.title,
     );
   }
 
@@ -160,6 +161,7 @@ class _EditCtrimInfoBodyState extends State<EditCtrimInfoBody>
       actorUserId: appContext.currentUser.id,
       log: UserActivityMessages.deletedCtrimInfo,
       documentId: widget.info!.id,
+      title: widget.info!.title,
     );
   }
 }

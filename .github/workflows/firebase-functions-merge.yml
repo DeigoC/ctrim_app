@@ -57,4 +57,6 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CTRIM_APP }}
 
       - name: Deploy Cloud Functions
-        run: firebase deploy --only functions --project ctrim-app --non-interactive
+        # The running app (firebase_options.dart) uses ctrim-8b49b.
+        # ctrim-app is the hosting project and has no functions.
+        run: firebase deploy --only functions --project ctrim-8b49b --non-interactive

@@ -16,6 +16,7 @@ import '../../utility/cache/directory_cache.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import 'church_hub_dashboard.dart';
 import 'edit_info_body_page.dart';
@@ -336,8 +337,12 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
         context.select((AppContext c) => c.currentUser.canManageChurchPages);
 
     if (_loading && _church == null) {
-      return const Scaffold(
-        body: LoadProgressBody(
+      return Scaffold(
+        appBar: AppBar(
+          leading: PermalinkAppBarLeading.homeOrNull(context),
+          title: Text(l10n.churchInfoPageTitle),
+        ),
+        body: const LoadProgressBody(
           message: 'Loading…',
           completedSteps: 0,
           totalSteps: 1,
@@ -347,7 +352,10 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
 
     if (_error != null && _church == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.churchInfoPageTitle)),
+        appBar: AppBar(
+          leading: PermalinkAppBarLeading.homeOrNull(context),
+          title: Text(l10n.churchInfoPageTitle),
+        ),
         body: LoadProgressBody(
           message: '',
           completedSteps: 0,
@@ -362,7 +370,10 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
     final church = _church;
     if (church == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.churchInfoPageTitle)),
+        appBar: AppBar(
+          leading: PermalinkAppBarLeading.homeOrNull(context),
+          title: Text(l10n.churchInfoPageTitle),
+        ),
         body: Center(child: Text(l10n.churchInfoNotFound)),
       );
     }
@@ -388,6 +399,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
           slivers: [
             SliverAppBar(
               pinned: true,
+              leading: PermalinkAppBarLeading.homeOrNull(context),
               expandedHeight: heroHeight,
               title: Text(church.title),
               backgroundColor: colorScheme.surface,

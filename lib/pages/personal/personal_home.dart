@@ -9,6 +9,7 @@ import '../../models/event/event_head.dart';
 import '../../models/user_role_assignment.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/app_links.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../utility/notifications/notification_permission_prompt.dart';
 import '../../utility/notifications/notification_subscription_service.dart';
@@ -21,9 +22,11 @@ import '../../widgets/personal/personal_admin_section.dart';
 import '../../widgets/personal/personal_logout_section.dart';
 import '../../widgets/personal/personal_profile_card.dart';
 import '../../widgets/personal/personal_cell_groups_preview_card.dart';
+import '../../widgets/personal/personal_ministry_schedule_preview_card.dart';
 import '../../widgets/personal/personal_schedule_preview_card.dart';
 import '../../widgets/personal/personal_settings_section.dart';
 import '../../widgets/two_column_masonry.dart';
+import '../events/edit_shared_media_folders_page.dart';
 import '../events/post_templates/view_templates_page.dart';
 import 'guest_registration_page.dart';
 import 'edit_profile_picture_page.dart';
@@ -34,7 +37,6 @@ import 'view_all_users_page.dart';
 import 'view_my_posts_page.dart';
 import 'view_team_rota_page.dart';
 import 'manage_user_locations_page.dart';
-import 'manage_user_tags_page.dart';
 import 'manage_post_tags_page.dart';
 import 'notification_schedules_page.dart';
 import '../../utility/responsive_layout.dart';
@@ -169,7 +171,7 @@ class _PersonalHomeState extends State<PersonalHome> {
         ],
         const SizedBox(height: 24),
         PersonalActionSection(
-          title: 'For you',
+          title: 'For You',
           actions: _forYouActions(appContext, colorScheme),
           wide: false,
         ),
@@ -187,6 +189,7 @@ class _PersonalHomeState extends State<PersonalHome> {
             onViewTemplates: _openViewTemplatesClick,
             onManageUserLocations: _openManageUserLocationsClick,
             onNotificationSchedules: _openNotificationSchedulesClick,
+            onSharedMediaFolders: _openSharedMediaFoldersClick,
           ),
         ],
         const SizedBox(height: 24),
@@ -220,7 +223,7 @@ class _PersonalHomeState extends State<PersonalHome> {
         ],
         const SizedBox(height: 28),
         PersonalActionSection(
-          title: 'For you',
+          title: 'For You',
           actions: _forYouActions(appContext, colorScheme),
           wide: true,
           gridColumns: actionColumns,
@@ -245,6 +248,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   onViewTemplates: _openViewTemplatesClick,
                   onManageUserLocations: _openManageUserLocationsClick,
                   onNotificationSchedules: _openNotificationSchedulesClick,
+                  onSharedMediaFolders: _openSharedMediaFoldersClick,
                 ),
               ),
               const SizedBox(width: 20),
@@ -292,10 +296,20 @@ class _PersonalHomeState extends State<PersonalHome> {
       appContext: appContext,
       onBrowseCellGroups: widget.onBrowseCellGroups,
     );
+    final ministryCard = PersonalMinistrySchedulePreviewCard(
+      appContext: appContext,
+    );
 
     if (wide) {
-      return TwoColumnMasonry(
-        children: [scheduleCard, cellGroupsCard],
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TwoColumnMasonry(
+            children: [scheduleCard, cellGroupsCard],
+          ),
+          const SizedBox(height: 16),
+          ministryCard,
+        ],
       );
     }
 
@@ -305,14 +319,24 @@ class _PersonalHomeState extends State<PersonalHome> {
         scheduleCard,
         const SizedBox(height: 16),
         cellGroupsCard,
+        const SizedBox(height: 16),
+        ministryCard,
       ],
     );
   }
 
   List<PersonalAction> _forYouActions(
       AppContext appContext, ColorScheme colorScheme) {
+    final l10n = AppLocalizations.of(context)!;
     final actions = <PersonalAction>[];
     final shareAndGuide = [
+      PersonalAction(
+        icon: Icons.volunteer_activism_outlined,
+        title: l10n.donationsTitle,
+        subtitle: l10n.donationsMenuSubtitle,
+        onTap: () => AppLinks.openDonations(context),
+        iconColor: colorScheme.primary,
+      ),
       PersonalAction(
         icon: Icons.share_rounded,
         title: 'Share Web App',
@@ -322,9 +346,15 @@ class _PersonalHomeState extends State<PersonalHome> {
       ),
       PersonalAction(
         icon: Icons.menu_book_rounded,
-        title: 'Product guide',
-        subtitle: 'How the app works — open to everyone',
-        onTap: () => launchUrlString(PersonalSettingsSection.productGuideUrl),
+        title: 'Product Guide',
+        subtitle: appContext.isCurrentUserGuest
+            ? 'How the app works — open to everyone'
+            : 'A short start if you serve or lead',
+        onTap: () => launchUrlString(
+          PersonalSettingsSection.productGuideUrlFor(
+            signedIn: !appContext.isCurrentUserGuest,
+          ),
+        ),
         iconColor: colorScheme.primary,
       ),
     ];
@@ -343,7 +373,6 @@ class _PersonalHomeState extends State<PersonalHome> {
       return actions;
     }
 
-    final l10n = AppLocalizations.of(context)!;
     actions.addAll([
       PersonalAction(
         icon: Icons.article_rounded,
@@ -361,7 +390,7 @@ class _PersonalHomeState extends State<PersonalHome> {
       ),
       PersonalAction(
         icon: Icons.account_circle_outlined,
-        title: 'Profile picture',
+        title: 'Profile Picture',
         subtitle: 'Update your photo URL',
         onTap: _onUserProfileClick,
         iconColor: colorScheme.primary,
@@ -563,9 +592,17 @@ class _PersonalHomeState extends State<PersonalHome> {
         context, MaterialPageRoute(builder: (_) => const ViewTemplatesPage()));
   }
 
-  void _openManageUserTagsClick() {
+  void _openSharedMediaFoldersClick() {
     Navigator.push(
-        context, MaterialPageRoute(builder: (_) => const ManageUserTagsPage()));
+      context,
+      MaterialPageRoute(
+        builder: (_) => const EditSharedMediaFoldersPage(),
+      ),
+    );
+  }
+
+  void _openManageUserTagsClick() {
+    AppLinks.openMinistries(context);
   }
 
   void _openManageUserLocationsClick() {

@@ -108,6 +108,20 @@ void main() {
         final template = PostTemplate.fromMap(true, 'tpl-speaker', map);
 
         expect(template.leadSpeakerUID, 'speaker-1');
+        expect(template.leadSpeakerUIDs, ['speaker-1']);
+      });
+
+      test('prefers LeadSpeakerUIDs over the legacy uid', () {
+        final map = baseLocalMap();
+        map['LeadSpeakerUID'] = 'legacy';
+        map['LeadSpeakerUIDs'] = ['ada', 'ben', 'ada', 'cara', 'dan'];
+        final template = PostTemplate.fromMap(true, 'tpl-speakers', map);
+
+        expect(template.leadSpeakerUIDs, ['ada', 'ben', 'cara']);
+        expect(template.leadSpeakerUID, 'ada');
+        expect(
+            template.toJson(true)['LeadSpeakerUIDs'], ['ada', 'ben', 'cara']);
+        expect(template.toJson(true)['LeadSpeakerUID'], 'ada');
       });
 
       test('defaults IsPeriodParent to false and reads true', () {
@@ -119,6 +133,71 @@ void main() {
         final period = PostTemplate.fromMap(true, 'tpl-period', map);
         expect(period.isPeriodParent, true);
         expect(period.toJson(true)['IsPeriodParent'], true);
+      });
+
+      test('reads a legacy DefaultDayOfWeek as one day', () {
+        final map = baseLocalMap();
+        map['DefaultDayOfWeek'] = 3;
+        final template = PostTemplate.fromMap(true, 'tpl-legacy-day', map);
+
+        expect(template.defaultDaysOfWeek, [3]);
+        expect(template.defaultDayOfWeek, 3);
+      });
+
+      test('treats an out-of-range DefaultDayOfWeek as unset', () {
+        final template =
+            PostTemplate.fromMap(true, 'tpl-day-zero', baseLocalMap());
+        expect(template.defaultDaysOfWeek, isEmpty);
+        expect(template.defaultDayOfWeek, isNull);
+      });
+
+      test('reads DefaultDaysOfWeek sorted and unique', () {
+        final map = baseLocalMap();
+        map['DefaultDaysOfWeek'] = [4, 2, 4, 9];
+        map['DefaultDayOfWeek'] = 2;
+        final template = PostTemplate.fromMap(true, 'tpl-days', map);
+
+        expect(template.defaultDaysOfWeek, [2, 4]);
+        expect(template.defaultDayOfWeek, 2);
+      });
+
+      test('falls back to DefaultDayOfWeek when an older app changed it', () {
+        final changed = baseLocalMap();
+        changed['DefaultDaysOfWeek'] = [2, 4];
+        changed['DefaultDayOfWeek'] = 6;
+        expect(
+          PostTemplate.fromMap(true, 'tpl-stale', changed).defaultDaysOfWeek,
+          [6],
+        );
+
+        final cleared = baseLocalMap();
+        cleared['DefaultDaysOfWeek'] = [2, 4];
+        cleared['DefaultDayOfWeek'] = null;
+        expect(
+          PostTemplate.fromMap(true, 'tpl-cleared', cleared).defaultDaysOfWeek,
+          isEmpty,
+        );
+      });
+
+      test('writes both day fields', () {
+        final template =
+            PostTemplate.fromMap(true, 'tpl-write', baseLocalMap());
+        template.setDefaultDaysOfWeek([7, 3]);
+
+        final json = template.toJson(true);
+        expect(json['DefaultDaysOfWeek'], [3, 7]);
+        expect(json['DefaultDayOfWeek'], 3);
+        expect(
+          PostTemplate.fromMap(true, 'tpl-write', json).defaultDaysOfWeek,
+          [3, 7],
+        );
+      });
+
+      test('defaultDaysOfWeek getter is unmodifiable', () {
+        final map = baseLocalMap();
+        map['DefaultDayOfWeek'] = 1;
+        final template = PostTemplate.fromMap(true, 'tpl-unmod-days', map);
+        expect(() => template.defaultDaysOfWeek.add(2), throwsUnsupportedError);
       });
 
       test('defaults Category to service when missing', () {
@@ -414,6 +493,54 @@ void main() {
           () => template.schedulePresets.add(SchedulePreset.emptyDefault()),
           throwsUnsupportedError,
         );
+      });
+
+      test('synthesizes a default expected attendance preset from top-level IDs',
+          () {
+        final map = baseLocalMap();
+        map['ExpectedAttendeeUserIDs'] = <String>['u1', 'u2'];
+        final template = PostTemplate.fromMap(true, 'legacy-expected', map);
+
+        expect(template.expectedAttendancePresets, hasLength(1));
+        expect(template.expectedAttendancePresets.single.id,
+            ExpectedAttendancePreset.defaultId);
+        expect(template.expectedAttendeeUserIDs, ['u1', 'u2']);
+        expect(template.toJson(true)['ExpectedAttendancePresets'], hasLength(1));
+      });
+
+      test('parses ExpectedAttendancePresets and aliases the first list', () {
+        final map = baseLocalMap();
+        map['ExpectedAttendeeUserIDs'] = <String>['legacy'];
+        map['ExpectedAttendancePresets'] = [
+          {
+            'id': 'team-a',
+            'name': 'Team A',
+            'userIds': <String>['a1', 'a2'],
+          },
+          {
+            'id': 'team-b',
+            'name': 'Team B',
+            'userIds': <String>['b1'],
+          },
+        ];
+        final template = PostTemplate.fromMap(true, 'multi-expected', map);
+
+        expect(template.expectedAttendancePresets, hasLength(2));
+        expect(template.expectedAttendancePresetById('team-b')?.name, 'Team B');
+        expect(template.expectedAttendeeUserIDs, ['a1', 'a2']);
+
+        final json = template.toJson(true);
+        expect(json['ExpectedAttendeeUserIDs'], ['a1', 'a2']);
+        expect((json['ExpectedAttendancePresets'] as List).last['name'],
+            'Team B');
+      });
+
+      test('does not synthesize an expected preset when the list is empty', () {
+        final template =
+            PostTemplate.fromMap(true, 'empty-expected', baseLocalMap());
+        expect(template.expectedAttendancePresets, isEmpty);
+        expect(template.expectedAttendeeUserIDs, isEmpty);
+        expect(template.toJson(true)['ExpectedAttendancePresets'], isEmpty);
       });
 
       test('round-trips local serialization', () {

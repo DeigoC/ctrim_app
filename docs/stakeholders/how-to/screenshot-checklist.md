@@ -30,7 +30,7 @@ Save under `assets/images/`.
 | [ ] | `home-bulletin.png` | Bulletin tab with a few post cards | Events & bulletin |
 | [ ] | `home-information.png` | CTRIM tab — Churches list or a church hub | Information |
 | [ ] | `home-cell-groups.png` | Cell Groups → Groups catalogue | Cell Groups |
-| [ ] | `home-personal.png` | Personal signed in: profile, dashboard cards, For you, People & teams | Personal |
+| [ ] | `home-personal.png` | Personal signed in: profile, dashboard cards, For You, People & Teams | Personal |
 
 ---
 
@@ -40,7 +40,7 @@ Save under `assets/images/`.
 
 | Done | Filename | What to show |
 |------|----------|--------------|
-| [ ] | `create-post-01-templates.png` | Template picker (Cell Groups / Services, location filter if visible) |
+| [ ] | `create-post-01-templates.png` | Template picker with Cell Groups and Services closed, then one kind open |
 | [ ] | `create-post-02-date-confirm.png` | Date (and other template fields) plus create confirm |
 | [ ] | `create-post-flow.gif` *(optional)* | Pick template → set date → create |
 
@@ -52,7 +52,9 @@ Save under `assets/images/`.
 
 | Done | Filename | What to show |
 |------|----------|--------------|
-| [ ] | `edit-post-00-actions.png` | Post actions / edit menu |
+| [ ] | `edit-post-00-actions.png` | Post actions / edit menu (first page) |
+| [ ] | `edit-post-00b-schedule.png` | Edit menu → Schedule |
+| [ ] | `edit-post-00c-related.png` | Edit menu → Related posts (leader) |
 | [ ] | `edit-post-01-title-details.png` | Title & details editor, including **Add who attended** when the post has an attended list |
 | [ ] | `edit-post-02-schedule.png` | Schedule tab (day timeline) |
 | [ ] | `edit-post-02b-move-schedule.png` | Start-time change asking to move the schedule or keep current times |
@@ -86,7 +88,7 @@ Save under `assets/images/`.
 
 | Done | Filename | What to show |
 |------|----------|--------------|
-| [ ] | `people-01-directory-filters.png` | Who's who with Serving and location filters (cover photo at the top when that location has one) |
+| [ ] | `people-01-directory-filters.png` | Who's Who Refine & sort, with the Show chips (Everyone, Serving, Placeholders) and a location (cover photo at the top when that location has one) |
 | [ ] | `people-02-register-form.png` | Register / add person form |
 | [ ] | `people-03-placeholder-picker.png` | People picker: Placeholders in the Refine sheet, or Create placeholder |
 | [ ] | `people-register-list.gif` *(optional)* | Register someone → they appear in the list |
@@ -103,10 +105,13 @@ Save under `assets/images/`. Skip a row if a **Home** shot already covers it.
 | [ ] | `events-schedule-timeline.png` | Schedule tab with overlapping items if you have one | Events & bulletin |
 | [ ] | `events-arrange-schedule.png` *(optional)* | Arrange schedule drag mode | Events & bulletin |
 | [ ] | `personal-my-schedule.png` | Full My Schedule list | Personal |
-| [ ] | `personal-team-rota.png` | Team rota (location / ministry chips) | Personal |
+| [ ] | `personal-team-rota.png` | Ministry Schedule: Needs people card, Mine/All, a slot that needs people, or I'll do this | Personal |
 | [ ] | `personal-tag-color.png` | Add/edit team or post tag dialog with colour picker | Personal |
+| [ ] | `personal-post-tag.png` | A post tag: past totals, weekly chart, a location row, and recent posts | Personal |
 | [ ] | `notifications-settings.png` | Push Notifications: This device + a location switch | Notifications |
 | [ ] | `cell-groups-add-meeting.png` *(optional)* | Group page: Add meeting beside Recent meetings, with the parent post title underneath | Cell Groups |
+| [ ] | `donations-bank-transfer.png` | Donations page: bank details and notes | Information |
+| [ ] | `startup-progress.png` | Opening screen: logo, progress bar, and a step such as “Loading the bulletin…” | Platforms |
 
 ---
 

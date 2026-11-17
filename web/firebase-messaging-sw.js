@@ -126,3 +126,12 @@ messaging.onBackgroundMessage((payload) => {
     .then(() => console.log('[NOTIF] SW showNotification OK:', notificationTitle))
     .catch((err) => console.error('[NOTIF] SW showNotification FAILED:', err, notificationOptions));
 });
+
+// Chrome only fires beforeinstallprompt when this worker has a fetch handler.
+// Pass the request through. An empty listener is treated as a no-op and ignored.
+self.addEventListener('fetch', (event) => {
+  if (event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin') {
+    return;
+  }
+  event.respondWith(fetch(event.request));
+});

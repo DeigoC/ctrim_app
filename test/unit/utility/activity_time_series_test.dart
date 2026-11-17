@@ -123,6 +123,56 @@ void main() {
       expect(total, 1);
     });
 
+    test('omits an open week that is still empty', () {
+      final points = ActivityTimeSeries.bucketWeeklyCount(
+        eventDates: [DateTime(2026, 10, 6)],
+        startInclusive: DateTime(2026, 10, 5),
+        endExclusive: DateTime(2026, 10, 14),
+      );
+
+      expect(points, hasLength(1));
+      expect(points.single.weekStart, DateTime(2026, 10, 5));
+      expect(points.single.value, 1);
+    });
+
+    test('keeps an open week that already has a count', () {
+      final points = ActivityTimeSeries.bucketWeeklyCount(
+        eventDates: [DateTime(2026, 10, 12)],
+        startInclusive: DateTime(2026, 10, 5),
+        endExclusive: DateTime(2026, 10, 14),
+      );
+
+      expect(points, hasLength(2));
+      expect(points.last.weekStart, DateTime(2026, 10, 12));
+      expect(points.last.value, 1);
+    });
+
+    test('keeps a finished empty week', () {
+      final points = ActivityTimeSeries.bucketWeeklyCount(
+        eventDates: [DateTime(2026, 10, 6)],
+        startInclusive: DateTime(2026, 10, 5),
+        endExclusive: DateTime(2026, 10, 19),
+      );
+
+      expect(points, hasLength(2));
+      expect(points[1].weekStart, DateTime(2026, 10, 12));
+      expect(points[1].value, 0);
+    });
+
+    test('keeps a finished empty week ahead of an omitted open week', () {
+      final points = ActivityTimeSeries.bucketWeeklySum(
+        entries: [(date: DateTime(2026, 9, 29), amount: 8)],
+        startInclusive: DateTime(2026, 9, 28),
+        endExclusive: DateTime(2026, 10, 14),
+      );
+
+      expect(points, hasLength(2));
+      expect(points[0].weekStart, DateTime(2026, 9, 28));
+      expect(points[0].value, 8);
+      expect(points[1].weekStart, DateTime(2026, 10, 5));
+      expect(points[1].value, 0);
+    });
+
     test('hasNonZeroValues is false when all buckets are zero', () {
       final points = ActivityTimeSeries.bucketWeeklyCount(
         eventDates: const [],

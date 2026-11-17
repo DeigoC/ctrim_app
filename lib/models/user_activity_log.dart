@@ -39,10 +39,20 @@ class UserActivityLog {
     required String log,
     required String documentId,
     required DateTime ts,
+    String title = '',
+    String note = '',
+    String parentId = '',
   }) {
     _records.insert(
       0,
-      UserActivityRecord(log: log, ts: ts, documentId: documentId),
+      UserActivityRecord(
+        log: log,
+        ts: ts,
+        documentId: documentId,
+        title: title,
+        note: note,
+        parentId: parentId,
+      ),
     );
     if (_records.length > maxStoredRecords) {
       _records = _records.sublist(0, maxStoredRecords);

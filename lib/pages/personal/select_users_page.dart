@@ -8,8 +8,10 @@ import '../../models/user.dart';
 import '../../models/user_tag.dart';
 import '../../pages/events/select_catalog_items_page.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/after_route_transition.dart';
 import '../../utility/app_context.dart';
 import '../../utility/catalog/catalog_picker_helpers.dart';
+import '../../utility/cell_group_roster_cache.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/cache/persist_users_local_cache.dart';
@@ -24,6 +26,7 @@ import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/volunteer_role_helpers.dart';
 import '../../widgets/app_search_bar.dart';
 import '../../widgets/common/app_dialog.dart';
+import '../../widgets/personal/people_directory_band.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/common/action_sheet.dart';
@@ -50,6 +53,8 @@ class SelectUsersPage extends StatefulWidget {
     this.cellGroupIdForPlaceholderCreate,
     this.allowCellGroupBulkSelect = false,
     this.lockedLocation,
+    this.initialLocation,
+    this.initialTagIDs = const [],
   });
 
   final List<String> selectedUIDs;
@@ -58,8 +63,8 @@ class SelectUsersPage extends StatefulWidget {
   final bool allowTaskCheck;
   final String? title;
 
-  /// When set, selection is capped (e.g. `1` for lead speaker). Selecting
-  /// beyond the limit replaces the oldest selection.
+  /// When set, selection is capped (speakers use 3). A further tap drops the
+  /// earliest selection so the rest keep their order.
   final int? maxSelection;
 
   /// When true (and the signed-in user passes the create gate), a failed search
@@ -71,8 +76,9 @@ class SelectUsersPage extends StatefulWidget {
   /// temporary profiles.
   final bool includePlaceholders;
 
-  /// When true, the list defaults to people who serve (leaders, team tags, or
-  /// cell-group leaders). Turn Serving off to pick attendees too.
+  /// When true, the list starts with the Serving refine filter on. The default
+  /// is off so pickers show everyone (same as the People directory) until
+  /// Serving or Placeholders is turned on in Refine & sort.
   final bool preferServing;
 
   /// Optional post id passed to `create_placeholder_user` for author-gate checks.
@@ -89,6 +95,13 @@ class SelectUsersPage extends StatefulWidget {
   /// location name (for example choosing department heads for one church site).
   final String? lockedLocation;
 
+  /// Starting location when [lockedLocation] is unset. The refine sheet can
+  /// still move off it.
+  final String? initialLocation;
+
+  /// Ministries selected when the picker opens. The refine sheet can clear them.
+  final List<String> initialTagIDs;
+
   @override
   State<SelectUsersPage> createState() => _SelectUsersPageState();
 }
@@ -104,14 +117,24 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   bool _isSearching = false;
   String _searchQuery = '';
   Set<String> _selectedTagIDs = {};
+  final AfterRouteTransition _afterOpen = AfterRouteTransition();
+  int? _filteredUsersKey;
+  List<User>? _filteredUsersCache;
 
   @override
   void initState() {
     super.initState();
     _selectedUIDs = Set<String>.from(widget.selectedUIDs);
+    _selectedTagIDs = {
+      for (final id in widget.initialTagIDs)
+        if (id.trim().isNotEmpty) id.trim(),
+    };
     final locked = widget.lockedLocation?.trim() ?? '';
+    final seededLocation = widget.initialLocation?.trim() ?? '';
     if (locked.isNotEmpty) {
       _locationFilter = locked;
+    } else if (seededLocation.isNotEmpty) {
+      _locationFilter = seededLocation;
     } else {
       final appContext = Provider.of<AppContext>(context, listen: false);
       final assignable =
@@ -122,10 +145,38 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       );
     }
     _servingOnly = widget.preferServing;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _afterOpen.schedule(this, () {
+        _ensureCellGroupRostersLoaded();
+      });
+    });
+  }
+
+  Future<void> _ensureCellGroupRostersLoaded() async {
+    if (!mounted) return;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final ids = appContext.allCellGroups
+        .where((group) => !group.isArchived)
+        .map((group) => group.id)
+        .toList();
+    final missing = ids.any(
+      (id) => id.isNotEmpty && !CellGroupRosterCache.isLoaded(id),
+    );
+    await CellGroupRosterCache.ensureLoaded(ids);
+    if (mounted && missing) setState(() {});
+  }
+
+  Set<String> _ledMemberIds(AppContext appContext) {
+    return CellGroupRosterHelpers.activeLinkedUserIdsLedBy(
+      actor: appContext.currentUser,
+      catalogue: appContext.allCellGroups,
+    );
   }
 
   @override
   void dispose() {
+    _afterOpen.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -344,6 +395,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                         horizontalPadding: horizontalPadding,
                         isWide: isWide,
                         l10n: l10n,
+                        appContext: appContext,
                       ),
               ),
             ],
@@ -405,65 +457,175 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     required double horizontalPadding,
     required bool isWide,
     required AppLocalizations l10n,
+    required AppContext appContext,
   }) {
-    final sections = _useLetterSections
-        ? PeopleDirectorySections.bySurnameLetter(users)
-        : [
-            PeopleDirectorySection(letter: '', users: users),
-          ];
+    // Speakers are capped. A family tick would silently stop at that cap.
+    final groupSurnames = widget.maxSelection == null;
+    final crossAxisExtent = isWide
+        ? (MediaQuery.sizeOf(context).width - horizontalPadding * 2)
+            .clamp(0.0, double.infinity)
+        : 0.0;
+    final lines = PeopleDirectorySections.scrollLines(
+      users: users,
+      useLetterSections: _useLetterSections,
+      groupSurnames: groupSurnames,
+      peoplePerRow: isWide
+          ? PeopleDirectoryGrid.crossAxisCount(crossAxisExtent.toDouble())
+          : 1,
+    );
 
     return CustomScrollView(
       slivers: [
-        for (final section in sections) ...[
-          if (_useLetterSections)
-            SliverToBoxAdapter(
-              child: _buildLetterHeader(
-                section.letter,
-                horizontalPadding: horizontalPadding,
-              ),
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => _buildDirectoryLine(
+              line: lines[index],
+              spacedBelow: isWide &&
+                  index + 1 < lines.length &&
+                  lines[index + 1].isPeople,
+              allTags: allTags,
+              horizontalPadding: horizontalPadding,
+              crossAxisExtent: crossAxisExtent.toDouble(),
+              isWide: isWide,
+              l10n: l10n,
+              appContext: appContext,
             ),
-          if (isWide)
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                0,
-                horizontalPadding,
-                0,
-              ),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 420,
-                  mainAxisExtent: 108,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 8,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildWideUserCard(
-                    user: section.users[index],
-                    allTags: allTags,
-                    l10n: l10n,
-                  ),
-                  childCount: section.users.length,
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildUserListTile(
-                    user: section.users[index],
-                    allTags: allTags,
-                    l10n: l10n,
-                  ),
-                  childCount: section.users.length,
-                ),
-              ),
-            ),
-        ],
+            childCount: lines.length,
+            addAutomaticKeepAlives: false,
+            findChildIndexCallback: (key) =>
+                PeopleDirectorySections.indexForKey(lines, key),
+          ),
+        ),
         const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
       ],
+    );
+  }
+
+  Widget _buildDirectoryLine({
+    required PeopleDirectoryScrollLine line,
+    required bool spacedBelow,
+    required List<UserTag> allTags,
+    required double horizontalPadding,
+    required double crossAxisExtent,
+    required bool isWide,
+    required AppLocalizations l10n,
+    required AppContext appContext,
+  }) {
+    final Widget child;
+    if (line.isLetter) {
+      child = _buildLetterHeader(
+        line.letter!,
+        horizontalPadding: horizontalPadding,
+      );
+    } else if (line.isSurname) {
+      child = _buildSurnameHeader(
+        surname: line.surnameLabel!,
+        users: line.users,
+        horizontalPadding: horizontalPadding,
+        l10n: l10n,
+        appContext: appContext,
+      );
+    } else if (isWide) {
+      child = Padding(
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        child: PeopleDirectoryBand(
+          crossAxisExtent: crossAxisExtent,
+          mainAxisExtent: 108,
+          spacedBelow: spacedBelow,
+          children: [
+            for (final user in line.users)
+              _buildWideUserCard(
+                user: user,
+                allTags: allTags,
+                l10n: l10n,
+              ),
+          ],
+        ),
+      );
+    } else {
+      child = _buildUserListTile(
+        user: line.users.single,
+        allTags: allTags,
+        l10n: l10n,
+      );
+    }
+
+    return KeyedSubtree(
+      key: ValueKey(line.storageKey),
+      child: child,
+    );
+  }
+
+  Widget _buildSurnameHeader({
+    required String surname,
+    required List<User> users,
+    required double horizontalPadding,
+    required AppLocalizations l10n,
+    required AppContext appContext,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final selectedCount =
+        users.where((user) => _selectedUIDs.contains(user.id)).length;
+    final bool? checkboxValue = selectedCount == 0
+        ? false
+        : selectedCount == users.length
+            ? true
+            : null;
+    final allSelected = checkboxValue == true;
+    final tooltip = allSelected
+        ? l10n.selectUsersUnselectSurname(surname)
+        : l10n.selectUsersSelectSurname(surname);
+
+    return Tooltip(
+      message: tooltip,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding + 4,
+          16,
+          horizontalPadding + 4,
+          12,
+        ),
+        child: Material(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _toggleSurnameGroup(users, appContext),
+            child: Row(
+              children: [
+                const SizedBox(width: 4),
+                // The row handles the tap. A null onChanged would grey the box out.
+                IgnorePointer(
+                  child: Checkbox(
+                    tristate: true,
+                    visualDensity: VisualDensity.compact,
+                    value: checkboxValue,
+                    onChanged: (_) {},
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    surname,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${users.length}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -557,6 +719,23 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   }
 
   List<User> _filteredUsers(AppContext appContext) {
+    final cacheKey = Object.hash(
+      appContext.usersEpoch,
+      appContext.sessionEpoch,
+      appContext.catalogsEpoch,
+      widget.includeCurrentUser,
+      widget.includePlaceholders,
+      _locationFilter,
+      _servingOnly,
+      _placeholdersOnly,
+      _searchQuery,
+      _hashIds(widget.excludedUIDs),
+      _hashIds(_selectedUIDs),
+      _hashIds(_selectedTagIDs),
+    );
+    final cached = _filteredUsersCache;
+    if (cached != null && cacheKey == _filteredUsersKey) return cached;
+
     Iterable<User> users = appContext.allUsers;
     final cellGroupLeaders =
         CellGroupLeaderIndex.fromGroups(appContext.allCellGroups);
@@ -584,6 +763,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     if (_servingOnly && !_placeholdersOnly) {
       users = users.where((user) =>
           _selectedUIDs.contains(user.id) ||
+          (widget.includePlaceholders && user.isPlaceholder) ||
           VolunteerRoleHelpers.userServes(
             user: user,
             cellGroupLeaders: cellGroupLeaders,
@@ -608,7 +788,14 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     }
 
     final result = users.toList()..sort(UserTagHelpers.compareUsersBySurname);
+    _filteredUsersKey = cacheKey;
+    _filteredUsersCache = result;
     return result;
+  }
+
+  int _hashIds(Iterable<String> ids) {
+    final sorted = ids.toList()..sort();
+    return Object.hashAll(sorted);
   }
 
   /// Name matches ignoring location / Serving / tags / placeholders-only,
@@ -620,6 +807,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       allUsers: appContext.allUsers,
       viewer: appContext.currentUser,
       searchQuery: _searchQuery,
+      cellGroupMemberIdsLedByViewer: _ledMemberIds(appContext),
     );
 
     if (!widget.includeCurrentUser) {
@@ -666,7 +854,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
         _locationFilter != _defaultLocationFilter(appContext)) {
       count++;
     }
-    if (widget.preferServing && !_servingOnly) count++;
+    if (_servingOnly) count++;
     if (widget.includePlaceholders && _placeholdersOnly) count++;
     count += _selectedTagIDs.length;
     return count;
@@ -688,7 +876,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   void _clearFilters(AppContext appContext) {
     setState(() {
       _locationFilter = _defaultLocationFilter(appContext);
-      _servingOnly = widget.preferServing;
+      _servingOnly = false;
       _placeholdersOnly = false;
       _selectedTagIDs = {};
     });
@@ -774,10 +962,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
 
   void _showFilterSheet(AppContext appContext) {
     final l10n = AppLocalizations.of(context)!;
-    final activeTags =
-        appContext.allTags.where((tag) => tag.isActive).toList();
-    final showShowSection =
-        widget.preferServing || widget.includePlaceholders;
+    final activeTags = appContext.allTags.where((tag) => tag.isActive).toList();
 
     HapticFeedback.lightImpact();
     showModalBottomSheet<void>(
@@ -829,17 +1014,15 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                     ),
                   ),
                 ],
-                if (showShowSection)
-                  _filterSectionLabel(l10n.volunteersFilterShowSection),
-                if (widget.preferServing)
-                  SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    title: Text(l10n.volunteersFilterServing),
-                    subtitle: Text(l10n.volunteersFilterServingSubtitle),
-                    value: _servingOnly,
-                    onChanged: (value) =>
-                        refreshSheet(() => _servingOnly = value),
-                  ),
+                _filterSectionLabel(l10n.volunteersFilterShowSection),
+                SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  title: Text(l10n.volunteersFilterServing),
+                  subtitle: Text(l10n.volunteersFilterServingSubtitle),
+                  value: _servingOnly,
+                  onChanged: (value) =>
+                      refreshSheet(() => _servingOnly = value),
+                ),
                 if (widget.includePlaceholders)
                   SwitchListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -881,7 +1064,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                       child: TextButton(
                         onPressed: () => refreshSheet(() {
                           _locationFilter = _defaultLocationFilter(appContext);
-                          _servingOnly = widget.preferServing;
+                          _servingOnly = false;
                           _placeholdersOnly = false;
                           _selectedTagIDs = {};
                         }),
@@ -936,8 +1119,10 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
         return;
       }
       final max = widget.maxSelection;
-      if (max != null && _selectedUIDs.length >= max) {
-        _selectedUIDs.clear();
+      if (max != null &&
+          _selectedUIDs.length >= max &&
+          _selectedUIDs.isNotEmpty) {
+        _selectedUIDs.remove(_selectedUIDs.first);
       }
       _selectedUIDs.add(uid);
     });
@@ -964,6 +1149,15 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       final ids = filteredUsers.map((user) => user.id).toSet();
       _selectedUIDs.removeWhere(ids.contains);
     });
+  }
+
+  void _toggleSurnameGroup(List<User> users, AppContext appContext) {
+    final allSelected = users.every((user) => _selectedUIDs.contains(user.id));
+    if (allSelected) {
+      _unselectAllFiltered(users);
+    } else {
+      _selectAllFiltered(users, appContext);
+    }
   }
 
   Future<void> _onAddFromCellGroup(AppContext appContext) async {
@@ -1137,6 +1331,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.registeredVolunteer,
           documentId: user.id,
+          title: user.fullname,
         );
         setState(() {
           final max = widget.maxSelection;

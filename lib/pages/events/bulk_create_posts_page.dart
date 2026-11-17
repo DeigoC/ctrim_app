@@ -19,6 +19,7 @@ import '../../utility/post_template_mapper.dart';
 import '../../utility/post_title_date.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/posts/expected_attendance_preset_picker.dart';
 import '../../widgets/posts/schedule_preset_picker.dart';
 
 enum _BulkPostRelation { child, sibling }
@@ -57,7 +58,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
 
   late PostTemplate _template;
   int _selectedWeeks = 4;
-  int? _selectedDayOfWeek;
+  List<int> _selectedDays = [];
   _BulkPostRelation _selectedRelation = _BulkPostRelation.child;
   List<_PostPreview> _previews = [];
   bool _isCreating = false;
@@ -90,15 +91,25 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
 
   bool get _hasMultiplePresets => _template.schedulePresets.length > 1;
 
+  bool get _hasMultipleExpectedPresets =>
+      _template.expectedAttendancePresets.length > 1;
+
+  int get _maxWeeks => maxBulkWeeksFor(_selectedDays.length);
+
   String? get _defaultPresetId => _template.schedulePresets.isEmpty
       ? null
       : _template.schedulePresets.first.id;
+
+  String? get _defaultExpectedPresetId =>
+      _template.expectedAttendancePresets.isEmpty
+          ? null
+          : _template.expectedAttendancePresets.first.id;
 
   @override
   void initState() {
     super.initState();
     _template = widget.template;
-    _selectedDayOfWeek = _template.defaultDayOfWeek;
+    _selectedDays = List<int>.from(_template.defaultDaysOfWeek);
     _refreshTemplateAndPreviews();
   }
 
@@ -129,11 +140,21 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     if (!mounted) return;
     setState(() {
       _isRefreshingTemplate = false;
-      _selectedDayOfWeek ??= _template.defaultDayOfWeek;
+      if (_selectedDays.isEmpty) {
+        _selectedDays = List<int>.from(_template.defaultDaysOfWeek);
+      }
     });
-    if (_selectedDayOfWeek != null) {
-      _regeneratePreviews();
-    }
+    _regeneratePreviews();
+  }
+
+  void _toggleDay(int day) {
+    _selectedDays = PostTemplate.normalizeDaysOfWeek(
+      _selectedDays.contains(day)
+          ? _selectedDays.where((d) => d != day).toList()
+          : [..._selectedDays, day],
+    );
+    if (_selectedWeeks > _maxWeeks) _selectedWeeks = _maxWeeks;
+    _regeneratePreviews();
   }
 
   Map<String, dynamic>? _pickRandomCover() {
@@ -143,10 +164,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   }
 
   void _regeneratePreviews() {
-    if (_selectedDayOfWeek == null) return;
-
     final dates = computeBulkPostDates(
-      dayOfWeek: _selectedDayOfWeek!,
+      daysOfWeek: _selectedDays,
       weeks: _selectedWeeks,
       anchorDate: widget.sourcePostEventDate,
     );
@@ -162,6 +181,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
             date: date,
             headMedia: _pickRandomCover(),
             schedulePresetId: _defaultPresetId,
+            expectedAttendancePresetId: _defaultExpectedPresetId,
           ),
       ];
     });
@@ -187,6 +207,12 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     return _template.presetById(id)?.name ?? 'Schedule preset';
   }
 
+  String _expectedPresetName(String? id) {
+    if (id == null) return 'No expected list';
+    return _template.expectedAttendancePresetById(id)?.name ??
+        'Expected attendance';
+  }
+
   Future<void> _pickPresetForRow(int index) async {
     final selected = await showSchedulePresetPicker(
       context: context,
@@ -197,6 +223,19 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     );
     if (!mounted || selected == null) return;
     setState(() => _previews[index].schedulePresetId = selected.id);
+  }
+
+  Future<void> _pickExpectedPresetForRow(int index) async {
+    final selected = await showExpectedAttendancePresetPicker(
+      context: context,
+      presets: _template.expectedAttendancePresets,
+      selectedId: _previews[index].expectedAttendancePresetId,
+      title: 'Expected attendance preset',
+      subtitle: 'Expected members for this date',
+    );
+    if (!mounted || selected == null) return;
+    setState(
+        () => _previews[index].expectedAttendancePresetId = selected.id);
   }
 
   Future<void> _applyPresetToAll() async {
@@ -210,6 +249,21 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     setState(() {
       for (final preview in _previews) {
         preview.schedulePresetId = selected.id;
+      }
+    });
+  }
+
+  Future<void> _applyExpectedPresetToAll() async {
+    final selected = await showExpectedAttendancePresetPicker(
+      context: context,
+      presets: _template.expectedAttendancePresets,
+      title: 'Apply to all',
+      subtitle: 'Use this expected-member list on every date',
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      for (final preview in _previews) {
+        preview.expectedAttendancePresetId = selected.id;
       }
     });
   }
@@ -255,6 +309,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           parentID: parentID,
           allUsers: appContext.allUsers,
           schedulePresetId: preview.schedulePresetId,
+          expectedAttendancePresetId: preview.expectedAttendancePresetId,
         );
         PostTemplateMapper.adjustEventProgramToDate(eventContext, preview.date);
         _applyPreviewHeadMedia(eventContext.head, preview.headMedia);
@@ -354,9 +409,6 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final dayName = _selectedDayOfWeek != null
-        ? _dayNames[_selectedDayOfWeek! - 1]
-        : 'Not set';
 
     late final Widget page;
     if (_isCreating) {
@@ -405,11 +457,12 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: Column(
                     children: [
-                      _buildTemplateHeader(colorScheme, dayName),
+                      _buildTemplateHeader(colorScheme),
                       if (widget.sourcePostId != null)
                         _buildRelationPicker(colorScheme),
                       _buildDayOfWeekSelector(colorScheme),
-                      if (_selectedDayOfWeek != null) _buildWeeksSelector(),
+                      if (_selectedDays.isNotEmpty)
+                        _buildWeeksSelector(colorScheme),
                     ],
                   ),
                 ),
@@ -418,10 +471,10 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                   child: Padding(
                     padding:
                         EdgeInsets.symmetric(horizontal: horizontalPadding),
-                    child: _selectedDayOfWeek == null
+                    child: _selectedDays.isEmpty
                         ? Center(
                             child: Text(
-                              'Choose a day of the week to preview posts.',
+                              'Choose at least one day of the week to preview posts.',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -454,7 +507,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     );
   }
 
-  Widget _buildTemplateHeader(ColorScheme colorScheme, String dayName) {
+  Widget _buildTemplateHeader(ColorScheme colorScheme) {
     return Container(
       width: double.infinity,
       color: colorScheme.surfaceContainerLow,
@@ -474,8 +527,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                       .titleMedium
                       ?.copyWith(fontWeight: FontWeight.w600),
                 ),
-                if (_selectedDayOfWeek != null)
-                  Text('Every $dayName',
+                if (_selectedDays.isNotEmpty)
+                  Text(everyDaysOfWeekLabel(_selectedDays),
                       style: Theme.of(context)
                           .textTheme
                           .bodySmall
@@ -491,15 +544,29 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                             : colorScheme.error,
                       ),
                 ),
-                if (_hasMultiplePresets) ...[
+                if (_hasMultiplePresets || _hasMultipleExpectedPresets) ...[
                   const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton.tonalIcon(
-                      onPressed: _previews.isEmpty ? null : _applyPresetToAll,
-                      icon: const Icon(Icons.view_timeline_outlined, size: 18),
-                      label: const Text('Apply schedule to all'),
-                    ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (_hasMultiplePresets)
+                        FilledButton.tonalIcon(
+                          onPressed:
+                              _previews.isEmpty ? null : _applyPresetToAll,
+                          icon: const Icon(Icons.view_timeline_outlined,
+                              size: 18),
+                          label: const Text('Apply schedule to all'),
+                        ),
+                      if (_hasMultipleExpectedPresets)
+                        FilledButton.tonalIcon(
+                          onPressed: _previews.isEmpty
+                              ? null
+                              : _applyExpectedPresetToAll,
+                          icon: const Icon(Icons.groups_outlined, size: 18),
+                          label: const Text('Apply expected to all'),
+                        ),
+                    ],
                   ),
                 ],
               ],
@@ -517,7 +584,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Day of week',
+            'Days of week',
             style: Theme.of(context)
                 .textTheme
                 .titleSmall
@@ -525,9 +592,10 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            _selectedDayOfWeek == null
-                ? 'Choose which day to create posts for.'
-                : 'Posts will be scheduled every ${_dayNames[_selectedDayOfWeek! - 1]}.',
+            _selectedDays.isEmpty
+                ? 'Choose one or more days to create posts for.'
+                : 'A post on each selected day, every week. '
+                    '${everyDaysOfWeekLabel(_selectedDays)}.',
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
@@ -539,14 +607,10 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
             runSpacing: 8,
             children: List.generate(7, (i) {
               final day = i + 1;
-              final selected = _selectedDayOfWeek == day;
               return FilterChip(
                 label: Text(_dayNames[i]),
-                selected: selected,
-                onSelected: (_) {
-                  setState(() => _selectedDayOfWeek = day);
-                  _regeneratePreviews();
-                },
+                selected: _selectedDays.contains(day),
+                onSelected: (_) => _toggleDay(day),
               );
             }),
           ),
@@ -555,7 +619,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     );
   }
 
-  Widget _buildWeeksSelector() {
+  Widget _buildWeeksSelector(ColorScheme colorScheme) {
+    final maxWeeks = _maxWeeks;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
@@ -568,11 +633,20 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                 .titleSmall
                 ?.copyWith(fontWeight: FontWeight.w600),
           ),
+          if (maxWeeks < maxBulkWeeks)
+            Text(
+              'Up to $maxBulkPosts posts at a time, so $maxWeeks weeks at most '
+              'with ${_selectedDays.length} days.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
+            ),
           Slider(
             value: _selectedWeeks.toDouble(),
             min: 1,
-            max: 12,
-            divisions: 11,
+            max: maxWeeks.toDouble(),
+            divisions: maxWeeks - 1,
             label: '$_selectedWeeks weeks',
             onChanged: (value) {
               _selectedWeeks = value.round();
@@ -721,6 +795,20 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                                       const EdgeInsets.symmetric(horizontal: 8),
                                 ),
                               ),
+                            if (_hasMultipleExpectedPresets)
+                              TextButton.icon(
+                                onPressed: () =>
+                                    _pickExpectedPresetForRow(index),
+                                icon:
+                                    const Icon(Icons.groups_outlined, size: 16),
+                                label: Text(_expectedPresetName(
+                                    preview.expectedAttendancePresetId)),
+                                style: TextButton.styleFrom(
+                                  visualDensity: VisualDensity.compact,
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -778,10 +866,22 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                           ),
                     ),
                   ],
+                  if (_hasMultipleExpectedPresets) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      _expectedPresetName(preview.expectedAttendancePresetId),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colorScheme.tertiary,
+                          ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            if (_hasSubtitles || _hasCoverPool || _hasMultiplePresets)
+            if (_hasSubtitles ||
+                _hasCoverPool ||
+                _hasMultiplePresets ||
+                _hasMultipleExpectedPresets)
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -802,6 +902,13 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                       icon: const Icon(Icons.view_timeline_outlined, size: 18),
                       tooltip: _presetName(preview.schedulePresetId),
                       onPressed: () => _pickPresetForRow(index),
+                    ),
+                  if (_hasMultipleExpectedPresets)
+                    IconButton(
+                      icon: const Icon(Icons.groups_outlined, size: 18),
+                      tooltip: _expectedPresetName(
+                          preview.expectedAttendancePresetId),
+                      onPressed: () => _pickExpectedPresetForRow(index),
                     ),
                 ],
               ),
@@ -950,6 +1057,7 @@ class _PostPreview {
   final DateTime date;
   Map<String, dynamic>? headMedia;
   String? schedulePresetId;
+  String? expectedAttendancePresetId;
 
   _PostPreview({
     required this.title,
@@ -957,5 +1065,6 @@ class _PostPreview {
     required this.date,
     this.headMedia,
     this.schedulePresetId,
+    this.expectedAttendancePresetId,
   });
 }

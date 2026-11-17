@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/event/event_head.dart';
+import 'package:ctrim_app/models/event/lead_speaker.dart';
 
 void main() {
   group('EventHead', () {
@@ -439,6 +440,40 @@ void main() {
         expect(head.containsMediaItem('other.jpg'), false);
       });
 
+      test('moveMediaItem reorders and the first image stays the cover', () {
+        final head = EventHead(id: 'e1');
+        head.addMediaItem(type: 'img', src: 'a.jpg');
+        head.addMediaItem(type: 'vid', src: 'b.mp4');
+        head.addMediaItem(type: 'img', src: 'c.jpg');
+
+        head.moveMediaItem(2, 0);
+
+        expect(
+          head.media.map((entry) => entry['src']),
+          ['c.jpg', 'a.jpg', 'b.mp4'],
+        );
+        expect(head.getKeyGraphic(), 'c.jpg');
+
+        head.moveMediaItem(0, 2);
+        expect(
+          head.media.map((entry) => entry['src']),
+          ['a.jpg', 'b.mp4', 'c.jpg'],
+        );
+        expect(head.getKeyGraphic(), 'a.jpg');
+      });
+
+      test('moveMediaItem ignores a no-op or out-of-range index', () {
+        final head = EventHead(id: 'e1');
+        head.addMediaItem(type: 'img', src: 'a.jpg');
+        head.addMediaItem(type: 'img', src: 'b.jpg');
+
+        head.moveMediaItem(0, 0);
+        head.moveMediaItem(-1, 0);
+        head.moveMediaItem(0, 4);
+
+        expect(head.media.map((entry) => entry['src']), ['a.jpg', 'b.jpg']);
+      });
+
       test('removeMediaItem removes the entry', () {
         final head = EventHead(id: 'e1');
         head.addMediaItem(type: 'img', src: 'photo.jpg');
@@ -552,6 +587,60 @@ void main() {
         expect(head.getKeyGraphic(), 'new-cover.jpg');
       });
 
+      test(
+          'setLeadSpeakers keeps order, caps at 3, and covers with the first photo',
+          () {
+        final head = EventHead(id: 'e1');
+        head.setLeadSpeakers(const [
+          LeadSpeakerSnapshot(uid: 'a', imgSrc: '', name: 'Ada'),
+          LeadSpeakerSnapshot(uid: 'b', imgSrc: 'b.jpg', name: 'Ben'),
+          LeadSpeakerSnapshot(uid: 'a', name: 'Ada again'),
+          LeadSpeakerSnapshot(uid: 'c', imgSrc: 'c.jpg', name: 'Cara'),
+          LeadSpeakerSnapshot(uid: 'd', imgSrc: 'd.jpg', name: 'Dan'),
+        ]);
+
+        expect(
+            head.leadSpeakers.map((speaker) => speaker.uid), ['a', 'b', 'c']);
+        expect(head.leadSpeakerUID, 'a');
+        expect(head.leadSpeakerImgSrc, isNull);
+        expect(head.getKeyGraphic(), isNull);
+        expect(head.hasLeadSpeakerPortrait, true);
+
+        final json = head.toJson();
+        expect(json['LeadSpeakerUID'], 'a');
+        expect(json['LeadSpeakerName'], 'Ada');
+        expect((json['LeadSpeakers'] as List).length, 3);
+      });
+
+      test('fromMap reads a legacy single speaker and a speaker list', () {
+        final legacy = EventHead.fromMap('e1', {
+          'Title': 'T',
+          'Subtitle': 'S',
+          'Location': 'Belfast',
+          'LeadSpeakerUID': 'old',
+          'LeadSpeakerImgSrc': 'old.jpg',
+          'LeadSpeakerName': 'Alex',
+        });
+        expect(legacy.leadSpeakers.map((speaker) => speaker.uid), ['old']);
+        expect(legacy.getKeyGraphic(), 'old.jpg');
+
+        final listed = EventHead.fromMap('e2', {
+          'Title': 'T',
+          'Subtitle': 'S',
+          'Location': 'Belfast',
+          'LeadSpeakerUID': 'old',
+          'LeadSpeakerImgSrc': 'old.jpg',
+          'LeadSpeakerName': 'Alex',
+          'LeadSpeakers': [
+            {'UID': 'new-1', 'ImgSrc': 'one.jpg', 'Name': 'Ada'},
+            {'UID': 'new-2', 'ImgSrc': 'two.jpg', 'Name': 'Ben'},
+          ],
+        });
+        expect(listed.leadSpeakers.map((speaker) => speaker.uid),
+            ['new-1', 'new-2']);
+        expect(listed.getKeyGraphic(), 'one.jpg');
+      });
+
       test('clearLeadSpeaker removes denormalized fields', () {
         final head = EventHead(id: 'e1');
         head.setLeadSpeaker(uid: 'u1', imgSrc: 'speaker.jpg', name: 'Alex');
@@ -587,6 +676,7 @@ void main() {
         expect(json['LeadSpeakerUID'], isNull);
         expect(json['LeadSpeakerImgSrc'], isNull);
         expect(json['LeadSpeakerName'], isNull);
+        expect(json['LeadSpeakers'], isEmpty);
         expect(json['IsPeriodParent'], false);
       });
 

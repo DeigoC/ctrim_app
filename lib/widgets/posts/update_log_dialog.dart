@@ -5,7 +5,7 @@ import '../common/app_dialog.dart';
 /// Material 3 dialog that collects a short update note before save.
 ///
 /// By default pops with the trimmed log (or `null` if cancelled). Pass [onSave]
-/// when the caller needs to keep this route open (e.g. nested confirm/progress).
+/// when the caller needs to keep this route open (e.g. a progress dialog).
 class UpdateLogDialog extends StatefulWidget {
   const UpdateLogDialog({
     super.key,

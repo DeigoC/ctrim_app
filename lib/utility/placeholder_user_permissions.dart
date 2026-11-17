@@ -65,6 +65,21 @@ bool canLinkPlaceholderAuth({
 /// Whether [actor] may unlink Auth from [target] (area admin only).
 bool canUnlinkUserAuth({required User actor}) => actor.isAreaAdmin;
 
+/// Whether [actor] may merge [placeholder] into an existing non-placeholder.
+///
+/// Area admin only. Source must still be a placeholder; destination must not.
+bool canMergePlaceholderIntoUser({
+  required User actor,
+  required User placeholder,
+  User? survivor,
+}) {
+  if (!actor.isAreaAdmin) return false;
+  if (!placeholder.isPlaceholder) return false;
+  if (survivor == null) return true;
+  if (survivor.id == placeholder.id) return false;
+  return !survivor.isPlaceholder;
+}
+
 /// Picker-minted placeholders (have a creator). Used to decide whether a
 /// non-admin should see the People directory "Placeholders" filter chip.
 bool isTransientVolunteerPlaceholder(User user) {
@@ -75,9 +90,13 @@ bool isTransientVolunteerPlaceholder(User user) {
 /// Whether [user] should appear in the People directory for [viewer]
 /// given the placeholders filter.
 ///
-/// Off: hide every `IsPlaceholder` profile (including legacy empty-Auth
-/// backfill rows). On: placeholders only — area admins see all of them;
-/// others see ones they created or that sit on a cell group they lead.
+/// Off: all members the viewer may see — active profiles plus viewer-visible
+/// placeholders (created by them, on a cell group they lead, or any
+/// placeholder for area admins). On: placeholders only — same visibility
+/// rules, excluding linked / non-placeholder rows.
+///
+/// Serving and Placeholders together is not this flag. Leave it off and use
+/// `PeopleDirectoryQuery.matchesShowFilter` so serving members stay in the list.
 bool isVisibleInVolunteerDirectory({
   required User user,
   required User viewer,
@@ -85,14 +104,34 @@ bool isVisibleInVolunteerDirectory({
   bool showInactive = false,
   bool leadsCellGroupContainingUser = false,
 }) {
-  if (!placeholdersOnly) {
-    if (!user.isProfileActive) {
-      return showInactive && viewer.isAreaAdmin;
-    }
-    return !user.isPlaceholder;
+  if (placeholdersOnly) {
+    if (!user.isPlaceholder) return false;
+    return _viewerCanSeePlaceholder(
+      user: user,
+      viewer: viewer,
+      leadsCellGroupContainingUser: leadsCellGroupContainingUser,
+    );
   }
 
-  if (!user.isPlaceholder) return false;
+  if (user.isPlaceholder) {
+    return _viewerCanSeePlaceholder(
+      user: user,
+      viewer: viewer,
+      leadsCellGroupContainingUser: leadsCellGroupContainingUser,
+    );
+  }
+
+  if (!user.isProfileActive) {
+    return showInactive && viewer.isAreaAdmin;
+  }
+  return true;
+}
+
+bool _viewerCanSeePlaceholder({
+  required User user,
+  required User viewer,
+  required bool leadsCellGroupContainingUser,
+}) {
   if (viewer.isAreaAdmin) return true;
   if (user.createdByUserID == viewer.id) return true;
   return leadsCellGroupContainingUser;
@@ -130,9 +169,11 @@ bool isIncludedInUnfilteredPeopleSearch({
   bool leadsCellGroupContainingUser = false,
 }) {
   if (user.isPlaceholder) {
-    if (viewer.isAreaAdmin) return true;
-    if (user.createdByUserID == viewer.id) return true;
-    return leadsCellGroupContainingUser;
+    return _viewerCanSeePlaceholder(
+      user: user,
+      viewer: viewer,
+      leadsCellGroupContainingUser: leadsCellGroupContainingUser,
+    );
   }
   if (!user.isProfileActive) {
     return viewer.isAreaAdmin;

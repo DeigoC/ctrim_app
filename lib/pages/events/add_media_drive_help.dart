@@ -78,7 +78,8 @@ class AddMediaDriveHelpSection extends StatelessWidget {
             '• Google Drive share links are converted to direct links automatically\n'
             '• Direct HTTPS URLs (ending in .jpg, .png, .mp4, etc.) also work\n'
             '• If Test & Preview fails, the file is usually still private — check “Anyone with the link”\n'
-            '• For videos, you can add an optional thumbnail URL for a better preview',
+            '• For videos, you can add an optional thumbnail URL for a better preview\n'
+            '• To add many files at once from a public Drive folder, use Bulk add from Drive folder on Edit Gallery',
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.4),
           ),

@@ -92,7 +92,7 @@ class _ArrangeSchedulePageState extends State<ArrangeSchedulePage> {
       finishTime: widget.eventContext.program.finishTime,
     );
 
-    if (layout.isEmpty) {
+    if (layout.isEmpty && layout.coverageRoles.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),

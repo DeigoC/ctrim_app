@@ -17,6 +17,8 @@ CTRIM Community is a **web-first** community app (also usable on phones in the b
 | Stakeholders (this site) | A clear picture of capabilities and priorities — no technical background needed |
 | Anyone curious | Browse as a guest; product guide and [open source on GitHub](https://github.com/DeigoC/ctrim_app) |
 
+People who serve or lead a ministry can start with **[For servers & leaders](servers-and-leaders.md)** — the bulletin, the schedule, ministries, and post tags, before the rest of the app.
+
 ## Main areas of the app
 
 | Area | What it is | More detail |
@@ -26,6 +28,8 @@ CTRIM Community is a **web-first** community app (also usable on phones in the b
 | **Cell Groups** | Small groups — in development and testing | [Cell Groups](cell-groups.md) |
 | **Personal** | Sign-in, profile, schedule, notifications, people directory | [Personal](personal.md) |
 
+The address bar follows the section you are in: `ctrim.org/bulletin`, `ctrim.org/ctrim`, `ctrim.org/cell-groups`, and `ctrim.org/personal`. Opening the plain site address still uses the startup tab from Personal settings.
+
 **Glossary:** [Key concepts](key-concepts.md) — post, serving, interest, bookmark, and other terms.
 
 Supporting topics: [People & roles](people-and-roles.md) · [Notifications](notifications.md) · [Platforms](platforms.md) · [Roadmap](roadmap.md)
@@ -33,7 +37,7 @@ Supporting topics: [People & roles](people-and-roles.md) · [Notifications](noti
 ## What it’s not
 
 - Not the **worship team** song and setlist app — that is a separate product  
-- Not a full church management system (giving, membership CRM, and similar)  
+- Not a full church management system (membership records, card payments, and similar). The app does show how to give by bank transfer on **Donations**  
 - Not prioritising native App Store / Play Store releases right now — see [Platforms](platforms.md)
 
 ## Priorities

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -12,6 +13,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/schedule_assignee_suggestions.dart';
 import '../../utility/schedule_timeline_layout.dart';
 import '../common/action_sheet.dart';
 import 'schedule_coverage_band.dart';
@@ -37,20 +39,58 @@ class ViewAllPrograms extends StatefulWidget {
   State<ViewAllPrograms> createState() => _ViewAllProgramsPageState();
 }
 
-class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
+class _ViewAllProgramsPageState extends State<ViewAllPrograms>
+    with SingleTickerProviderStateMixin {
   static final DateFormat _startFormat = DateFormat('EEEE d MMM yyyy');
   static final DateFormat _startFormatAllDay = DateFormat('EEEE d MMM yyyy');
   static final DateFormat _timeFormat = DateFormat('HH:mm');
   static const double _detailPaneWidth = 320;
+  static const Duration _detailPaneDuration = Duration(milliseconds: 360);
   late final AppContext _appContext;
 
   /// Role shown in the wide-screen detail pane; phones use a modal sheet.
   int? _selectedRoleId;
 
+  /// Stays set while the pane animates shut, so the card can fade instead of
+  /// popping out on the frame selection clears.
+  int? _detailPaneRoleId;
+  late final AnimationController _detailPaneController;
+  late final CurvedAnimation _detailPaneSize;
+  late final CurvedAnimation _detailPaneFade;
+
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
     super.initState();
+    _detailPaneController = AnimationController(
+      vsync: this,
+      duration: _detailPaneDuration,
+    );
+    _detailPaneSize = CurvedAnimation(
+      parent: _detailPaneController,
+      curve: Curves.easeInOutCubic,
+    );
+    _detailPaneFade = CurvedAnimation(
+      parent: _detailPaneController,
+      curve: const Interval(0, 0.72, curve: Curves.easeOut),
+      reverseCurve: const Interval(0.2, 1, curve: Curves.easeIn),
+    );
+    _detailPaneController.addStatusListener(_onDetailPaneStatus);
+  }
+
+  @override
+  void dispose() {
+    _detailPaneController.removeStatusListener(_onDetailPaneStatus);
+    _detailPaneFade.dispose();
+    _detailPaneSize.dispose();
+    _detailPaneController.dispose();
+    super.dispose();
+  }
+
+  void _onDetailPaneStatus(AnimationStatus status) {
+    if (!mounted || status != AnimationStatus.dismissed) return;
+    if (_selectedRoleId != null || _detailPaneRoleId == null) return;
+    setState(() => _detailPaneRoleId = null);
   }
 
   @override
@@ -109,24 +149,23 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         selectedRoleId: isWide ? _selectedRoleId : null,
         usersForRole: _usersForRole,
         onRoleTap: (role) => _onRoleTap(role, isWide),
+        onRoleLongPress: _canEditPostProgram() ? _onRoleLongPress : null,
         onOverflowTap: _showOverflowRoles,
         onEmptyTap: _canEditPostProgram() ? _onAddScheduleAt : null,
       ),
     );
 
-    final selectedRole = isWide ? _roleById(_selectedRoleId) : null;
-    final Widget body = selectedRole == null
-        ? timeline
-        : Row(
+    // Wide screens keep the timeline in the row even while the pane is shut,
+    // so opening it eases the canvas narrower instead of snapping the width.
+    final Widget body = isWide
+        ? Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: timeline),
-              SizedBox(
-                width: _detailPaneWidth,
-                child: _buildDetailPane(selectedRole),
-              ),
+              _buildDetailPaneSlot(),
             ],
-          );
+          )
+        : timeline;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -150,17 +189,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               coverageRoles: layout.coverageRoles,
               usersForRole: _usersForRole,
               onRoleTap: (role) => _onRoleTap(role, isWide),
+              onRoleLongPress: _canEditPostProgram() ? _onRoleLongPress : null,
               selectedRoleId: isWide ? _selectedRoleId : null,
-            ),
-          ),
-        if (_canEditPostProgram() && layout.dayStart != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: Text(
-              AppLocalizations.of(context)!.scheduleTapGapToAdd,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
             ),
           ),
         body,
@@ -183,6 +213,29 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     });
   }
 
+  /// Grows and fades the side pane from the trailing edge. The timeline is the
+  /// other child of the row, so its width follows this slot.
+  Widget _buildDetailPaneSlot() {
+    final paneRole = _roleById(_detailPaneRoleId);
+    return IgnorePointer(
+      ignoring: _selectedRoleId == null,
+      child: SizeTransition(
+        axis: Axis.horizontal,
+        axisAlignment: 1,
+        sizeFactor: _detailPaneSize,
+        child: FadeTransition(
+          opacity: _detailPaneFade,
+          child: SizedBox(
+            width: paneRole == null ? 0 : _detailPaneWidth,
+            child: paneRole == null
+                ? const SizedBox.shrink()
+                : _buildDetailPane(paneRole),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDetailPane(final Map<String, dynamic> role) {
     return Card(
       elevation: 0,
@@ -196,12 +249,22 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
         alignment: Alignment.topCenter,
-        child: ScheduleRoleDetailSheet(
-          role: role,
-          assignedUsers: _usersForRole(role),
-          canEdit: _canEditRole(role),
-          onEdit: () => _openEditProgramPage(role),
-          onClose: () => setState(() => _selectedRoleId = null),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          child: ScheduleRoleDetailSheet(
+            key: ValueKey<int>(role['id'] as int),
+            role: role,
+            assignedUsers: _usersForRole(role),
+            canEdit: _canEditRole(role),
+            suggestions: _suggestionsFor(role),
+            onUseAssignees: _canEditRole(role)
+                ? (suggestion) => _applySuggestion(role, suggestion)
+                : null,
+            onEdit: () => _openEditProgramPage(role),
+            onClose: _clearWideSelection,
+          ),
         ),
       ),
     );
@@ -273,6 +336,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             leading: const Icon(Icons.help_outline),
             title: Text(role['title'] as String),
             onTap: () => _onRoleTap(role, false),
+            onLongPress:
+                _canEditPostProgram() ? () => _onRoleLongPress(role) : null,
           ),
       ],
     );
@@ -388,12 +453,34 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             children: children));
   }
 
+  void _clearWideSelection() {
+    if (_selectedRoleId == null) return;
+    setState(() => _selectedRoleId = null);
+    _detailPaneController.reverse();
+  }
+
+  void _showWideSelection(final int roleId) {
+    setState(() {
+      _selectedRoleId = roleId;
+      _detailPaneRoleId = roleId;
+    });
+    _detailPaneController.forward();
+  }
+
+  void _onRoleLongPress(final Map<String, dynamic> role) {
+    if (!_canEditRole(role)) return;
+    HapticFeedback.mediumImpact();
+    _openEditProgramPage(role);
+  }
+
   void _onRoleTap(final Map<String, dynamic> role, final bool isWide) {
     final int roleId = role['id'] as int;
     if (isWide) {
-      setState(() {
-        _selectedRoleId = _selectedRoleId == roleId ? null : roleId;
-      });
+      if (_selectedRoleId == roleId) {
+        _clearWideSelection();
+      } else {
+        _showWideSelection(roleId);
+      }
       return;
     }
 
@@ -402,6 +489,11 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       role: role,
       assignedUsers: _usersForRole(role),
       canEdit: _canEditRole(role),
+      allRoles: widget.eventContext.program.roles,
+      usersForRole: _usersForRole,
+      onUseAssignees: _canEditRole(role)
+          ? (suggestion) => _applySuggestion(role, suggestion)
+          : null,
       onEdit: () {
         Navigator.of(context).pop();
         _openEditProgramPage(role);
@@ -435,6 +527,12 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
                   Navigator.of(sheetContext).pop();
                   _onRoleTap(role, false);
                 },
+                onLongPress: _canEditPostProgram()
+                    ? () {
+                        Navigator.of(sheetContext).pop();
+                        _onRoleLongPress(role);
+                      }
+                    : null,
               ),
           ],
         ),
@@ -508,6 +606,39 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       setState(() {});
       widget.onProgramChanged();
     });
+  }
+
+  List<ScheduleAssigneeSuggestion> _suggestionsFor(
+    final Map<String, dynamic> role,
+  ) {
+    if (!_canEditRole(role)) return const [];
+    return ScheduleAssigneeSuggestions.forRole(
+      role: role,
+      roles: widget.eventContext.program.roles,
+    );
+  }
+
+  void _applySuggestion(
+    final Map<String, dynamic> role,
+    final ScheduleAssigneeSuggestion suggestion,
+  ) {
+    final current = List<String>.from(role['uids'] as List? ?? const []);
+    final next = ScheduleAssigneeSuggestions.unionAssignees(
+      current: current,
+      adding: suggestion.uids,
+    );
+    final added = next.where((id) => !current.contains(id)).toList();
+    final roleId = role['id'] as int;
+    widget.eventContext.program.replaceRoleAssignees(
+      roleId: roleId,
+      uids: next,
+    );
+    if (added.isNotEmpty) {
+      widget.eventContext.addRoleAdditionNotification(added, roleId);
+    }
+    widget.eventContext.allowSavingOfTheEdit();
+    setState(() {});
+    widget.onProgramChanged();
   }
 
   void _openEditProgramPage(final Map<String, dynamic> programEntry) {

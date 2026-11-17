@@ -340,7 +340,9 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
         ),
         minLines: 3,
         maxLines: 6,
-        keyboardType: TextInputType.url,
+        // A URL keyboard is a single-line web input, which strips newlines
+        // from a pasted list. Multiline keeps one URL per line.
+        keyboardType: TextInputType.multiline,
       ),
       const SizedBox(height: 8),
       Align(

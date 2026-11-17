@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
@@ -29,6 +30,7 @@ import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/catalog/user_tag_picker.dart';
 import '../../widgets/role_access_gate.dart';
 import '../../utility/responsive_layout.dart';
+import 'select_users_page.dart';
 
 class EditUserPage extends StatefulWidget {
   const EditUserPage({super.key, required this.user});
@@ -260,6 +262,19 @@ class _EditUserPageState extends State<EditUserPage> {
     return canUnlinkUserAuth(actor: current);
   }
 
+  bool get _canMergeIntoExisting {
+    final current = Provider.of<AppContext>(context, listen: false).currentUser;
+    final liveTarget = copyUser(
+      widget.user,
+      authID: _authID,
+      isPlaceholder: _isPlaceholder,
+    );
+    return canMergePlaceholderIntoUser(
+      actor: current,
+      placeholder: liveTarget,
+    );
+  }
+
   Widget? _buildSaveBar() {
     if (!_hasChanges) return null;
 
@@ -280,6 +295,17 @@ class _EditUserPageState extends State<EditUserPage> {
     );
   }
 
+  Future<void> _copyEmail(String email) async {
+    await Clipboard.setData(ClipboardData(text: email));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.editUserEmailCopied),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Widget _buildEmailField() {
     return FutureBuilder<String?>(
       future: _emailFuture,
@@ -295,6 +321,10 @@ class _EditUserPageState extends State<EditUserPage> {
         } else {
           display = snap.data!;
         }
+
+        final email = snap.data;
+        final hasEmail = email != null && email.isNotEmpty;
+        final l10n = AppLocalizations.of(context)!;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -315,9 +345,7 @@ class _EditUserPageState extends State<EditUserPage> {
               child: Text(
                 display,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: snap.hasData &&
-                              snap.data != null &&
-                              snap.data!.isNotEmpty
+                      color: hasEmail
                           ? colorScheme.onSurface
                           : colorScheme.onSurfaceVariant,
                     ),
@@ -328,6 +356,12 @@ class _EditUserPageState extends State<EditUserPage> {
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (email != null && email.isNotEmpty)
+                  OutlinedButton.icon(
+                    onPressed: () => _copyEmail(email),
+                    icon: const Icon(Icons.copy_outlined),
+                    label: Text(l10n.editUserCopyEmail),
+                  ),
                 if (_canLinkAuth)
                   OutlinedButton.icon(
                     onPressed: _onLinkAccountClick,
@@ -340,6 +374,12 @@ class _EditUserPageState extends State<EditUserPage> {
                     onPressed: _onUnlinkAccountClick,
                     icon: const Icon(Icons.link_off),
                     label: const Text('Unlink'),
+                  ),
+                if (_canMergeIntoExisting)
+                  OutlinedButton.icon(
+                    onPressed: _onMergeIntoExistingClick,
+                    icon: const Icon(Icons.merge_type),
+                    label: const Text('Merge into existing'),
                   ),
               ],
             ),
@@ -783,6 +823,7 @@ class _EditUserPageState extends State<EditUserPage> {
           actorUserId: actorUserId,
           log: UserActivityMessages.linkedVolunteerAccount,
           documentId: updated.id,
+          title: updated.fullname,
         );
       },
     );
@@ -794,6 +835,100 @@ class _EditUserPageState extends State<EditUserPage> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  Future<void> _onMergeIntoExistingClick() async {
+    final explained = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Merge into existing',
+      content:
+          'Choose the real profile this placeholder was meant to be. Every post, '
+          'attendance list, cell group, and roster that used this placeholder will '
+          'point at that profile instead. The placeholder is then removed.',
+      confirmText: 'Choose profile',
+      icon: Icons.merge_type,
+    );
+    if (!mounted || explained != true) return;
+
+    final selected = await Navigator.of(context).push<List<String>>(
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: const [],
+          excludedUIDs: [widget.user.id],
+          title: 'Merge into…',
+          maxSelection: 1,
+          includePlaceholders: false,
+          allowCreatePlaceholder: false,
+          preferServing: false,
+        ),
+      ),
+    );
+    if (!mounted || selected == null || selected.isEmpty) return;
+
+    final survivorId = selected.first;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final survivor = appContext.userById(survivorId);
+    if (survivor == null || survivor.isPlaceholder) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pick an existing non-placeholder profile'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Confirm merge',
+      content:
+          'Forward “${widget.user.fullname}” onto “${survivor.fullname}”? '
+          'Posts and lists keep their history under ${survivor.fullname}. '
+          'This cannot be undone from the app.',
+      confirmText: 'Merge',
+      icon: Icons.merge_type,
+      isDestructive: true,
+    );
+    if (!mounted || confirmed != true) return;
+
+    final merged = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Merging placeholder',
+      subtitle: 'Updating posts and removing the placeholder…',
+      errorTitle: 'Could not merge placeholder',
+      action: () async {
+        final actorUserId = appContext.currentUser.id;
+        final result =
+            await CloudFunctionManager().mergePlaceholderIntoUser(
+          placeholderUserId: widget.user.id,
+          survivorUserId: survivor.id,
+        );
+        if (!mounted) return;
+        if (result['placeholderDeleted'] != true) {
+          throw StateError('Merge finished without removing the placeholder.');
+        }
+        appContext.removeUser(widget.user.id);
+        await persistUsersLocalCache(appContext.allUsers);
+        await IDTrackerDBManager()
+            .tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
+        await UserActivityRecorder().record(
+          actorUserId: actorUserId,
+          log: UserActivityMessages.mergedPlaceholderIntoUser,
+          documentId: survivor.id,
+          title: survivor.fullname,
+          note: 'From ${widget.user.fullname} (${widget.user.id})',
+        );
+      },
+    );
+
+    if (!mounted || !merged) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Merged into ${survivor.fullname}'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    _popRouteAfterAllowing(result: true);
   }
 
   Future<void> _onUnlinkAccountClick() async {
@@ -834,6 +969,7 @@ class _EditUserPageState extends State<EditUserPage> {
           actorUserId: actorUserId,
           log: UserActivityMessages.unlinkedVolunteerAccount,
           documentId: updated.id,
+          title: updated.fullname,
         );
       },
     );
@@ -996,6 +1132,7 @@ class _EditUserPageState extends State<EditUserPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.editedVolunteerProfile,
           documentId: userToSave.id,
+          title: userToSave.fullname,
         );
 
         setState(() {

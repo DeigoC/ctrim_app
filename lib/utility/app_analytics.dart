@@ -337,6 +337,9 @@ class AppAnalytics {
   void logSchedulePresetApply(String postId) =>
       _event('schedule_preset_apply', {'post_id': postId});
 
+  void logExpectedAttendancePresetApply(String postId) =>
+      _event('expected_attendance_preset_apply', {'post_id': postId});
+
   void _screen(String screenName, [Map<String, Object>? parameters]) {
     assert(eventNamePattern.hasMatch(screenName), screenName);
     final client = _client;

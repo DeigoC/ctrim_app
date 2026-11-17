@@ -17,7 +17,7 @@ import '../../utility/placeholder_user_permissions.dart';
 import '../catalog/cell_group_picker.dart';
 import '../my_avatar_stack.dart';
 import '../catalog/post_tag_picker.dart';
-import '../user_avatar.dart';
+import 'lead_speaker_field.dart';
 
 class AddEventHeadMeta extends StatefulWidget {
   const AddEventHeadMeta({
@@ -29,6 +29,8 @@ class AddEventHeadMeta extends StatefulWidget {
     this.showNotificationControls = true,
     this.showPastAttendancePicker = false,
     this.allowSelfAsContributor = false,
+    this.expectedPresetBar,
+    this.onExpectedAttendeesChanged,
   });
   final TextEditingController tecTitle, tecSubtitle;
   final EventContext eventContext;
@@ -44,6 +46,12 @@ class AddEventHeadMeta extends StatefulWidget {
   /// contributor. Templates reuse [EventContext.adding], which sets the editor
   /// as author, and posts normally exclude the author from contributors.
   final bool allowSelfAsContributor;
+
+  /// Optional bar above expected attendees (template expected-attendance presets).
+  final Widget? expectedPresetBar;
+
+  /// Called after expected attendees change (template editor flushes presets).
+  final VoidCallback? onExpectedAttendeesChanged;
 
   @override
   State<AddEventHeadMeta> createState() => _AddEventHeadMetaState();
@@ -252,9 +260,82 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             ),
           ),
 
-          // Lead speaker + Contributors
+          // Speakers + Contributors
           _buildLeadSpeakerSection(),
           _buildContributorSection(),
+          _buildPeriodParentSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodParentSection() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final bool isPeriodParent = widget.eventContext.metadata.isPeriodParent;
+
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.account_tree_outlined,
+                    size: 18, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.postPeriodParentSection,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.postPeriodParentIntro,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  secondary: Icon(
+                    isPeriodParent ? Icons.flag : Icons.flag_outlined,
+                    color: isPeriodParent
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  title: Text(l10n.postPeriodParentTitle),
+                  subtitle: Text(l10n.postPeriodParentSubtitle),
+                  value: isPeriodParent,
+                  onChanged: (value) {
+                    setState(
+                        () => widget.eventContext.applyIsPeriodParent(value));
+                    widget.onRequiredFieldChange('');
+                  },
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -263,8 +344,6 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
   Widget _buildLeadSpeakerSection() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final User? speaker = _resolveLeadSpeaker(appContext);
 
     return Card(
       elevation: 1,
@@ -288,7 +367,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                     size: 18, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 Text(
-                  'Lead speaker',
+                  'Speakers',
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
@@ -299,109 +378,17 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (speaker == null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      'No lead speaker selected',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                else ...[
-                  Center(child: MyUserAvatar(speaker, radius: 36)),
-                  const SizedBox(height: 8),
-                  Text(
-                    speaker.fullname,
-                    style: theme.textTheme.titleMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  if (speaker.imgSrc.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        'No profile picture — card will show initials only',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                ],
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _onManageLeadSpeakerTap,
-                  icon: const Icon(Icons.person_search, size: 18),
-                  label: Text(speaker == null
-                      ? 'Select lead speaker'
-                      : 'Change lead speaker'),
-                ),
-                if (speaker != null) ...[
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        widget.eventContext.applyLeadSpeaker(uid: null);
-                      });
-                      widget.onRequiredFieldChange('');
-                    },
-                    child: const Text('Clear'),
-                  ),
-                ],
-              ],
+            child: LeadSpeakerField(
+              eventContext: widget.eventContext,
+              onChanged: () {
+                setState(() {});
+                widget.onRequiredFieldChange('');
+              },
             ),
           ),
         ],
       ),
     );
-  }
-
-  User? _resolveLeadSpeaker(AppContext appContext) {
-    final uid = widget.eventContext.metadata.leadSpeakerUID ??
-        widget.eventContext.head.leadSpeakerUID;
-    if (uid == null || uid.isEmpty) return null;
-    return appContext.userById(uid);
-  }
-
-  Future<void> _onManageLeadSpeakerTap() async {
-    final currentUid = widget.eventContext.metadata.leadSpeakerUID ??
-        widget.eventContext.head.leadSpeakerUID;
-    final result = await Navigator.push<List<String>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SelectUsersPage(
-          selectedUIDs: currentUid == null ? <String>[] : [currentUid],
-          includeCurrentUser: true,
-          maxSelection: 1,
-          title: 'Select lead speaker',
-          preferServing: true,
-          allowCreatePlaceholder: canCreatePlaceholderUser(
-            actor: Provider.of<AppContext>(context, listen: false).currentUser,
-            postAuthorUid: widget.eventContext.metadata.authorUID,
-          ),
-          postIdForPlaceholderCreate: widget.eventContext.id,
-        ),
-      ),
-    );
-    if (result == null || !mounted) return;
-
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    setState(() {
-      if (result.isEmpty) {
-        widget.eventContext.applyLeadSpeaker(uid: null);
-      } else {
-        final user = appContext.userById(result.first);
-        if (user == null) return;
-        widget.eventContext.applyLeadSpeaker(
-            uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
-      }
-    });
-    widget.onRequiredFieldChange('');
   }
 
   Widget _buildHeadMediaPoolSelector(List<Map<String, dynamic>> pool) {
@@ -883,6 +870,10 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.expectedPresetBar != null) ...[
+          widget.expectedPresetBar!,
+          const SizedBox(height: 12),
+        ],
         Text(
           'Expected attendees',
           style:
@@ -1012,6 +1003,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     setState(() {
       widget.eventContext.applyExpectedAttendeeUserIDs(seededIds!);
     });
+    widget.onExpectedAttendeesChanged?.call();
   }
 
   Future<void> _onManageExpectedAttendeesTap() async {
@@ -1023,6 +1015,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           selectedUIDs:
               List<String>.from(widget.eventContext.expectedAttendeeUserIDs),
           title: 'Expected attendees',
+          includeCurrentUser: true,
           includePlaceholders: true,
           allowCellGroupBulkSelect: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
@@ -1037,6 +1030,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     setState(() {
       widget.eventContext.applyExpectedAttendeeUserIDs(result);
     });
+    widget.onExpectedAttendeesChanged?.call();
   }
 
   Future<void> _onSelectAttendeesTap() async {
@@ -1051,6 +1045,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
         builder: (_) => SelectUsersPage(
           selectedUIDs: selected,
           title: 'Who attended',
+          includeCurrentUser: true,
           includePlaceholders: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,
@@ -1097,7 +1092,6 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
               : [widget.eventContext.metadata.authorUID],
           includeCurrentUser: widget.allowSelfAsContributor,
           title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
-          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,

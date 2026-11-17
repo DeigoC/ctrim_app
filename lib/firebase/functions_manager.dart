@@ -288,6 +288,28 @@ class CloudFunctionManager {
     return 0;
   }
 
+  /// Area admin: forward a placeholder onto an existing non-placeholder profile.
+  ///
+  /// Rewrites volunteer IDs across posts, attendance, cell groups, templates,
+  /// and related indexes, then deletes the placeholder document.
+  Future<Map<String, dynamic>> mergePlaceholderIntoUser({
+    required String placeholderUserId,
+    required String survivorUserId,
+    bool dryRun = false,
+  }) async {
+    final callable = _inst.httpsCallable('merge_placeholder_into_user');
+    final result = await callable.call({
+      'PlaceholderUserID': placeholderUserId,
+      'SurvivorUserID': survivorUserId,
+      'DryRun': dryRun,
+    });
+    final data = result.data;
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+    throw StateError('merge_placeholder_into_user returned no data');
+  }
+
   List<String> _convertMapToKeyValueStrings(Map<String, String> data) {
     if (data.isEmpty) {
       return ['', ''];

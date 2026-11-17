@@ -495,7 +495,9 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
         ),
         minLines: 3,
         maxLines: 6,
-        keyboardType: TextInputType.url,
+        // A URL keyboard is a single-line web input, which strips newlines
+        // from a pasted list. Multiline keeps one URL per line.
+        keyboardType: TextInputType.multiline,
       ),
       const SizedBox(height: 8),
       Align(
@@ -1158,7 +1160,6 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
           title: _isOutreach
               ? l10n.churchEditorChoosePlanters
               : l10n.churchEditorChoosePastors,
-          preferServing: true,
         ),
       ),
     );
@@ -1532,6 +1533,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       actorUserId: appContext.currentUser.id,
       log: log,
       documentId: church.id,
+      title: church.title,
     );
   }
 
@@ -1547,6 +1549,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       actorUserId: appContext.currentUser.id,
       log: UserActivityMessages.deletedChurchRecord,
       documentId: id,
+      title: widget.info!.title,
     );
   }
 }

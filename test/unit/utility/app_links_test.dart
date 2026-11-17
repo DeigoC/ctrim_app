@@ -28,23 +28,34 @@ void main() {
       expect(AppLinks.infoPath('core_values'), '/info/core_values');
       expect(AppLinks.testimonialPath('t-1'), '/testimonials/t-1');
       expect(AppLinks.personPath('u-1'), '/people/u-1');
+      expect(AppLinks.ministriesPath, '/ministries');
+      expect(AppLinks.ministryPath('worship'), '/ministries/worship');
+      expect(
+        AppLinks.ministryPath('worship', locationId: 'belfast'),
+        '/ministries/worship?location=belfast',
+      );
     });
 
     test('uses the public web origin', () {
-      expect(AppLinks.postUrl('post-42'), 'https://ctrim.app/post/post-42');
+      expect(AppLinks.postUrl('post-42'), 'https://ctrim.org/post/post-42');
       expect(
         AppLinks.cellGroupUrl('cg-1'),
-        'https://ctrim.app/cell-groups/cg-1',
+        'https://ctrim.org/cell-groups/cg-1',
       );
       expect(
-          AppLinks.churchUrl('belfast'), 'https://ctrim.app/churches/belfast');
+          AppLinks.churchUrl('belfast'), 'https://ctrim.org/churches/belfast');
       expect(AppLinks.infoUrl('core_values'),
-          'https://ctrim.app/info/core_values');
+          'https://ctrim.org/info/core_values');
       expect(
         AppLinks.testimonialUrl('t-1'),
-        'https://ctrim.app/testimonials/t-1',
+        'https://ctrim.org/testimonials/t-1',
       );
-      expect(AppLinks.personUrl('u-1'), 'https://ctrim.app/people/u-1');
+      expect(AppLinks.personUrl('u-1'), 'https://ctrim.org/people/u-1');
+      expect(AppLinks.ministriesUrl(), 'https://ctrim.org/ministries');
+      expect(
+        AppLinks.ministryUrl('worship'),
+        'https://ctrim.org/ministries/worship',
+      );
     });
   });
 
@@ -63,7 +74,7 @@ void main() {
     test('maps postId query to /post/:id', () {
       expect(
         AppLinks.redirectFromUri(
-            Uri.parse('https://ctrim.app/?postId=post-42')),
+            Uri.parse('https://ctrim.org/?postId=post-42')),
         '/post/post-42',
       );
     });
@@ -71,19 +82,19 @@ void main() {
     test('maps infoPage query to /info/:id', () {
       expect(
         AppLinks.redirectFromUri(
-            Uri.parse('https://ctrim.app/?infoPage=core_values')),
+            Uri.parse('https://ctrim.org/?infoPage=core_values')),
         '/info/core_values',
       );
       expect(
         AppLinks.redirectFromUri(Uri.parse(
-            'https://ctrim.app/?infoPage=assets/info/ctrim_info/4xd.json')),
+            'https://ctrim.org/?infoPage=assets/info/ctrim_info/4xd.json')),
         '/info/4xd',
       );
     });
 
     test('returns null when there is no known query', () {
       expect(
-        AppLinks.redirectFromUri(Uri.parse('https://ctrim.app/')),
+        AppLinks.redirectFromUri(Uri.parse('https://ctrim.org/bulletin')),
         isNull,
       );
     });
@@ -91,7 +102,7 @@ void main() {
     test('prefers postId when both query params are present', () {
       expect(
         AppLinks.redirectFromUri(
-          Uri.parse('https://ctrim.app/?postId=p1&infoPage=core_values'),
+          Uri.parse('https://ctrim.org/?postId=p1&infoPage=core_values'),
         ),
         '/post/p1',
       );
@@ -99,15 +110,119 @@ void main() {
 
     test('ignores empty postId', () {
       expect(
-        AppLinks.redirectFromUri(Uri.parse('https://ctrim.app/?postId=')),
+        AppLinks.redirectFromUri(Uri.parse('https://ctrim.org/?postId=')),
         isNull,
       );
     });
 
     test('encodes ids in the redirected path', () {
       expect(
-        AppLinks.redirectFromUri(Uri.parse('https://ctrim.app/?postId=a b')),
+        AppLinks.redirectFromUri(Uri.parse('https://ctrim.org/?postId=a b')),
         '/post/a%20b',
+      );
+    });
+  });
+
+  group('AppLinks home tabs', () {
+    test('builds a path for each main section', () {
+      expect(AppLinks.homeTabPath(AppLinks.bulletinTab), '/bulletin');
+      expect(AppLinks.homeTabPath(AppLinks.ctrimTab), '/ctrim');
+      expect(AppLinks.homeTabPath(AppLinks.cellGroupsTab), '/cell-groups');
+      expect(AppLinks.homeTabPath(AppLinks.personalTab), '/personal');
+    });
+
+    test('clamps an unknown startup tab to CTRIM', () {
+      expect(AppLinks.homeTabPath(99), '/ctrim');
+      expect(AppLinks.clampHomeTab(-1), AppLinks.ctrimTab);
+    });
+
+    test('reads a section path and ignores record links', () {
+      expect(AppLinks.homeTabIndexForPath('/personal'), AppLinks.personalTab);
+      expect(
+        AppLinks.homeTabIndexForPath('/cell-groups'),
+        AppLinks.cellGroupsTab,
+      );
+      expect(AppLinks.homeTabIndexForPath('/cell-groups/cg-1'), isNull);
+      expect(AppLinks.homeTabIndexForPath('/post/post-42'), isNull);
+      expect(AppLinks.homeTabIndexForPath('/'), isNull);
+    });
+
+    test('sends / to the startup tab and leaves a section link', () {
+      expect(
+        AppLinks.redirectLocation(
+          Uri.parse('https://ctrim.org/'),
+          preferredHomeTab: AppLinks.personalTab,
+        ),
+        '/personal',
+      );
+      expect(
+        AppLinks.redirectLocation(
+          Uri.parse('https://ctrim.org/bulletin'),
+          preferredHomeTab: AppLinks.ctrimTab,
+        ),
+        isNull,
+      );
+    });
+
+    test('still prefers a legacy post query over the startup tab', () {
+      expect(
+        AppLinks.redirectLocation(
+          Uri.parse('https://ctrim.org/?postId=post-42'),
+          preferredHomeTab: AppLinks.personalTab,
+        ),
+        '/post/post-42',
+      );
+    });
+
+    test('steps a root permalink up to its section', () {
+      expect(AppLinks.upPath('/post/post-42'), '/bulletin');
+      expect(AppLinks.upPath('/cell-groups/cg-1'), '/cell-groups');
+      expect(AppLinks.upPath('/churches/belfast'), '/ctrim');
+      expect(AppLinks.upPath('/info/core_values'), '/ctrim');
+      expect(AppLinks.upPath('/testimonials/t-1'), '/ctrim');
+      expect(AppLinks.upPath('/people/u-1'), '/personal');
+      expect(AppLinks.upPath('/ministries'), '/personal');
+      expect(AppLinks.upPath('/donations'), '/ctrim');
+    });
+
+    test('steps a nested ministry page up to View Ministries', () {
+      expect(AppLinks.upPath('/ministries/worship'), '/ministries');
+      expect(
+        AppLinks.upPath('/ministries/worship?location=belfast'),
+        '/ministries',
+      );
+    });
+
+    test('steps a nested church page up to that church', () {
+      expect(
+        AppLinks.upPath('/churches/belfast/pages/getting-here'),
+        '/churches/belfast',
+      );
+      expect(AppLinks.upPath('/churches/belfast/pastors'), '/churches/belfast');
+      expect(
+        AppLinks.upPath('/churches/belfast/statistics'),
+        '/churches/belfast',
+      );
+      expect(
+        AppLinks.upPath('/churches/north%20coast/pastors'),
+        '/churches/north%20coast',
+      );
+    });
+
+    test('sends an unknown section segment to the startup tab', () {
+      expect(
+        AppLinks.redirectHomeTabSegment(
+          'personal',
+          preferredHomeTab: AppLinks.bulletinTab,
+        ),
+        isNull,
+      );
+      expect(
+        AppLinks.redirectHomeTabSegment(
+          'nope',
+          preferredHomeTab: AppLinks.cellGroupsTab,
+        ),
+        '/cell-groups',
       );
     });
   });

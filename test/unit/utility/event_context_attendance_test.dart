@@ -142,6 +142,45 @@ void main() {
     });
   });
 
+  group('EventContext.replaceExpectedUserIds', () {
+    test('updates draft list and live expected without touching attendees', () {
+      final context = EventContext.viewing(
+        eventHead: EventHead(id: 'post-1'),
+        currentUID: 'author-1',
+      );
+      context.setFetchedAttendance(
+        EventAttendance.fromMap({
+          'interested': {
+            'auth-1': InterestedEntry(
+              authId: 'auth-1',
+              userId: 'u-interest',
+              displayName: 'Interested',
+              ts: DateTime(2026, 1, 1),
+            ).toJson(),
+          },
+          'attendees': [
+            AttendeeEntry.user(
+              userId: 'u-attendee',
+              displayName: 'Attendee',
+              addedBy: 'author-1',
+            ).toJson(),
+          ],
+          'expectedUserIds': <String>['old-1'],
+        }),
+        forceReplace: true,
+      );
+
+      context.replaceExpectedUserIds(['new-1', 'new-2']);
+
+      expect(context.expectedAttendeeUserIDs, ['new-1', 'new-2']);
+      expect(context.attendance!.expectedUserIds, ['new-1', 'new-2']);
+      expect(context.attendance!.attendeeCount, 1);
+      expect(context.attendance!.interestedCount, 1);
+      expect(context.isAttendanceDirty, isTrue);
+      expect(context.canSaveTheEditing, isTrue);
+    });
+  });
+
   group('EventContext draft attendees on create', () {
     AttendeeEntry person(String id) => AttendeeEntry.user(
           userId: id,

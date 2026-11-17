@@ -101,21 +101,38 @@ class UserTagHelpers {
     );
   }
 
-  /// Catalogue rows for the team-tags page.
+  /// Whether [tag] appears on View Ministries for this reader.
   ///
   /// Area admins see every tag. Everyone else sees active tags. Guests also
-  /// skip tags marked hidden from guests.
+  /// skip tags marked hidden from guests. Cold links use the same rule.
+  static bool canBrowseTag({
+    required UserTag tag,
+    required bool isGuest,
+    required bool canManage,
+  }) {
+    if (canManage) return true;
+    if (!tag.isActive) return false;
+    if (isGuest && !tag.visibleToGuests) return false;
+    return true;
+  }
+
+  /// Catalogue rows for the team-tags page.
+  ///
+  /// Uses [canBrowseTag]. Sorted by display order, then name.
   static List<UserTag> browseTags({
     required List<UserTag> allTags,
     required bool isGuest,
     required bool canManage,
   }) {
-    final visible = allTags.where((tag) {
-      if (canManage) return true;
-      if (!tag.isActive) return false;
-      if (isGuest && !tag.visibleToGuests) return false;
-      return true;
-    }).toList();
+    final visible = allTags
+        .where(
+          (tag) => canBrowseTag(
+            tag: tag,
+            isGuest: isGuest,
+            canManage: canManage,
+          ),
+        )
+        .toList();
     visible.sort((a, b) {
       final orderCompare = a.displayOrder.compareTo(b.displayOrder);
       if (orderCompare != 0) return orderCompare;

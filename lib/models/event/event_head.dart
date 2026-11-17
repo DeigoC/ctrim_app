@@ -3,6 +3,8 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import 'lead_speaker.dart';
+
 class EventHead {
   late final String _id;
   late final List<Map<String, dynamic>> _media;
@@ -11,7 +13,7 @@ class EventHead {
   late DateTime _recentDate;
   DateTime? _eventDate;
   late int _interestedCount, _attendeeCount;
-  String? _leadSpeakerUID, _leadSpeakerImgSrc, _leadSpeakerName;
+  List<LeadSpeakerSnapshot> _leadSpeakers = [];
   bool _isPeriodParent = false;
 
   EventHead({
@@ -48,9 +50,7 @@ class EventHead {
     _eventDate = _parseDateTime(data['EventDate']);
     _interestedCount = (data['InterestedCount'] as num?)?.toInt() ?? 0;
     _attendeeCount = (data['AttendeeCount'] as num?)?.toInt() ?? 0;
-    _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
-    _leadSpeakerImgSrc = data['LeadSpeakerImgSrc'] as String?;
-    _leadSpeakerName = data['LeadSpeakerName'] as String?;
+    _leadSpeakers = LeadSpeakerSnapshot.listFromHeadFields(data);
     _isPeriodParent = data['IsPeriodParent'] == true;
   }
 
@@ -99,9 +99,10 @@ class EventHead {
       'EventDate': _eventDate == null ? null : Timestamp.fromDate(_eventDate!),
       'InterestedCount': _interestedCount,
       'AttendeeCount': _attendeeCount,
-      'LeadSpeakerUID': _leadSpeakerUID,
-      'LeadSpeakerImgSrc': _leadSpeakerImgSrc,
-      'LeadSpeakerName': _leadSpeakerName,
+      'LeadSpeakerUID': leadSpeakerUID,
+      'LeadSpeakerImgSrc': leadSpeakerImgSrc,
+      'LeadSpeakerName': leadSpeakerName,
+      'LeadSpeakers': _leadSpeakers.map((speaker) => speaker.toJson()).toList(),
       'IsPeriodParent': _isPeriodParent,
     };
   }
@@ -120,9 +121,10 @@ class EventHead {
       'EventDate': _eventDate?.millisecondsSinceEpoch,
       'InterestedCount': _interestedCount,
       'AttendeeCount': _attendeeCount,
-      'LeadSpeakerUID': _leadSpeakerUID,
-      'LeadSpeakerImgSrc': _leadSpeakerImgSrc,
-      'LeadSpeakerName': _leadSpeakerName,
+      'LeadSpeakerUID': leadSpeakerUID,
+      'LeadSpeakerImgSrc': leadSpeakerImgSrc,
+      'LeadSpeakerName': leadSpeakerName,
+      'LeadSpeakers': _leadSpeakers.map((speaker) => speaker.toJson()).toList(),
       'IsPeriodParent': _isPeriodParent,
     };
   }
@@ -143,20 +145,24 @@ class EventHead {
   int get interestedCount => _interestedCount;
   int get attendeeCount => _attendeeCount;
   bool get hasAttendanceCounts => _interestedCount > 0 || _attendeeCount > 0;
-  String? get leadSpeakerUID => _leadSpeakerUID;
-  String? get leadSpeakerImgSrc => _leadSpeakerImgSrc;
-  String? get leadSpeakerName => _leadSpeakerName;
-  bool get hasLeadSpeaker =>
-      _leadSpeakerUID != null && _leadSpeakerUID!.isNotEmpty;
+  List<LeadSpeakerSnapshot> get leadSpeakers =>
+      UnmodifiableListView(_leadSpeakers);
+
+  /// First speaker. Kept so older call sites and the cover photo stay singular.
+  String? get leadSpeakerUID =>
+      _leadSpeakers.isEmpty ? null : _leadSpeakers.first.uid;
+  String? get leadSpeakerImgSrc =>
+      _leadSpeakers.isEmpty ? null : _leadSpeakers.first.imgSrc;
+  String? get leadSpeakerName =>
+      _leadSpeakers.isEmpty ? null : _leadSpeakers.first.name;
+  bool get hasLeadSpeaker => _leadSpeakers.isNotEmpty;
   bool get hasLeadSpeakerPortrait =>
-      hasLeadSpeaker &&
-      ((_leadSpeakerImgSrc != null && _leadSpeakerImgSrc!.isNotEmpty) ||
-          (_leadSpeakerName != null && _leadSpeakerName!.isNotEmpty));
+      _leadSpeakers.any((speaker) => speaker.hasPortrait);
   TimeOfDay get startTimeOfEvent => TimeOfDay.fromDateTime(_eventDate!);
   List<Map<String, dynamic>> get media => UnmodifiableListView(_media);
 
   /// Cover image for AppBar / notifications / bulletin thumbnail.
-  /// Prefers the first head media image; falls back to the lead speaker
+  /// Prefers the first head media image; falls back to the first speaker's
   /// portrait only when no key-graphic images exist.
   String? getKeyGraphic() {
     for (final entry in media) {
@@ -164,9 +170,8 @@ class EventHead {
         return entry['src'];
       }
     }
-    if (_leadSpeakerImgSrc != null && _leadSpeakerImgSrc!.isNotEmpty) {
-      return _leadSpeakerImgSrc;
-    }
+    final imgSrc = leadSpeakerImgSrc;
+    if (imgSrc != null && imgSrc.isNotEmpty) return imgSrc;
     return null;
   }
 
@@ -186,16 +191,23 @@ class EventHead {
   void setAttendeeCount(final int count) =>
       _attendeeCount = count < 0 ? 0 : count;
 
+  /// Replaces the speaker list with one person, or clears it when [uid] is empty.
   void setLeadSpeaker({String? uid, String? imgSrc, String? name}) {
-    _leadSpeakerUID = uid;
-    _leadSpeakerImgSrc = imgSrc;
-    _leadSpeakerName = name;
+    if (uid == null || uid.isEmpty) {
+      clearLeadSpeaker();
+      return;
+    }
+    setLeadSpeakers([
+      LeadSpeakerSnapshot(uid: uid, imgSrc: imgSrc, name: name),
+    ]);
+  }
+
+  void setLeadSpeakers(final List<LeadSpeakerSnapshot> speakers) {
+    _leadSpeakers = LeadSpeakerSnapshot.normalize(speakers);
   }
 
   void clearLeadSpeaker() {
-    _leadSpeakerUID = null;
-    _leadSpeakerImgSrc = null;
-    _leadSpeakerName = null;
+    _leadSpeakers = [];
   }
 
   /// Key media shown on the post card. Extra gallery items stay in post media.
@@ -268,6 +280,24 @@ class EventHead {
 
   void removeMediaItem(final Map<String, dynamic> thisEntry) =>
       _media.remove(thisEntry);
+
+  /// Moves the key-media entry at [from] to index [to].
+  ///
+  /// Both indexes are positions in the list before the move. The same index,
+  /// or an index outside the list, leaves the order unchanged. The first image
+  /// is still the cover ([getKeyGraphic]).
+  void moveMediaItem(final int from, final int to) {
+    if (from == to ||
+        from < 0 ||
+        to < 0 ||
+        from >= _media.length ||
+        to >= _media.length) {
+      return;
+    }
+    final Map<String, dynamic> item = _media.removeAt(from);
+    _media.insert(to, item);
+  }
+
   void resetMediaWithOriginal(List<Map<String, dynamic>> original) {
     _media.clear();
     _media.addAll(original.map((e) => Map<String, dynamic>.from(e)));

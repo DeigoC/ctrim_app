@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../models/user.dart';
 import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/after_route_transition.dart';
 import '../../utility/app_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/cell_group_roster_cache.dart';
@@ -20,6 +21,7 @@ import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/volunteer_role_helpers.dart';
 import '../../utility/app_links.dart';
 import '../../widgets/common/action_sheet.dart';
+import '../../widgets/personal/people_directory_band.dart';
 import '../../widgets/app_search_bar.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
@@ -48,9 +50,12 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   _VolunteerSortMode _sortMode = _VolunteerSortMode.surname;
   bool _placeholdersOnly = false;
   bool _showInactive = false;
-  bool _servingOnly = true;
+  bool _servingOnly = false;
   bool _refreshing = false;
   String? _refreshError;
+  final AfterRouteTransition _afterOpen = AfterRouteTransition();
+  int? _filteredUsersKey;
+  List<User>? _filteredUsersCache;
 
   @override
   void initState() {
@@ -64,15 +69,23 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       assignable,
     );
     // Cache-aware refresh: skips Firestore when lastUpdate matches.
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _refreshUsersFromServer(ignoreCooldown: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      await _ensureCellGroupRostersLoaded();
+      _afterOpen.schedule(this, () {
+        _refreshDirectoryAfterOpen();
+      });
     });
+  }
+
+  Future<void> _refreshDirectoryAfterOpen() async {
+    await _refreshUsersFromServer(ignoreCooldown: true);
+    if (!mounted) return;
+    await _ensureCellGroupRostersLoaded();
   }
 
   @override
   void dispose() {
+    _afterOpen.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -80,10 +93,15 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   Future<void> _ensureCellGroupRostersLoaded() async {
     if (!mounted) return;
     final appContext = Provider.of<AppContext>(context, listen: false);
-    await CellGroupRosterCache.ensureLoaded(
-      appContext.allCellGroups.where((g) => !g.isArchived).map((g) => g.id),
+    final ids = appContext.allCellGroups
+        .where((group) => !group.isArchived)
+        .map((group) => group.id)
+        .toList();
+    final missing = ids.any(
+      (id) => id.isNotEmpty && !CellGroupRosterCache.isLoaded(id),
     );
-    if (mounted) setState(() {});
+    await CellGroupRosterCache.ensureLoaded(ids);
+    if (mounted && missing) setState(() {});
   }
 
   Set<String> _ledMemberIds(AppContext appContext) {
@@ -346,73 +364,22 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ),
                   ),
                 ),
-              if (locationCover != null)
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    filterHorizontalPadding,
-                    8,
-                    filterHorizontalPadding,
-                    4,
-                  ),
-                  child: UserTagGraphic(
-                    imageUrl: locationCover,
-                    height: MediaQuery.sizeOf(context).height * 0.33,
-                  ),
-                ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  filterHorizontalPadding,
-                  0,
-                  filterHorizontalPadding,
-                  4,
-                ),
-                child: Text(
-                  l10n.volunteersDirectoryIntro,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ),
-              _buildListHeader(
-                l10n: l10n,
-                count: listUsers.length,
-                horizontalPadding: filterHorizontalPadding,
-                appContext: appContext,
-              ),
-              if (_hasNonDefaultFilters(appContext))
-                _buildActiveFiltersBanner(
-                  l10n: l10n,
-                  horizontalPadding: filterHorizontalPadding,
-                  appContext: appContext,
-                ),
-              if (showingUnfilteredSearchFallback)
-                _buildUnfilteredSearchBanner(
-                  l10n: l10n,
-                  count: unfilteredSearchMatches.length,
-                  horizontalPadding: filterHorizontalPadding,
-                ),
               Expanded(
-                child: listUsers.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: horizontalPadding + 16),
-                          child: Text(
-                            _emptyMessage(l10n),
-                            style: Theme.of(context).textTheme.bodyLarge,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      )
-                    : _buildSectionedUserList(
-                        users: listUsers,
-                        allTags: appContext.allTags,
-                        cellGroupLeaders: cellGroupLeaders,
-                        appContext: appContext,
-                        horizontalPadding: horizontalPadding,
-                        isWide: isWide,
-                        l10n: l10n,
-                      ),
+                child: _buildSectionedUserList(
+                  users: listUsers,
+                  allTags: appContext.allTags,
+                  cellGroupLeaders: cellGroupLeaders,
+                  ledMemberIds: ledMemberIds,
+                  appContext: appContext,
+                  horizontalPadding: horizontalPadding,
+                  headerPadding: filterHorizontalPadding,
+                  isWide: isWide,
+                  l10n: l10n,
+                  locationCover: locationCover,
+                  showingUnfilteredSearchFallback:
+                      showingUnfilteredSearchFallback,
+                  unfilteredMatchCount: unfilteredSearchMatches.length,
+                ),
               ),
             ],
           ));
@@ -432,7 +399,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   int _activeFilterCount(AppContext appContext) {
     var count = 0;
     if (_locationFilterIsNonDefault(appContext)) count++;
-    if (!_servingOnly) count++;
+    if (_servingOnly) count++;
     if (_placeholdersOnly) count++;
     if (_showInactive) count++;
     if (_sortMode != _VolunteerSortMode.surname) count++;
@@ -454,7 +421,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           ? l10n.volunteersFilterAll
           : _locationFilter);
     }
-    if (!_servingOnly) parts.add(l10n.volunteersFilterEveryone);
+    if (_servingOnly) parts.add(l10n.volunteersFilterServing);
     if (_placeholdersOnly) parts.add(l10n.volunteersShowPlaceholders);
     if (_showInactive) parts.add(l10n.volunteersShowInactive);
     if (_sortMode == _VolunteerSortMode.tags) {
@@ -480,7 +447,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final appContext = Provider.of<AppContext>(context, listen: false);
     setState(() {
       _locationFilter = _defaultLocationFilter(appContext);
-      _servingOnly = true;
+      _servingOnly = false;
       _placeholdersOnly = false;
       _showInactive = false;
       _sortMode = _VolunteerSortMode.surname;
@@ -637,70 +604,172 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required List<User> users,
     required List<UserTag> allTags,
     required CellGroupLeaderIndex cellGroupLeaders,
+    required Set<String> ledMemberIds,
     required AppContext appContext,
     required double horizontalPadding,
+    required double headerPadding,
     required bool isWide,
     required AppLocalizations l10n,
+    required String? locationCover,
+    required bool showingUnfilteredSearchFallback,
+    required int unfilteredMatchCount,
   }) {
-    final sections = _useLetterSections
-        ? PeopleDirectorySections.bySurnameLetter(users)
-        : [
-            PeopleDirectorySection(letter: '', users: users),
-          ];
+    final crossAxisExtent = isWide
+        ? (MediaQuery.sizeOf(context).width - horizontalPadding * 2)
+            .clamp(0.0, double.infinity)
+        : 0.0;
+    final lines = PeopleDirectorySections.scrollLines(
+      users: users,
+      useLetterSections: _useLetterSections,
+      groupSurnames: false,
+      peoplePerRow: isWide
+          ? PeopleDirectoryGrid.crossAxisCount(crossAxisExtent.toDouble())
+          : 1,
+    );
 
     return CustomScrollView(
       slivers: [
-        for (final section in sections) ...[
-          if (_useLetterSections)
-            SliverToBoxAdapter(
-              child: _buildLetterHeader(
-                section.letter,
-                horizontalPadding: horizontalPadding,
+        if (locationCover != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(headerPadding, 8, headerPadding, 4),
+              child: UserTagGraphic(
+                imageUrl: locationCover,
+                height: MediaQuery.sizeOf(context).height * 0.33,
               ),
             ),
-          if (isWide)
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                0,
-                horizontalPadding,
-                0,
-              ),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 420,
-                  mainAxisExtent: 92,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 8,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildUserGridCard(
-                    user: section.users[index],
-                    allTags: allTags,
-                    cellGroupLeaders: cellGroupLeaders,
-                    appContext: appContext,
-                    l10n: l10n,
+          ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(headerPadding, 0, headerPadding, 4),
+            child: Text(
+              l10n.volunteersDirectoryIntro,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                  childCount: section.users.length,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: _buildListHeader(
+            l10n: l10n,
+            count: users.length,
+            horizontalPadding: headerPadding,
+            appContext: appContext,
+          ),
+        ),
+        if (_hasNonDefaultFilters(appContext))
+          SliverToBoxAdapter(
+            child: _buildActiveFiltersBanner(
+              l10n: l10n,
+              horizontalPadding: headerPadding,
+              appContext: appContext,
+            ),
+          ),
+        if (showingUnfilteredSearchFallback)
+          SliverToBoxAdapter(
+            child: _buildUnfilteredSearchBanner(
+              l10n: l10n,
+              count: unfilteredMatchCount,
+              horizontalPadding: headerPadding,
+            ),
+          ),
+        if (users.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Padding(
+                padding:
+                    EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
+                child: Text(
+                  _emptyMessage(l10n),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  textAlign: TextAlign.center,
                 ),
-              ),
-            )
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildUserListTile(
-                  user: section.users[index],
-                  allTags: allTags,
-                  cellGroupLeaders: cellGroupLeaders,
-                  appContext: appContext,
-                  l10n: l10n,
-                ),
-                childCount: section.users.length,
               ),
             ),
+          )
+        else ...[
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildDirectoryLine(
+                line: lines[index],
+                spacedBelow: isWide &&
+                    index + 1 < lines.length &&
+                    lines[index + 1].isPeople,
+                allTags: allTags,
+                cellGroupLeaders: cellGroupLeaders,
+                ledMemberIds: ledMemberIds,
+                appContext: appContext,
+                horizontalPadding: horizontalPadding,
+                crossAxisExtent: crossAxisExtent.toDouble(),
+                isWide: isWide,
+                l10n: l10n,
+              ),
+              childCount: lines.length,
+              addAutomaticKeepAlives: false,
+              findChildIndexCallback: (key) =>
+                  PeopleDirectorySections.indexForKey(lines, key),
+            ),
+          ),
+          const SliverPadding(padding: EdgeInsets.only(bottom: 88)),
         ],
-        const SliverPadding(padding: EdgeInsets.only(bottom: 88)),
       ],
+    );
+  }
+
+  Widget _buildDirectoryLine({
+    required PeopleDirectoryScrollLine line,
+    required bool spacedBelow,
+    required List<UserTag> allTags,
+    required CellGroupLeaderIndex cellGroupLeaders,
+    required Set<String> ledMemberIds,
+    required AppContext appContext,
+    required double horizontalPadding,
+    required double crossAxisExtent,
+    required bool isWide,
+    required AppLocalizations l10n,
+  }) {
+    final Widget child;
+    if (line.isLetter) {
+      child = _buildLetterHeader(
+        line.letter!,
+        horizontalPadding: horizontalPadding,
+      );
+    } else if (isWide) {
+      child = Padding(
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        child: PeopleDirectoryBand(
+          crossAxisExtent: crossAxisExtent,
+          mainAxisExtent: 92,
+          spacedBelow: spacedBelow,
+          children: [
+            for (final user in line.users)
+              _buildUserGridCard(
+                user: user,
+                allTags: allTags,
+                cellGroupLeaders: cellGroupLeaders,
+                ledMemberIds: ledMemberIds,
+                appContext: appContext,
+                l10n: l10n,
+              ),
+          ],
+        ),
+      );
+    } else {
+      child = _buildUserListTile(
+        user: line.users.single,
+        allTags: allTags,
+        cellGroupLeaders: cellGroupLeaders,
+        ledMemberIds: ledMemberIds,
+        appContext: appContext,
+        l10n: l10n,
+      );
+    }
+
+    return KeyedSubtree(
+      key: ValueKey(line.storageKey),
+      child: child,
     );
   }
 
@@ -728,6 +797,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required User user,
     required List<UserTag> allTags,
     required CellGroupLeaderIndex cellGroupLeaders,
+    required Set<String> ledMemberIds,
     required AppContext appContext,
     required AppLocalizations l10n,
   }) {
@@ -743,8 +813,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final canEditUser = canEditPlaceholderProfile(
       actor: appContext.currentUser,
       target: user,
-      leadsCellGroupContainingTarget:
-          _ledMemberIds(appContext).contains(user.id),
+      leadsCellGroupContainingTarget: ledMemberIds.contains(user.id),
     );
     final meta = _compactPersonMeta(roles: roles, tags: userTags);
 
@@ -774,6 +843,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required User user,
     required List<UserTag> allTags,
     required CellGroupLeaderIndex cellGroupLeaders,
+    required Set<String> ledMemberIds,
     required AppContext appContext,
     required AppLocalizations l10n,
   }) {
@@ -789,8 +859,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final canEditUser = canEditPlaceholderProfile(
       actor: appContext.currentUser,
       target: user,
-      leadsCellGroupContainingTarget:
-          _ledMemberIds(appContext).contains(user.id),
+      leadsCellGroupContainingTarget: ledMemberIds.contains(user.id),
     );
     final theme = Theme.of(context);
     final meta = _compactPersonMeta(roles: roles, tags: userTags);
@@ -863,6 +932,85 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         spacing: 6,
         runSpacing: 6,
         children: chips,
+      ),
+    );
+  }
+
+  void _setDirectoryShow({
+    required bool servingOnly,
+    required bool placeholdersOnly,
+  }) {
+    _servingOnly = servingOnly;
+    _placeholdersOnly = placeholdersOnly;
+    if (placeholdersOnly && !servingOnly) {
+      _selectedRoles = {};
+      _selectedTagIDs = {};
+    }
+  }
+
+  String _directoryShowHint(AppLocalizations l10n) {
+    if (_servingOnly && _placeholdersOnly) {
+      return l10n.volunteersFilterAudienceHintBoth;
+    }
+    if (_placeholdersOnly) return l10n.volunteersFilterAudienceHintPlaceholders;
+    if (_servingOnly) return l10n.volunteersFilterServingSubtitle;
+    return l10n.volunteersFilterAudienceHintEveryone;
+  }
+
+  Widget _buildShowFilterControls({
+    required AppLocalizations l10n,
+    required bool showPlaceholdersOption,
+    required void Function(VoidCallback update) refreshSheet,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: Text(l10n.volunteersFilterEveryone),
+                selected: !_servingOnly && !_placeholdersOnly,
+                onSelected: (selected) {
+                  if (!selected) return;
+                  refreshSheet(() => _setDirectoryShow(
+                        servingOnly: false,
+                        placeholdersOnly: false,
+                      ));
+                },
+              ),
+              FilterChip(
+                label: Text(l10n.volunteersFilterServing),
+                selected: _servingOnly,
+                onSelected: (selected) => refreshSheet(() => _setDirectoryShow(
+                      servingOnly: selected,
+                      placeholdersOnly: _placeholdersOnly,
+                    )),
+              ),
+              if (showPlaceholdersOption)
+                FilterChip(
+                  label: Text(l10n.volunteersShowPlaceholders),
+                  selected: _placeholdersOnly,
+                  onSelected: (selected) => refreshSheet(
+                    () => _setDirectoryShow(
+                      servingOnly: _servingOnly,
+                      placeholdersOnly: selected,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _directoryShowHint(l10n),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ],
       ),
     );
   }
@@ -952,27 +1100,11 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   ),
                 ),
                 _filterSectionLabel(l10n.volunteersFilterShowSection),
-                SwitchListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                  title: Text(l10n.volunteersFilterServing),
-                  subtitle: Text(l10n.volunteersFilterServingSubtitle),
-                  value: _servingOnly,
-                  onChanged: (value) =>
-                      refreshSheet(() => _servingOnly = value),
+                _buildShowFilterControls(
+                  l10n: l10n,
+                  showPlaceholdersOption: showPlaceholdersOption,
+                  refreshSheet: refreshSheet,
                 ),
-                if (showPlaceholdersOption)
-                  SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    title: Text(l10n.volunteersShowPlaceholders),
-                    value: _placeholdersOnly,
-                    onChanged: (value) => refreshSheet(() {
-                      _placeholdersOnly = value;
-                      if (value) {
-                        _selectedRoles = {};
-                        _selectedTagIDs = {};
-                      }
-                    }),
-                  ),
                 if (canEdit)
                   SwitchListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1010,7 +1142,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ],
                   ),
                 ),
-                if (!_placeholdersOnly) ...[
+                if (!_placeholdersOnly || _servingOnly) ...[
                   _filterSectionLabel(l10n.volunteersFilterRolesSection),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -1064,7 +1196,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ),
                   ),
                 ],
-                if (activeTags.isNotEmpty && !_placeholdersOnly) ...[
+                if (activeTags.isNotEmpty &&
+                    (!_placeholdersOnly || _servingOnly)) ...[
                   _filterSectionLabel(l10n.volunteersFilterTeamsSection),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -1097,7 +1230,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                       child: TextButton(
                         onPressed: () => refreshSheet(() {
                           _locationFilter = _defaultLocationFilter(appContext);
-                          _servingOnly = true;
+                          _servingOnly = false;
                           _placeholdersOnly = false;
                           _showInactive = false;
                           _sortMode = _VolunteerSortMode.surname;
@@ -1124,20 +1257,46 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final appContext = Provider.of<AppContext>(context, listen: false);
     final currentUser = appContext.currentUser;
     final ledMemberIds = _ledMemberIds(appContext);
+    final cacheKey = Object.hash(
+      appContext.usersEpoch,
+      appContext.sessionEpoch,
+      appContext.catalogsEpoch,
+      identityHashCode(allUsers),
+      _locationFilter,
+      _servingOnly,
+      _placeholdersOnly,
+      _showInactive,
+      _sortMode,
+      _searchQuery,
+      _hashIds(_selectedTagIDs),
+      _hashIds(_selectedRoles.map((role) => role.name)),
+      _hashIds(ledMemberIds),
+    );
+    final cached = _filteredUsersCache;
+    if (cached != null && cacheKey == _filteredUsersKey) return cached;
+
     Iterable<User> users = allUsers;
 
+    // Placeholders alone uses placeholders-only visibility. Both chips leave
+    // that off so serving members stay, then matchesShowFilter keeps both groups.
+    final placeholdersOnlyMode = _placeholdersOnly && !_servingOnly;
     users = users.where((user) => isVisibleInVolunteerDirectory(
           user: user,
           viewer: currentUser,
-          placeholdersOnly: _placeholdersOnly,
+          placeholdersOnly: placeholdersOnlyMode,
           showInactive: _showInactive,
           leadsCellGroupContainingUser: ledMemberIds.contains(user.id),
         ));
 
-    if (!_placeholdersOnly && _servingOnly) {
-      users = users.where((user) => VolunteerRoleHelpers.userServes(
+    if (_servingOnly || _placeholdersOnly) {
+      users = users.where((user) => PeopleDirectoryQuery.matchesShowFilter(
             user: user,
-            cellGroupLeaders: cellGroupLeaders,
+            servingOnly: _servingOnly,
+            placeholdersOnly: _placeholdersOnly,
+            userServes: VolunteerRoleHelpers.userServes(
+              user: user,
+              cellGroupLeaders: cellGroupLeaders,
+            ),
           ));
     }
 
@@ -1145,14 +1304,14 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       users = users.where((user) => user.location == _locationFilter);
     }
 
-    if (_selectedTagIDs.isNotEmpty && !_placeholdersOnly) {
+    if (_selectedTagIDs.isNotEmpty && !placeholdersOnlyMode) {
       users = users.where((user) => UserTagHelpers.userMatchesTagFilter(
             user: user,
             selectedTagIDs: _selectedTagIDs,
           ));
     }
 
-    if (_selectedRoles.isNotEmpty && !_placeholdersOnly) {
+    if (_selectedRoles.isNotEmpty && !placeholdersOnlyMode) {
       users = users.where((user) => VolunteerRoleHelpers.userMatchesRoleFilter(
             user: user,
             selected: _selectedRoles,
@@ -1179,7 +1338,14 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
             ),
         };
       });
+    _filteredUsersKey = cacheKey;
+    _filteredUsersCache = result;
     return result;
+  }
+
+  int _hashIds(Iterable<String> ids) {
+    final sorted = ids.toList()..sort();
+    return Object.hashAll(sorted);
   }
 
   String _personLocationLine(User user, AppLocalizations l10n) {
@@ -1205,6 +1371,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   String _emptyMessage(AppLocalizations l10n) {
     if (_searchQuery.isNotEmpty) {
       return l10n.volunteersEmptySearch(_searchQuery);
+    }
+    if (_placeholdersOnly && _servingOnly) {
+      return l10n.volunteersEmptyServingAndPlaceholders;
     }
     if (_placeholdersOnly) {
       return l10n.volunteersEmptyPlaceholders;

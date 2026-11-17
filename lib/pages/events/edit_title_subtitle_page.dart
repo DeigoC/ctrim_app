@@ -5,19 +5,16 @@ import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
-import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/parent_link.dart';
-import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/post_title_attendees.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/catalog/cell_group_picker.dart';
 import '../../widgets/catalog/post_tag_picker.dart';
-import '../../widgets/user_avatar.dart';
-import '../personal/select_users_page.dart';
+import '../../widgets/posts/lead_speaker_field.dart';
 import 'select_period_parent_page.dart';
 
 class EditHeadDetailsPage extends StatefulWidget {
@@ -31,7 +28,7 @@ class EditHeadDetailsPage extends StatefulWidget {
 class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
   late final TextEditingController _tecTitle, _tecSubtitle;
   late final String _originalTitle, _originalSubtitle;
-  late final String? _originalLeadSpeakerUID;
+  late final List<String> _originalLeadSpeakerUIDs;
   late final List<String> _originalTagIDs;
   late final List<String> _originalCellGroupIDs;
   late final bool _originalIsPeriodParent;
@@ -41,8 +38,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
   void initState() {
     _originalTitle = widget.eventContext.head.title;
     _originalSubtitle = widget.eventContext.head.subtitle;
-    _originalLeadSpeakerUID = widget.eventContext.metadata.leadSpeakerUID ??
-        widget.eventContext.head.leadSpeakerUID;
+    _originalLeadSpeakerUIDs = _currentLeadSpeakerUIDs;
     _originalTagIDs = List<String>.from(widget.eventContext.head.tagIDs);
     _originalCellGroupIDs =
         List<String>.from(widget.eventContext.head.cellGroupIDs);
@@ -112,7 +108,8 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
 
     final titleChanged = _originalTitle.compareTo(newTitle) != 0;
     final subtitleChanged = _originalSubtitle.compareTo(newSubtitle) != 0;
-    final leadSpeakerChanged = _leadSpeakerUID != _originalLeadSpeakerUID;
+    final leadSpeakerChanged =
+        !_sameOrderedIds(_currentLeadSpeakerUIDs, _originalLeadSpeakerUIDs);
     final tagsChanged =
         !_sameIdLists(_originalTagIDs, widget.eventContext.head.tagIDs);
     final cellGroupsChanged = !_sameIdLists(
@@ -144,9 +141,21 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
     return b.every(setA.contains);
   }
 
-  String? get _leadSpeakerUID =>
-      widget.eventContext.metadata.leadSpeakerUID ??
-      widget.eventContext.head.leadSpeakerUID;
+  bool _sameOrderedIds(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  List<String> get _currentLeadSpeakerUIDs {
+    final fromMeta = widget.eventContext.metadata.leadSpeakerUIDs;
+    if (fromMeta.isNotEmpty) return List<String>.from(fromMeta);
+    return widget.eventContext.head.leadSpeakers
+        .map((speaker) => speaker.uid)
+        .toList();
+  }
 
   bool get _canEditParentStructure {
     final appContext = Provider.of<AppContext>(context, listen: false);
@@ -271,7 +280,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
           },
         ),
         const SizedBox(height: 12),
-        _buildLeadSpeakerCard(appContext),
+        _buildLeadSpeakerCard(),
         if (_canEditParentStructure) ...[
           const SizedBox(height: 12),
           _buildRelatedPostsCard(appContext),
@@ -286,59 +295,13 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
     });
   }
 
-  Widget _buildLeadSpeakerCard(AppContext appContext) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final User? speaker = _resolveLeadSpeaker(appContext);
-
+  Widget _buildLeadSpeakerCard() {
     return _DetailsSectionCard(
       icon: Icons.record_voice_over_outlined,
-      title: 'Lead speaker',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Shown on the bulletin card when there is no cover media',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 12),
-          Material(
-            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(12),
-            child: ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              leading: speaker == null
-                  ? CircleAvatar(
-                      backgroundColor: colorScheme.surfaceContainerHighest,
-                      child: Icon(Icons.person_outline,
-                          color: colorScheme.onSurfaceVariant),
-                    )
-                  : MyUserAvatar(speaker, radius: 20),
-              title: Text(speaker?.fullname ?? 'No lead speaker'),
-              subtitle: speaker == null
-                  ? const Text('Tap to select')
-                  : (speaker.imgSrc.isEmpty
-                      ? const Text('No photo — card shows initials')
-                      : null),
-              trailing: speaker == null
-                  ? Icon(Icons.chevron_right,
-                      color: colorScheme.onSurfaceVariant)
-                  : IconButton(
-                      tooltip: 'Clear',
-                      onPressed: () {
-                        setState(() =>
-                            widget.eventContext.applyLeadSpeaker(uid: null));
-                      },
-                      icon: const Icon(Icons.close),
-                    ),
-              onTap: _onManageLeadSpeakerTap,
-            ),
-          ),
-        ],
+      title: 'Speakers',
+      child: LeadSpeakerField(
+        eventContext: widget.eventContext,
+        onChanged: () => setState(() {}),
       ),
     );
   }
@@ -482,46 +445,6 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
     }
 
     setState(() => widget.eventContext.applyParentID(newParentID));
-  }
-
-  User? _resolveLeadSpeaker(AppContext appContext) {
-    final uid = _leadSpeakerUID;
-    if (uid == null || uid.isEmpty) return null;
-    return appContext.userById(uid);
-  }
-
-  Future<void> _onManageLeadSpeakerTap() async {
-    final result = await Navigator.push<List<String>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SelectUsersPage(
-          selectedUIDs:
-              _leadSpeakerUID == null ? <String>[] : [_leadSpeakerUID!],
-          includeCurrentUser: true,
-          maxSelection: 1,
-          title: 'Select lead speaker',
-          preferServing: true,
-          allowCreatePlaceholder: canCreatePlaceholderUser(
-            actor: Provider.of<AppContext>(context, listen: false).currentUser,
-            postAuthorUid: widget.eventContext.metadata.authorUID,
-          ),
-          postIdForPlaceholderCreate: widget.eventContext.id,
-        ),
-      ),
-    );
-    if (result == null || !mounted) return;
-
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    setState(() {
-      if (result.isEmpty) {
-        widget.eventContext.applyLeadSpeaker(uid: null);
-      } else {
-        final user = appContext.userById(result.first);
-        if (user == null) return;
-        widget.eventContext.applyLeadSpeaker(
-            uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
-      }
-    });
   }
 }
 

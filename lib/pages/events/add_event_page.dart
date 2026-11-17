@@ -13,6 +13,7 @@ import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/notifications/notification_token_resolver.dart';
 import '../../utility/post_draft_review.dart';
+import '../../utility/post_title_attendees.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/action_sheet.dart';
 import '../../widgets/posts/add_header_meta_tab_body.dart';
@@ -47,6 +48,7 @@ class _AddEventPageState extends State<AddEventPage>
   late final AppContext _appContext;
   late final TabController _tabController;
   late final TextEditingController _tecTitle, _tecSubtitle;
+  late final String _defaultTitle;
   final NotificationTokenResolver _tokenResolver = NotificationTokenResolver();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   final EventHeadDBManager _headDBManager = EventHeadDBManager();
@@ -66,6 +68,7 @@ class _AddEventPageState extends State<AddEventPage>
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
     _tabController = TabController(length: 4, vsync: this);
+    _defaultTitle = widget.eventContext.head.title.trim();
     _tecTitle = TextEditingController(text: widget.eventContext.head.title);
     _tecSubtitle =
         TextEditingController(text: widget.eventContext.head.subtitle);
@@ -227,9 +230,28 @@ class _AddEventPageState extends State<AddEventPage>
     return true;
   }
 
+  /// Cell-group drafts keep a template title and gain attendee names on save.
+  /// A title the organiser has edited is left as written.
+  String _titleToSave() {
+    final pastMeeting = widget.eventContext.head.isRecent;
+    return PostTitleAttendees.resolveNewCellGroupTitle(
+      title: _tecTitle.text,
+      defaultTitle: _defaultTitle,
+      linkedToCellGroup: widget.eventContext.head.cellGroupIDs.isNotEmpty,
+      shortenedNames: pastMeeting
+          ? PostTitleAttendees.shortenedNames(
+              widget.eventContext.draftAttendees,
+              _appContext.userById,
+            )
+          : const [],
+    );
+  }
+
   void _onSaveClick() async {
-    final confirmed = await _confirmSave();
+    final title = _titleToSave();
+    final confirmed = await _confirmSave(title);
     if (!confirmed || !mounted) return;
+    _tecTitle.text = title;
 
     final saved = await DialogManager.runWithSteppedProgressDialog(
       context: context,
@@ -245,10 +267,10 @@ class _AddEventPageState extends State<AddEventPage>
     }
   }
 
-  Future<bool> _confirmSave() async {
+  Future<bool> _confirmSave(String title) async {
     final review = buildPostDraftReview(
       eventContext: widget.eventContext,
-      title: _tecTitle.text.trim(),
+      title: title,
       subtitle: _tecSubtitle.text.trim(),
       allTags: _appContext.allPostTags,
     );

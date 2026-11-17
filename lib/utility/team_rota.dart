@@ -1,5 +1,7 @@
 import '../models/event/event_head.dart';
 import '../models/event/event_program.dart';
+import '../models/user.dart';
+import '../models/user_tag.dart';
 import 'catalog/volunteer_locations.dart';
 
 /// One post on the personal team rota, with the programme roles that match
@@ -29,16 +31,49 @@ class TeamRotaMonthGroup {
   DateTime get monthDate => DateTime(year, month);
 }
 
+/// One empty programme slot on the ministry schedule index.
+class TeamRotaGap {
+  const TeamRotaGap({
+    required this.post,
+    required this.role,
+  });
+
+  final TeamRotaPost post;
+  final Map<String, dynamic> role;
+}
+
 /// Filter and group dated posts into a team rota.
 ///
 /// Join is role [EventProgram.tagIDsOf] vs selected team-tag IDs — not the
 /// assignee's personal tags. Untagged roles are omitted. Empty [selectedTagIDs]
 /// means no ministry filter (all tagged roles). Empty `uids` still belong to
-/// the team.
+/// the team when the line [EventProgram.requiresPeople]. A line that does not
+/// is a shared responsibility: it stays out of the list and out of gap counts
+/// unless [matchingPosts] is asked to include them.
 class TeamRotaQuery {
   TeamRotaQuery._();
 
   static const int defaultHorizonMonths = 3;
+
+  /// Roles a card shows before **View schedule**.
+  static const int previewRoleCount = 4;
+
+  /// Cards with this many roles or fewer show every matching line.
+  static const int collapseAfterRoleCount = 5;
+
+  /// How many matching roles a card paints. Longer lists show
+  /// [previewRoleCount]; the rest open on the event schedule page.
+  static int visibleRoleCount(int total) {
+    if (total <= collapseAfterRoleCount) return total;
+    return previewRoleCount;
+  }
+
+  /// Every programme line, earliest start first. Lines with no ministry stay in.
+  static List<Map<String, dynamic>> rolesInStartOrder(EventProgram program) {
+    final roles = List<Map<String, dynamic>>.from(program.roles);
+    roles.sort(_compareRoleStart);
+    return roles;
+  }
 
   static DateTime rangeStart(final DateTime now) =>
       DateTime(now.year, now.month, now.day);
@@ -54,6 +89,175 @@ class TeamRotaQuery {
     final raw = role['uids'];
     if (raw is! List) return const [];
     return raw.map((e) => e.toString()).where((id) => id.isNotEmpty).toList();
+  }
+
+  /// True when [a] and [b] name the same people, ignoring order.
+  static bool sameAssigneeIds(
+      final Iterable<String> a, final Iterable<String> b) {
+    final left = Set<String>.from(a);
+    final right = Set<String>.from(b);
+    return left.length == right.length && left.containsAll(right);
+  }
+
+  static bool isAssignedTo(final Map<String, dynamic> role, final String uid) {
+    if (uid.isEmpty) return false;
+    return uidsOf(role).contains(uid);
+  }
+
+  /// Empty slot that still needs a named person.
+  static bool isVacancy(final Map<String, dynamic> role) =>
+      uidsOf(role).isEmpty && EventProgram.requiresPeople(role);
+
+  /// Ministry-owned line that does not need a named person.
+  static bool isSharedResponsibility(final Map<String, dynamic> role) =>
+      !EventProgram.requiresPeople(role) &&
+      EventProgram.tagIDsOf(role).isNotEmpty;
+
+  /// Empty optional line with no ministry: the morning shows the title only.
+  static bool hidesAssigneeLine(final Map<String, dynamic> role) =>
+      uidsOf(role).isEmpty &&
+      !EventProgram.requiresPeople(role) &&
+      EventProgram.tagIDsOf(role).isEmpty;
+
+  /// Ministries selected when the rota opens: the user's own active ministries,
+  /// plus active ministries they head at [locationId].
+  static Set<String> openingMinistryIds({
+    required User user,
+    required List<UserTag> allTags,
+    required String locationId,
+  }) {
+    final ids = <String>{};
+    final siteId = locationId.trim();
+    for (final tag in allTags) {
+      if (!tag.isActive) continue;
+      if (user.tagIDs.contains(tag.id) ||
+          (siteId.isNotEmpty &&
+              tag.headsForLocation(siteId).contains(user.id))) {
+        ids.add(tag.id);
+      }
+    }
+    return ids;
+  }
+
+  /// A timed slot locks at its start. A slot with no start stays editable
+  /// through [eventDate]'s calendar day.
+  static bool roleHasStarted({
+    required Map<String, dynamic> role,
+    required DateTime? eventDate,
+    required DateTime now,
+  }) {
+    final start = role['start'] as DateTime?;
+    if (start != null) return !now.isBefore(start);
+    if (eventDate == null) return false;
+    final day = DateTime(eventDate.year, eventDate.month, eventDate.day);
+    final today = DateTime(now.year, now.month, now.day);
+    return day.isBefore(today);
+  }
+
+  /// Area admins may assign any tagged slot. A member of one of the slot's
+  /// ministries may assign it, lead or not. A ministry head may assign a slot
+  /// they head at [locationId] even when they are not a member. A started
+  /// slot is locked. A slot with no ministry is locked.
+  static bool canAssignRole({
+    required User actor,
+    required Map<String, dynamic> role,
+    required DateTime? eventDate,
+    required String? locationId,
+    required List<UserTag> allTags,
+    required DateTime now,
+  }) {
+    if (!EventProgram.requiresPeople(role)) return false;
+    if (roleHasStarted(role: role, eventDate: eventDate, now: now)) {
+      return false;
+    }
+    final tagIds = EventProgram.tagIDsOf(role);
+    if (tagIds.isEmpty) return false;
+    if (actor.isAreaAdmin) return true;
+    if (actor.hasAnyTag(tagIds)) return true;
+    final siteId = locationId?.trim() ?? '';
+    if (siteId.isEmpty) return false;
+    for (final tagId in tagIds) {
+      for (final tag in allTags) {
+        if (tag.id != tagId) continue;
+        if (tag.headsForLocation(siteId).contains(actor.id)) return true;
+      }
+    }
+    return false;
+  }
+
+  /// A member of one of the slot's ministries may add or remove themselves
+  /// until the slot starts. Heading the ministry, or being an area admin,
+  /// does not qualify on its own.
+  static bool canClaimRole({
+    required User actor,
+    required Map<String, dynamic> role,
+    required DateTime? eventDate,
+    required DateTime now,
+  }) {
+    if (!EventProgram.requiresPeople(role)) return false;
+    if (roleHasStarted(role: role, eventDate: eventDate, now: now)) {
+      return false;
+    }
+    final tagIds = EventProgram.tagIDsOf(role);
+    if (tagIds.isEmpty) return false;
+    return actor.hasAnyTag(tagIds);
+  }
+
+  /// Empty slots on one post, including roles past the card preview.
+  static int unassignedCount(final TeamRotaPost post) {
+    var count = 0;
+    for (final role in post.roles) {
+      if (isVacancy(role)) count++;
+    }
+    return count;
+  }
+
+  /// True when [uid] is on any matching role, including ones past the card preview.
+  static bool viewerIsServing(final TeamRotaPost post, final String uid) {
+    for (final role in post.roles) {
+      if (isAssignedTo(role, uid)) return true;
+    }
+    return false;
+  }
+
+  static int unassignedRoleCount(final List<TeamRotaPost> posts) {
+    var count = 0;
+    for (final post in posts) {
+      count += unassignedCount(post);
+    }
+    return count;
+  }
+
+  /// How many empty slots the Needs people index lists.
+  static const int gapIndexLimit = 5;
+
+  /// Soonest empty slots, in post date order then role start order.
+  ///
+  /// [posts] is already ordered by [matchingPosts]. Stops at [limit].
+  static List<TeamRotaGap> firstGaps(
+    final List<TeamRotaPost> posts, {
+    int limit = gapIndexLimit,
+  }) {
+    final gaps = <TeamRotaGap>[];
+    for (final post in posts) {
+      for (final role in post.roles) {
+        if (!isVacancy(role)) continue;
+        gaps.add(TeamRotaGap(post: post, role: role));
+        if (gaps.length >= limit) return gaps;
+      }
+    }
+    return gaps;
+  }
+
+  /// Keeps posts that still have an empty slot, and only those empty slots.
+  static List<TeamRotaPost> postsNeedingPeople(final List<TeamRotaPost> posts) {
+    final result = <TeamRotaPost>[];
+    for (final post in posts) {
+      final gaps = post.roles.where(isVacancy).toList();
+      if (gaps.isEmpty) continue;
+      result.add(TeamRotaPost(head: post.head, roles: gaps));
+    }
+    return result;
   }
 
   static bool headMatchesLocation({
@@ -85,6 +289,7 @@ class TeamRotaQuery {
     required List<({EventHead head, EventProgram program})> posts,
     required Set<String> selectedTagIDs,
     required String locationFilter,
+    bool includeSharedResponsibilities = false,
   }) {
     final result = <TeamRotaPost>[];
     for (final post in posts) {
@@ -95,10 +300,13 @@ class TeamRotaQuery {
         continue;
       }
       final roles = post.program.roles
-          .where((role) => roleMatchesTeamTags(
+          .where((role) =>
+              roleMatchesTeamTags(
                 role: role,
                 selectedTagIDs: selectedTagIDs,
-              ))
+              ) &&
+              (includeSharedResponsibilities ||
+                  EventProgram.requiresPeople(role)))
           .toList()
         ..sort(_compareRoleStart);
       if (roles.isEmpty) continue;

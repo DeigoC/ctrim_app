@@ -12,8 +12,8 @@ Short definitions of **guest**, **community profile**, **placeholder**, **Leader
 |-----|----------------|
 | **Guest** | Browse bulletin, information, and public cell-group cards without signing in |
 | **Signed-in person** | Interest (“follow updates”), notification preferences, and richer personal options once they have an account |
-| **Community profile** | Appear in the People directory; My Schedule, My Posts, Team rota, and assignments when organisers involve them |
-| **Serving** | Shown by default in the directory: Leader or Admin, a ministry, or cell-group leadership |
+| **Community profile** | Appear in the People directory; My Schedule, My Posts, Ministry Schedule, and assignments when organisers involve them |
+| **Serving** | Optional directory refine: Leader or Admin, a ministry, or cell-group leadership |
 | **Placeholder** | An organiser-created name in the directory **before** that person has signed in — for attendance, cell groups, and programmes |
 | **Leader** | Create posts and templates; register / add people they work with; edit the Information (CTRIM) section |
 | **Area admin** | A **Leader** plus admin for their **assigned area(s)** — people, tags, locations, cell groups |
@@ -27,7 +27,7 @@ These are not five separate “apps” — they stack:
 
 1. **Anyone** can open the app as a **guest** and browse public content.  
 2. **Signing in** unlocks personal actions (interest, notification prefs, and similar).  
-3. A **community profile** is the person record organisers assign to programmes, attendance, and cell groups. Signing in creates that profile; it does **not** mean they serve. The People directory defaults to people who **serve** (Leader/Admin, a ministry, or cell-group leadership) — turn off **Serving** to see everyone.  
+3. A **community profile** is the person record organisers assign to programmes, attendance, and cell groups. Signing in creates that profile; it does **not** mean they serve. The People directory opens with **Everyone** at your location. **Serving** narrows that list to Leader/Admin, a ministry, or cell-group leadership.  
 4. **Placeholder** profiles fill the gap when someone needs to be listed **before** they create an account — same kind of directory entry, without a sign-in yet.  
 5. **Leader** is an elevated flag on a community profile. **Area admin** is a step above Leader — every area admin is a Leader, but not every Leader is an area admin.  
 6. Separately, the **author** of a post (and anyone listed as a **contributor**) can edit **that** post even if they are not a global admin.
@@ -40,8 +40,8 @@ These are not five separate “apps” — they stack:
 | See interest / attendance **counts** on posts | Yes | Yes | Yes | Yes | Yes |
 | Mark interest (“follow updates”) and see who is interested | — | Yes | Yes | Yes | Yes |
 | Richer people / member details on posts and groups | — | Yes | Yes | Yes | Yes |
-| My Schedule / My Posts / Team rota | — | When they have a profile & assignments | Yes | Yes | Yes |
-| Who's who (Personal → People & teams) | — | Yes* | Yes | Yes | Yes |
+| My Schedule / My Posts / Ministry Schedule | — | When they have a profile & assignments | Yes | Yes | Yes |
+| Who's Who (Personal → People & Teams) | — | Yes* | Yes | Yes | Yes |
 | Recent activity on a profile (last few lines) | — | Yes* | Yes | Yes | Yes |
 | Full activity list for a person | — | — | — | — | Yes |
 | Create posts / use post templates | — | — | — | Yes | Yes |
@@ -71,7 +71,7 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## Area admin
 
-**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, ministries and locations (a cover photo and gallery for the place itself), cell groups, and extra pages on a church hub. Ministries and post tags get a colour when added (you can change or clear it). Each ministry can also have a **short description** of what it is for, and one **main image**. Each church location has its own **heads** and its own **photos**. Opening a ministry shows, for the site you pick, those heads, the people in it there, and that ministry's schedule for the past three months and the next three months. Area admins choose the heads and photos for each location. A **ministry** can be hidden from **guests**: the label drops off profiles, the People directory, schedule details, and the public Ministry list. The person still appears, and a schedule line stays unless that line itself is marked hidden from guests. Signed-in people still see the ministry. Controls will continue to be gated by area assignment as that model lands fully.
+**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, ministries and locations (a cover photo and gallery for the place itself), cell groups, and extra pages on a church hub. Ministries and post tags get a colour when added (you can change or clear it). Each ministry can also have a **short description** of what it is for, and one **main image**. Each post tag can have a short description too. Each church location has its own **heads** and its own **photos**. Opening a ministry shows, for the site you pick, those heads, the people in it there, and that ministry's schedule for the past three months and the next three months. Area admins choose the heads and photos for each location. From **Ministry Schedule**, someone in a ministry can put themselves on an upcoming slot tagged for that ministry, take themselves off, or assign other people on that slot. A ministry head can do the same for a ministry they head at that church even when they are not a member of it, and an area admin can assign people on any tagged slot. The slot’s time and title stay on the post. A **ministry** can be hidden from **guests**: the label drops off profiles, the People directory, schedule details, and **View Ministries**. The person still appears, and a schedule line stays unless that line itself is marked hidden from guests. Signed-in people still see the ministry. Controls will continue to be gated by area assignment as that model lands fully.
 
 ## Site admin *(planned)*
 
@@ -79,13 +79,13 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## Names guests see
 
-On a profile link, a ministry list, pastors, a schedule role, or the speaker on a bulletin card, people who are not signed in see a first name and the first letter of the surname (for example Adam B.). That person can turn on **Full surname for guests** in Personal settings, and an area admin can set the same choice when editing their profile. Signed-in people still see full names.
+On a profile link, a ministry list, pastors, a schedule role, the speaker on a bulletin card, or the People tab on a post (interest, expected, and attendance), people who are not signed in see a first name and the first letter of the surname (for example Adam B.). That person can turn on **Full Surname for Guests** in Personal settings, and an area admin can set the same choice when editing their profile. Signed-in people still see full names.
 
 ## People directory
 
-**Who's who** (from Personal → People & teams) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) and on people who **serve**. When that location has a cover photo, the photo appears at the top of the list; it stays while you keep that place selected and hides on **All**.
+**Who's Who** (from Personal → People & Teams) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) with **Everyone** there. When that location has a cover photo, the photo appears at the top of the list and scrolls away with the names. It is shown while that place is selected and hidden on **All**.
 
-Use **Refine & sort** (tune icon in the app bar) to change **location**, **Serving**, role filters, ministries, sort order, and **Placeholders**. The app bar title still reflects your chosen location (for example **Belfast People**). When sorted by surname, names are grouped **A–Z** by last name. Each row shows a photo, name, location, and at most one role badge plus one ministry — open a profile for the full picture. Opening a profile updates the address so you can share or bookmark it; hidden, archived, and placeholder profiles are not reachable from a public link.
+Use **Refine & sort** (tune icon in the app bar) to change **location**, who is shown, role filters, ministries, and sort order. Under **Show**, choose **Everyone**, **Serving**, **Placeholders**, or Serving and Placeholders together. The app bar title still reflects your chosen location (for example **Belfast People**). When sorted by surname, names are grouped **A–Z** by last name. Each row shows a photo, name, location, and at most one role badge plus one ministry — open a profile for the full picture. Opening a profile updates the address so you can share or bookmark it; hidden, archived, and placeholder profiles are not reachable from a public link. If the profile is the first page, **Home** opens Personal. **View Ministries** uses `/ministries` and `/ministries/:id` the same way; ministries hidden from guests are not reachable from a public link for them.
 
 If a **search** finds no one under the current filters, the directory still shows people whose names match **without** those filters (other locations, everyone not only Serving, and placeholders you are allowed to see), with a short note and a **Widen search** action — so organisers do not invent a second profile for someone who already exists.
 
@@ -95,9 +95,9 @@ If a **search** finds no one under the current filters, the directory still show
 - A **ministry** (Worship, Welcome, and similar)  
 - Listed as a leader on a cell group (including paused groups, not archived ones)
 
-Turn **Serving** off in **Refine & sort** to see everyone at that location — including people who only registered to follow updates. Registering still creates a profile; it does not put them in the serving list until an organiser adds a ministry or they become a Leader / cell-group leader.
+**Everyone** is the full list at that location, including people who only registered to follow updates. **Serving** keeps people who serve. **Placeholders** keeps names added before that person has signed in. With **Serving** and **Placeholders** both on, the list is those two groups together. Registering still creates a profile; it does not put them in the serving list until an organiser adds a ministry or they become a Leader / cell-group leader.
 
-Role filters (in **Refine & sort**, on top of Serving or All):
+Role filters (in **Refine & sort**, on top of Everyone or Serving; hidden when only Placeholders is on):
 
 - **Leaders** — everyone with Leader access, including area admins  
 - **Admins** — area admins only (a tighter view; you do not also select Leaders)  
@@ -105,9 +105,11 @@ Role filters (in **Refine & sort**, on top of Serving or All):
 
 Each person shows at most one of **Admin** or **Leader** from their profile permissions (Admin is the higher badge). **CG Leader** can appear alongside either — it is not a separate switch on the person.
 
-When organisers pick people for **programme roles**, lead speaker, contributors, pastors, or cell-group leaders, the picker also starts on serving people (turn Serving off there too if you need someone else). Attendance, expected attendees, and cell members still list everyone.
+When organisers pick people (programme roles, speakers, contributors, pastors, cell-group leaders, attendance, expected attendees, cell members, and similar), the picker also opens with everyone at the location. Turn **Serving** on in **Refine & sort** when you only want people who serve.
 
-Opening someone’s profile also shows their **recent activity** — a short list of the last few things they saved in the app (for example creating a bulletin post, editing a profile, or adding a church page). Anyone who can open the profile can see those last few lines. **Area admins** can open the full activity list, including which record was changed.
+When two or more of the people shown share a surname, that name sits above them with a tick box. Ticking it selects that group — for example a family on an attendance list — and ticking it again clears just those people. You can still change one person afterwards. A surname that appears only once has no group tick. Choosing speakers does not offer it, because only a few people can be chosen.
+
+Opening someone’s profile also shows their **recent activity** — a short list of the last few things they saved in the app (for example creating a bulletin post, editing a profile, or adding a church page). Anyone who can open the profile can see those last few lines. **Area admins** can open the full activity list. Each line names what was changed (the post title, the person, the church page, and so on), and a post edit also shows the short update the editor wrote. Tap a line to open that post, profile, or page; anything since deleted stays listed but no longer opens. Guests see a person's name the same way they do elsewhere, surname initial only.
 
 The profile also lists up to three **recent contributor posts** (from the bulletin posts already loaded). Tap a post to open it. **View posts** still opens the full list of posts they author or contribute to.
 
@@ -117,9 +119,11 @@ When you are signed in, the profile also lists **cell groups** that person belon
 
 Sometimes organisers need to assign or list someone **before** that person has signed in. The app supports **placeholder** people for that — useful for attendance, cell groups, and programmes.
 
-When you pick people (programmes, attendance, cell members, and similar), **placeholder** profiles are listed so they can be assigned like anyone else. Location, Serving, ministries, and **Placeholders** are in **Refine & sort** (the tune icon), not a row of chips across the top. A short “Showing: …” line tells you what the list is narrowed to. Leaders and area admins can **create placeholder** from the picker when a search finds no match — search first so you do not duplicate someone already in the directory. If filters hide a name match, the picker shows those matches (and only offers create when nothing matches even without filters). The People directory still hides placeholders by default; turn on **Placeholders** in **Refine & sort** to review them.
+When you pick people (programmes, attendance, cell members, and similar), **placeholder** profiles are listed with everyone else so they can be assigned like anyone else. Location, Serving, ministries, and **Placeholders** are in **Refine & sort** (the tune icon), not a row of chips across the top. A short “Showing: …” line tells you what the list is narrowed to. Leaders and area admins can **create placeholder** from the picker when a search finds no match — search first so you do not duplicate someone already in the directory. If filters hide a name match, the picker shows those matches (and only offers create when nothing matches even without filters). The People directory lists placeholders you are allowed to see on **Everyone**. **Placeholders** in **Refine & sort** reviews those names on their own. **Serving** and **Placeholders** together shows serving members and those names.
 
 The person who created a placeholder can later correct the name and **link** it to a real account. **Any area admin** can do the same for every placeholder. If that placeholder is a member of a cell group, **any listed leader of that group** can also edit the name and link an account — even if they did not create it, and even if the person belongs to more than one group. After the account is linked, only area admins can change the login link.
+
+If a placeholder was created by mistake when the person already has a proper profile, an **area admin** can **merge** the placeholder into that existing profile. Posts, attendance, cell groups, and similar lists that used the placeholder are updated to the real profile automatically, and the placeholder is removed — so you do not have to edit each post by hand.
 
 ## Related pages
 

@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -31,7 +32,10 @@ import 'information/information_home.dart';
 import 'personal/personal_home.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, required this.tabIndex});
+
+  /// Shell tab from the address (`AppLinks.bulletinTab` … `personalTab`).
+  final int tabIndex;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -74,8 +78,9 @@ class _HomePageState extends State<HomePage>
     _appContext = Provider.of<AppContext>(context, listen: false);
     WidgetsBinding.instance.addObserver(this);
 
-    // Set startup tab based on user preference (default to 1 = Information home)
-    _selectedIndex = _appContext.sharedPref.preferredStartupTab;
+    // The address is the source of truth. `/` already redirected to the
+    // startup tab before this page was built.
+    _selectedIndex = widget.tabIndex;
 
     _informationTabController = TabController(
       length: InformationHome.sections.length,
@@ -159,6 +164,16 @@ class _HomePageState extends State<HomePage>
   }
 
   @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Browser back/forward and a shared link update the route, not setState.
+    if (widget.tabIndex != _selectedIndex) {
+      _selectedIndex = widget.tabIndex;
+      _logShellScreen();
+    }
+  }
+
+  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _informationTabController.removeListener(_onInformationSectionChanged);
@@ -183,7 +198,7 @@ class _HomePageState extends State<HomePage>
           return Scaffold(
             body: useRail
                 ? _buildWideBody(nestCtrimSections: nestCtrimSections)
-                : _buildSelectedBody(),
+                : _buildFadingBody(),
             floatingActionButton:
                 _selectedIndex == 0 ? const _AddPostFab() : null,
             bottomNavigationBar: useRail ? null : _buildBottomNavigationBar(),
@@ -226,7 +241,7 @@ class _HomePageState extends State<HomePage>
           width: nestCtrimSections ? _labeledRailWidth : _iconRailWidth,
         ),
         const VerticalDivider(width: 1),
-        Expanded(child: _buildSelectedBody()),
+        Expanded(child: _buildFadingBody()),
       ],
     );
   }
@@ -280,12 +295,14 @@ class _HomePageState extends State<HomePage>
     required TabController controller,
   }) {
     if (_selectedIndex != destinationIndex) {
-      setState(() => _selectedIndex = destinationIndex);
+      _showHomeTab(destinationIndex, log: false);
     }
+    if (!mounted) return;
     if (controller.index != section) {
       controller.animateTo(section);
+    } else {
+      _logShellScreen();
     }
-    _logShellScreen();
   }
 
   Widget _buildBottomNavigationBar() {
@@ -314,6 +331,25 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  Widget _buildFadingBody() {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      layoutBuilder: (currentChild, previousChildren) {
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey<int>(_selectedIndex),
+        child: _buildSelectedBody(),
+      ),
+    );
+  }
+
   Widget _buildSelectedBody() {
     if (_selectedIndex == 0) {
       return ViewEventsHome(
@@ -336,21 +372,27 @@ class _HomePageState extends State<HomePage>
     }
     return PersonalHome(
       appContext: _appContext,
-      onBrowseCellGroups: () {
-        setState(() => _selectedIndex = 2);
-        _logShellScreen();
-      },
+      onBrowseCellGroups: () => _showHomeTab(AppLinks.cellGroupsTab),
     );
   }
 
   // * Logic
 
+  void _showHomeTab(int index, {bool log = true}) {
+    if (index == _selectedIndex) return;
+    final path = AppLinks.homeTabPath(index);
+    final router = GoRouter.of(context);
+    if (router.state.uri.path != path) {
+      router.go(path);
+    }
+    if (!mounted) return;
+    setState(() => _selectedIndex = index);
+    if (log) _logShellScreen();
+  }
+
   void _onNavigationItemTap(int index) {
     if (index != _selectedIndex) {
-      setState(() {
-        _selectedIndex = index;
-      });
-      _logShellScreen();
+      _showHomeTab(index);
     } else {
       // scroll page to top
       if (index == 0) {
@@ -789,25 +831,48 @@ class _ShellNavRail extends StatelessWidget {
       ];
     }
 
+    final sectionButtons = group == null
+        ? const <Widget>[]
+        : [
+            for (var section = 0; section < group.sections.length; section++)
+              _RailButton(
+                icon: Icon(group.sections[section].icon),
+                label: group.sections[section].label,
+                selected: group.selectedSection == section,
+                showLabel: true,
+                indented: true,
+                onTap: () => group.onSectionSelected(section),
+              ),
+          ];
+
     return [
-      _RailButton(
-        icon: icon,
-        label: dest.label,
-        selected: selected,
-        showLabel: nestSections,
-        tooltip: nestSections ? '' : dest.label,
-        onTap: () => onDestinationSelected(index),
-      ),
-      if (showChildren)
-        for (var section = 0; section < group.sections.length; section++)
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           _RailButton(
-            icon: Icon(group.sections[section].icon),
-            label: group.sections[section].label,
-            selected: group.selectedSection == section,
-            showLabel: true,
-            indented: true,
-            onTap: () => group.onSectionSelected(section),
+            icon: icon,
+            label: dest.label,
+            selected: selected,
+            showLabel: nestSections,
+            tooltip: nestSections ? '' : dest.label,
+            onTap: () => onDestinationSelected(index),
           ),
+          if (group != null)
+            AnimatedSize(
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: showChildren
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: sectionButtons,
+                    )
+                  : const SizedBox(width: double.infinity),
+            ),
+        ],
+      ),
     ];
   }
 }

@@ -9,19 +9,25 @@ import '../../models/event/event_attendance.dart';
 import '../../models/user.dart';
 import '../../pages/personal/guest_registration_page.dart';
 import '../../pages/personal/select_users_page.dart';
+import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/attendance_list_preview.dart';
 import '../../utility/attendance_name_order.dart';
+import '../../utility/attendance_newcomer.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notifications/notification_topics.dart';
+import '../../utility/person_display_name.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
+import '../catalog/colored_chip.dart';
 import '../common/load_progress_body.dart';
 import '../two_column_masonry.dart';
 import '../user_avatar.dart';
+import 'attendance_people_preview.dart';
 
 /// People tab: interested (self-serve) + expected checklist + attendees (author/contributor).
 class ViewAttendanceTab extends StatefulWidget {
@@ -46,6 +52,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
   bool _loading = true;
   bool _busy = false;
   Object? _loadError;
+  bool _expectedExpanded = false;
+  bool _attendeesExpanded = false;
+  List<AttendanceSeriesPost> _earlierSeries = const [];
+  int _seriesGeneration = 0;
 
   @override
   bool get wantKeepAlive => true;
@@ -54,20 +64,13 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
   void initState() {
     super.initState();
     _loadAttendance();
+    _loadSeries();
   }
 
   /// Loads attendance once per post view. Tab switches remount this widget;
   /// reuse [EventContext] data so unsaved attendee edits are not wiped by a
   /// refetch with [forceReplace].
   Future<void> _loadAttendance({bool forceReload = false}) async {
-    if (!_authManager.isSignedIn) {
-      setState(() {
-        _loading = false;
-        _loadError = null;
-      });
-      return;
-    }
-
     if (!forceReload && widget.eventContext.hasLoadedAttendance) {
       setState(() {
         _loading = false;
@@ -101,18 +104,51 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     }
   }
 
+  /// Earlier attendance in this post's cell group, or its tags when it has
+  /// no cell group. A failed lookup leaves the names unmarked.
+  Future<void> _loadSeries() async {
+    final generation = ++_seriesGeneration;
+    try {
+      final earlier = await AttendanceNewcomer.loadEarlier(
+        current: widget.eventContext.head,
+      );
+      if (!mounted || generation != _seriesGeneration) return;
+      setState(() => _earlierSeries = earlier);
+    } catch (e, stack) {
+      debugPrint('Attendance series lookup failed: $e\n$stack');
+      if (!mounted || generation != _seriesGeneration) return;
+      setState(() => _earlierSeries = const []);
+    }
+  }
+
+  Map<String, AttendanceVisitMark> _visitMarks() {
+    final attendance = widget.eventContext.attendance;
+    if (attendance == null) return const {};
+    return AttendanceNewcomer.marksFor(
+      current: widget.eventContext.head,
+      attendees: attendance.attendees,
+      earlier: _earlierSeries,
+    );
+  }
+
+  Widget? _visitBadge(
+    Map<String, AttendanceVisitMark> marks,
+    String? userId,
+  ) {
+    if (userId == null || userId.isEmpty) return null;
+    final mark = marks[userId];
+    if (mark == null) return null;
+    return _AttendanceVisitChip(mark: mark);
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final appContext = Provider.of<AppContext>(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final head = widget.eventContext.head;
-
-    if (!_authManager.isSignedIn) {
-      return _buildGuestBody(
-          theme, colorScheme, head.interestedCount, head.attendeeCount);
-    }
+    final isGuest = appContext.isCurrentUserGuest;
+    final isSignedIn = _authManager.isSignedIn;
 
     if (_loading || _loadError != null) {
       return LoadProgressBody(
@@ -121,15 +157,18 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         totalSteps: 1,
         error: _loadError,
         errorTitle: 'Could not load attendance',
-        onRetry: () => _loadAttendance(forceReload: true),
+        onRetry: () {
+          _loadAttendance(forceReload: true);
+          _loadSeries();
+        },
       );
     }
 
     final attendance = widget.eventContext.attendance ?? EventAttendance();
-    final canManage =
+    final canManage = !isGuest &&
         widget.eventContext.isUserAdminOfPost(appContext.currentUser.id);
-    final authId = _authManager.currentAuthUID;
-    final isInterested = attendance.hasInterest(authId);
+    final isInterested =
+        isSignedIn && attendance.hasInterest(_authManager.currentAuthUID);
     final hasInterested = attendance.interested.isNotEmpty;
     final expectedUserIds = AttendanceNameOrder.userIdsBySurname(
       attendance.expectedUserIds,
@@ -196,15 +235,42 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                     ),
                   )
                 else
-                  for (final userId in expectedUserIds)
-                    _buildExpectedTile(
-                      theme,
-                      colorScheme,
+                  AttendancePeoplePreview(
+                    names: [
+                      for (final userId in expectedUserIds)
+                        _displayNameForUserId(appContext, userId),
+                    ],
+                    overviewUsers: _usersForIds(
                       appContext,
-                      userId,
-                      checked: attendance.hasUserAttendee(userId),
-                      canManage: canManage,
+                      expectedUserIds
+                          .take(AttendanceListPreview.namePreviewCount(
+                            isWide: isWide,
+                          ))
+                          .toList(),
                     ),
+                    tiles: [
+                      for (final userId in expectedUserIds)
+                        _buildExpectedTile(
+                          theme,
+                          colorScheme,
+                          appContext,
+                          userId,
+                          checked: attendance.hasUserAttendee(userId),
+                          canManage: canManage,
+                        ),
+                    ],
+                    isWide: isWide,
+                    expanded: _expectedExpanded,
+                    onToggle: () => setState(
+                      () => _expectedExpanded = !_expectedExpanded,
+                    ),
+                    overviewDetail: _expectedOverview(
+                      marked: expectedUserIds
+                          .where(attendance.hasUserAttendee)
+                          .length,
+                      total: expectedUserIds.length,
+                    ),
+                  ),
                 if (canManage) ...[
                   const SizedBox(height: 8),
                   Wrap(
@@ -231,6 +297,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
           )
         : null;
 
+    final visitMarks = _visitMarks();
     final attendeesCard = hasAttendees
         ? _buildSectionCard(
             theme,
@@ -244,12 +311,38 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                     icon: const Icon(Icons.person_add_alt_1),
                   )
                 : null,
-            child: Column(
-              children: [
+            child: AttendancePeoplePreview(
+              names: [
                 for (final entry in attendees)
-                  _buildAttendeeTile(theme, colorScheme, appContext, entry,
-                      canManage: canManage),
+                  _displayNameForAttendee(appContext, entry),
               ],
+              nameBadges: [
+                for (final entry in attendees)
+                  _visitBadge(visitMarks, entry.userId),
+              ],
+              overviewUsers: _usersForAttendees(
+                appContext,
+                attendees
+                    .take(
+                        AttendanceListPreview.namePreviewCount(isWide: isWide))
+                    .toList(),
+              ),
+              tiles: [
+                for (final entry in attendees)
+                  _buildAttendeeTile(
+                    theme,
+                    colorScheme,
+                    appContext,
+                    entry,
+                    canManage: canManage,
+                    visitMark:
+                        entry.userId == null ? null : visitMarks[entry.userId!],
+                  ),
+              ],
+              isWide: isWide,
+              expanded: _attendeesExpanded,
+              onToggle: () =>
+                  setState(() => _attendeesExpanded = !_attendeesExpanded),
             ),
           )
         : null;
@@ -263,7 +356,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
-        _buildInterestToggle(theme, colorScheme, isInterested),
+        if (isSignedIn)
+          _buildInterestToggle(theme, colorScheme, isInterested)
+        else
+          _buildGuestInterestPrompt(theme, colorScheme),
         if (peopleCards.isNotEmpty) ...[
           const SizedBox(height: 20),
           if (isWide && peopleCards.length > 1)
@@ -287,6 +383,31 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     );
   }
 
+  String _expectedOverview({required int marked, required int total}) {
+    final markedWord = widget.eventContext.head.isRecent
+        ? 'marked attended'
+        : 'marked attending';
+    return '$marked of $total $markedWord';
+  }
+
+  List<User> _usersForIds(AppContext appContext, List<String> userIds) {
+    return [
+      for (final userId in userIds)
+        if (appContext.userById(userId) case final User user) user,
+    ];
+  }
+
+  List<User> _usersForAttendees(
+    AppContext appContext,
+    List<AttendeeEntry> attendees,
+  ) {
+    return [
+      for (final entry in attendees)
+        if (entry.isUser && entry.userId != null)
+          if (appContext.userById(entry.userId!) case final User user) user,
+    ];
+  }
+
   bool _isAlreadyAttending(EventAttendance attendance, InterestedEntry entry) {
     if (entry.userId != null) {
       return attendance.attendees
@@ -295,47 +416,49 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     return false;
   }
 
-  Widget _buildGuestBody(
-      ThemeData theme, ColorScheme colorScheme, int interested, int attending) {
-    final attendeeWord =
-        widget.eventContext.head.isRecent ? 'attended' : 'attending';
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        Icon(Icons.lock_outline, size: 40, color: colorScheme.primary),
-        const SizedBox(height: 16),
-        Text(
-          'Sign in to see who is interested',
-          style:
-              theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+  Widget _buildGuestInterestPrompt(ThemeData theme, ColorScheme colorScheme) {
+    return Card(
+      elevation: 0,
+      color: colorScheme.primaryContainer.withValues(alpha: 0.35),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Sign in to mark interest',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Follow updates for this post. Attendance below is visible to everyone.',
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const GuestRegistrationPage(),
+                  ),
+                );
+              },
+              child: const Text('Create account'),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Already registered? Sign in from the Personal tab.',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          interested == 0 && attending == 0
-              ? 'Create an account or sign in to mark interest, follow updates, and see names.'
-              : '$interested interested · $attending $attendeeWord.\n'
-                  'Sign in to see names and mark your own interest.',
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: colorScheme.onSurfaceVariant),
-        ),
-        const SizedBox(height: 24),
-        FilledButton(
-          onPressed: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const GuestRegistrationPage()));
-          },
-          child: const Text('Create account'),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Already registered? Sign in from the Personal tab.',
-          style: theme.textTheme.bodySmall
-              ?.copyWith(color: colorScheme.onSurfaceVariant),
-          textAlign: TextAlign.center,
-        ),
-      ],
+      ),
     );
   }
 
@@ -440,11 +563,12 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     required bool canManage,
     required bool alreadyAttending,
   }) {
+    final name = _displayNameForInterested(appContext, entry);
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-      leading: _avatarForUserId(appContext, entry.userId, entry.displayName,
-          colorScheme.secondaryContainer),
-      title: Text(entry.displayName),
+      leading: _avatarForUserId(
+          appContext, entry.userId, name, colorScheme.secondaryContainer),
+      title: Text(name),
       subtitle: Text(
         alreadyAttending
             ? (widget.eventContext.head.isRecent
@@ -481,20 +605,36 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     AppContext appContext,
     AttendeeEntry entry, {
     required bool canManage,
+    AttendanceVisitMark? visitMark,
   }) {
+    final name = _displayNameForAttendee(appContext, entry);
     final note = entry.isExternal && (entry.note?.isNotEmpty ?? false)
         ? entry.note
         : null;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
       leading: entry.isUser
-          ? _avatarForUserId(appContext, entry.userId, entry.displayName,
-              colorScheme.tertiaryContainer)
+          ? _avatarForUserId(
+              appContext, entry.userId, name, colorScheme.tertiaryContainer)
           : CircleAvatar(
               backgroundColor: colorScheme.tertiaryContainer,
               child: const Icon(Icons.person_outline, size: 20),
             ),
-      title: Text(entry.displayName),
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (visitMark != null) ...[
+            const SizedBox(width: 8),
+            _AttendanceVisitChip(mark: visitMark),
+          ],
+        ],
+      ),
       subtitle: note == null ? null : Text(note),
       trailing: canManage
           ? IconButton(
@@ -525,7 +665,31 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
   }
 
   String _displayNameForUserId(AppContext appContext, String userId) {
-    return appContext.userById(userId)?.fullname ?? userId;
+    return PersonDisplayName.forViewer(
+      storedName: null,
+      user: appContext.userById(userId),
+      guest: appContext.isCurrentUserGuest,
+      emptyFallback: userId,
+    );
+  }
+
+  String _displayNameForAttendee(AppContext appContext, AttendeeEntry entry) {
+    return PersonDisplayName.forViewer(
+      storedName: entry.displayName,
+      user: entry.userId == null ? null : appContext.userById(entry.userId!),
+      guest: appContext.isCurrentUserGuest,
+      emptyFallback: entry.displayName,
+    );
+  }
+
+  String _displayNameForInterested(
+      AppContext appContext, InterestedEntry entry) {
+    return PersonDisplayName.forViewer(
+      storedName: entry.displayName,
+      user: entry.userId == null ? null : appContext.userById(entry.userId!),
+      guest: appContext.isCurrentUserGuest,
+      emptyFallback: entry.displayName,
+    );
   }
 
   bool _canPromote(InterestedEntry entry, AppContext appContext) {
@@ -592,6 +756,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
           actorUserId: userId,
           log: UserActivityMessages.updatedPostInterest,
           documentId: widget.eventContext.id,
+          title: widget.eventContext.head.title,
         );
 
         onProgress(
@@ -637,6 +802,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
           actorUserId: actorId,
           log: UserActivityMessages.updatedPostInterest,
           documentId: widget.eventContext.id,
+          title: widget.eventContext.head.title,
         );
       },
     );
@@ -742,6 +908,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         builder: (_) => SelectUsersPage(
           selectedUIDs: List<String>.from(attendance.expectedUserIds),
           title: 'Expected attendees',
+          includeCurrentUser: true,
           includePlaceholders: true,
           allowCellGroupBulkSelect: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
@@ -802,6 +969,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         builder: (_) => SelectUsersPage(
           selectedUIDs: selected,
           title: 'Select attendees',
+          includeCurrentUser: true,
           includePlaceholders: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,
@@ -836,5 +1004,24 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     }
 
     _applyAttendeesLocally(next);
+  }
+}
+
+class _AttendanceVisitChip extends StatelessWidget {
+  const _AttendanceVisitChip({required this.mark});
+
+  final AttendanceVisitMark mark;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final first = mark == AttendanceVisitMark.first;
+    return ColoredChip(
+      label: first ? l10n.attendanceVisitNew : l10n.attendanceVisitReturning,
+      color: first ? colorScheme.primary : colorScheme.tertiary,
+      selected: first,
+      dense: true,
+    );
   }
 }

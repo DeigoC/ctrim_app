@@ -60,6 +60,12 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
     }
   }
 
+  String _feedMotionKey(BulletinListingQuery query) {
+    final tags = query.selectedTagIDs.toList()..sort();
+    return '${query.sort.name}|${query.timeFilter.name}|'
+        '${query.locationFilter}|${tags.join(',')}';
+  }
+
   BulletinListingQuery _listingQuery() {
     return BulletinListingQuery(
       sort: _sort,
@@ -196,47 +202,56 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
 
         return CustomScrollView(
           slivers: [
-            if (query.showsNonDefaultBanner)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    8,
-                    horizontalPadding,
-                    8,
-                  ),
-                  child: _buildFilterIndicator(colorScheme, l10n, query),
-                ),
+            SliverToBoxAdapter(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: query.showsNonDefaultBanner
+                    ? Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          8,
+                          horizontalPadding,
+                          8,
+                        ),
+                        child: _buildFilterIndicator(colorScheme, l10n, query),
+                      )
+                    : const SizedBox(width: double.infinity),
               ),
+            ),
             SliverPadding(
               padding: EdgeInsets.symmetric(
                 horizontal: horizontalPadding,
                 vertical: 8,
               ),
-              sliver: heads.isEmpty
-                  ? SliverToBoxAdapter(
-                      child: _buildEmptyState(
-                        colorScheme: colorScheme,
-                        theme: theme,
-                        l10n: l10n,
-                        hasAnyPosts: hasAnyPosts,
-                      ),
-                    )
-                  : isWideScreen
-                      ? SliverToBoxAdapter(
-                          child: TwoColumnMasonry(
-                            children: [
-                              for (final head in heads) _buildPostCard(head),
-                            ],
-                          ),
-                        )
-                      : SliverList.separated(
-                          itemCount: heads.length,
-                          itemBuilder: (_, index) =>
-                              _buildPostCard(heads[index]),
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 8),
+              sliver: _ListingFeedFade(
+                motionKey: _feedMotionKey(query),
+                sliver: heads.isEmpty
+                    ? SliverToBoxAdapter(
+                        child: _buildEmptyState(
+                          colorScheme: colorScheme,
+                          theme: theme,
+                          l10n: l10n,
+                          hasAnyPosts: hasAnyPosts,
                         ),
+                      )
+                    : isWideScreen
+                        ? SliverToBoxAdapter(
+                            child: TwoColumnMasonry(
+                              children: [
+                                for (final head in heads) _buildPostCard(head),
+                              ],
+                            ),
+                          )
+                        : SliverList.separated(
+                            itemCount: heads.length,
+                            itemBuilder: (_, index) =>
+                                _buildPostCard(heads[index]),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
+                          ),
+              ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
@@ -329,31 +344,35 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
                 width: 1,
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  switch (query.timeFilter) {
-                    BulletinTimeFilter.upcoming => Icons.upcoming,
-                    BulletinTimeFilter.past => Icons.history,
-                    BulletinTimeFilter.undated => Icons.event_busy,
-                    BulletinTimeFilter.all => Icons.filter_alt,
-                  },
-                  size: 16,
-                  color: accent,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    l10n.bulletinShowing(parts.join(' · ')),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: accent,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Row(
+                key: ValueKey<String>(parts.join(' · ')),
+                children: [
+                  Icon(
+                    switch (query.timeFilter) {
+                      BulletinTimeFilter.upcoming => Icons.upcoming,
+                      BulletinTimeFilter.past => Icons.history,
+                      BulletinTimeFilter.undated => Icons.event_busy,
+                      BulletinTimeFilter.all => Icons.filter_alt,
+                    },
+                    size: 16,
+                    color: accent,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.bulletinShowing(parts.join(' · ')),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: accent,
+                      ),
                     ),
                   ),
-                ),
-                Icon(Icons.close, size: 16, color: accent),
-              ],
+                  Icon(Icons.close, size: 16, color: accent),
+                ],
+              ),
             ),
           ),
         ),
@@ -485,6 +504,60 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
     await _scheduleService.pruneStalePostInvolvements(
       user: _appContext.currentUser,
       eventHeads: _appContext.eventHeads,
+    );
+  }
+}
+
+/// Fades the post list in when the filter signature changes.
+///
+/// The first frame stays fully visible. Head-list updates keep the same
+/// [motionKey], so a refresh does not replay the fade.
+class _ListingFeedFade extends StatefulWidget {
+  const _ListingFeedFade({
+    required this.motionKey,
+    required this.sliver,
+  });
+
+  final String motionKey;
+  final Widget sliver;
+
+  @override
+  State<_ListingFeedFade> createState() => _ListingFeedFadeState();
+}
+
+class _ListingFeedFadeState extends State<_ListingFeedFade>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+      value: 1,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _ListingFeedFade oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.motionKey != widget.motionKey) {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverFadeTransition(
+      opacity: _controller,
+      sliver: widget.sliver,
     );
   }
 }

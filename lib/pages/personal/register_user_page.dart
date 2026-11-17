@@ -304,6 +304,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
       actorUserId: appContext.currentUser.id,
       log: UserActivityMessages.registeredVolunteer,
       documentId: newUser.id,
+      title: newUser.fullname,
     );
     return newUser;
   }

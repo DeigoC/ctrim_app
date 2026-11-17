@@ -24,6 +24,7 @@ from placeholder_users import (
     link_user_auth_impl,
     update_placeholder_names_impl,
 )
+from merge_placeholder_user import merge_placeholder_into_user_impl
 
 initialize_app()
 options.set_global_options(max_instances=10, region='europe-west1')
@@ -303,4 +304,21 @@ def update_placeholder_names(req: https_fn.CallableRequest) -> any:
     db = firestore.client()
     result = update_placeholder_names_impl(db, req)
     print(f'update_placeholder_names user={result.get("Id")}')
+    return result
+
+
+@https_fn.on_call(
+    region='europe-west1',
+    timeout_sec=300,
+    memory=options.MemoryOption.MB_512,
+)
+def merge_placeholder_into_user(req: https_fn.CallableRequest) -> any:
+    """Area admin: rewrite placeholder volunteer IDs onto an existing profile, then delete the placeholder."""
+    db = firestore.client()
+    result = merge_placeholder_into_user_impl(db, req)
+    print(
+        'merge_placeholder_into_user '
+        f'from={result.get("placeholderUserId")} to={result.get("survivorUserId")} '
+        f'dryRun={result.get("dryRun")} deleted={result.get("placeholderDeleted")}'
+    )
     return result

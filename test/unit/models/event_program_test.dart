@@ -185,6 +185,122 @@ void main() {
         final tagged = EventProgram.parseRoleIdLine('10|worship,tech');
         expect(tagged.id, 10);
         expect(tagged.tagIDs, ['worship', 'tech']);
+        expect(tagged.standing, isFalse);
+      });
+
+      test('standing round-trips and a ministry id of 1 is not the flag', () {
+        expect(EventProgram.isStanding({'title': 'Host'}), isFalse);
+
+        final program = EventProgram();
+        program.addRole(
+          uids: ['user-1'],
+          title: 'Technical Media',
+          start: null,
+          end: null,
+          id: 5,
+          tagIDs: ['media'],
+          standing: true,
+        );
+        expect(EventProgram.isStanding(program.roles.single), isTrue);
+
+        final restored = EventProgram.fromMap(program.toJson());
+        expect(EventProgram.isStanding(restored.roles.single), isTrue);
+        expect(restored.roles.single['start'], isNull);
+
+        expect(
+          EventProgram.encodeRoleIdLine(10, const ['1'], standing: true),
+          '10|1|1',
+        );
+        expect(
+          EventProgram.encodeRoleIdLine(10, const [], standing: true),
+          '10||1',
+        );
+
+        final ministry = EventProgram.parseRoleIdLine('10|1');
+        expect(ministry.tagIDs, ['1']);
+        expect(ministry.standing, isFalse);
+
+        final standing = EventProgram.parseRoleIdLine('10|worship,tech|1');
+        expect(standing.tagIDs, ['worship', 'tech']);
+        expect(standing.standing, isTrue);
+
+        final bare = EventProgram.parseRoleIdLine('10||1');
+        expect(bare.tagIDs, isEmpty);
+        expect(bare.standing, isTrue);
+        expect(bare.requiresPeople, isTrue);
+      });
+
+      test('requiresPeople stays true unless the line says false', () {
+        expect(EventProgram.requiresPeople({'title': 'Host'}), isTrue);
+        expect(
+          EventProgram.requiresPeople({'requiresPeople': false}),
+          isFalse,
+        );
+
+        final program = EventProgram();
+        program.addRole(
+          uids: [],
+          title: 'Welcome',
+          start: null,
+          end: null,
+          id: 8,
+          tagIDs: ['welcome'],
+          requiresPeople: false,
+        );
+        expect(EventProgram.requiresPeople(program.roles.single), isFalse);
+
+        final restored = EventProgram.fromMap(program.toJson());
+        expect(EventProgram.requiresPeople(restored.roles.single), isFalse);
+
+        final missing = EventProgram.fromMap({
+          'AllDay': false,
+          'Online': false,
+          'Address': 'x',
+          'MapLink': 'y',
+          'Roles': [
+            {
+              'uids': <String>[],
+              'detail': '',
+              'title': 'Host',
+              'start': null,
+              'end': null,
+              'for_guests': true,
+              'id': 1,
+            }
+          ],
+        });
+        expect(EventProgram.requiresPeople(missing.roles.single), isTrue);
+
+        expect(
+          EventProgram.encodeRoleIdLine(
+            10,
+            const ['welcome'],
+            requiresPeople: false,
+          ),
+          '10|welcome|0|0',
+        );
+        expect(
+          EventProgram.encodeRoleIdLine(
+            10,
+            const ['welcome'],
+            standing: true,
+            requiresPeople: false,
+          ),
+          '10|welcome|1|0',
+        );
+
+        final optional = EventProgram.parseRoleIdLine('10|welcome|0|0');
+        expect(optional.tagIDs, ['welcome']);
+        expect(optional.standing, isFalse);
+        expect(optional.requiresPeople, isFalse);
+
+        final standingOptional = EventProgram.parseRoleIdLine('10|welcome|1|0');
+        expect(standingOptional.standing, isTrue);
+        expect(standingOptional.requiresPeople, isFalse);
+
+        final legacy = EventProgram.parseRoleIdLine('10|worship,tech|1');
+        expect(legacy.standing, isTrue);
+        expect(legacy.requiresPeople, isTrue);
       });
 
       test('removeRole removes matching role by id', () {
@@ -338,6 +454,30 @@ void main() {
               excludeRoleId: 1),
           2,
         );
+      });
+
+      test('updateRoleTiming with shiftFollowing leaves a standing role', () {
+        final program = buildSequentialProgram();
+        program.addRole(
+          uids: ['u1'],
+          title: 'Technical Media',
+          start: DateTime(2024, 6, 15, 10, 20),
+          end: DateTime(2024, 6, 15, 12, 0),
+          id: 4,
+          standing: true,
+        );
+
+        program.updateRoleTiming(
+          roleId: 1,
+          newStart: DateTime(2024, 6, 15, 10, 0),
+          newEnd: DateTime(2024, 6, 15, 10, 25),
+          shiftFollowing: true,
+        );
+
+        final media = program.roles.firstWhere((role) => role['id'] == 4);
+        expect(media['start'], DateTime(2024, 6, 15, 10, 20));
+        final worship = program.roles.firstWhere((role) => role['id'] == 2);
+        expect(worship['start'], DateTime(2024, 6, 15, 10, 25));
       });
 
       test('updateRoleTiming with shiftFollowing pushes later items', () {
@@ -573,6 +713,48 @@ void main() {
           expect(fellowship['end'], DateTime(2024, 6, 15, 14, 0));
         });
 
+        test('cascade does not move a standing role', () {
+          final program = buildSequentialProgram();
+          program.addRole(
+            uids: ['u1'],
+            title: 'Technical Media',
+            start: DateTime(2024, 6, 15, 10, 0),
+            end: DateTime(2024, 6, 15, 12, 0),
+            id: 4,
+            standing: true,
+          );
+
+          program.moveRoleToStart(
+            roleId: 3,
+            newStart: DateTime(2024, 6, 15, 10, 0),
+            mode: ProgramShiftMode.cascade,
+          );
+
+          final media = program.roles.firstWhere((role) => role['id'] == 4);
+          expect(media['start'], DateTime(2024, 6, 15, 10, 0));
+          expect(media['end'], DateTime(2024, 6, 15, 12, 0));
+          final welcome = program.roles.firstWhere((role) => role['id'] == 1);
+          expect(welcome['start'], isNot(DateTime(2024, 6, 15, 10, 0)));
+        });
+
+        test('shiftAllTimedRoles still moves a standing role that has times',
+            () {
+          final program = EventProgram();
+          program.addRole(
+            uids: [],
+            title: 'Technical Media',
+            start: DateTime(2024, 6, 15, 9, 0),
+            end: DateTime(2024, 6, 15, 12, 0),
+            id: 1,
+            standing: true,
+          );
+
+          program.shiftAllTimedRoles(const Duration(hours: 1));
+
+          expect(program.roles.single['start'], DateTime(2024, 6, 15, 10, 0));
+          expect(program.roles.single['end'], DateTime(2024, 6, 15, 13, 0));
+        });
+
         test('cascade leaves a long role that started earlier in place', () {
           final program = buildSequentialProgram();
           program.addRole(
@@ -658,6 +840,35 @@ void main() {
             false,
           );
         });
+      });
+    });
+
+    group('replaceRoleAssignees', () {
+      test('replaces uids and leaves the rest of the role', () {
+        final program = EventProgram();
+        program.addRole(
+          uids: ['a'],
+          title: 'Sound',
+          start: DateTime(2026, 9, 20, 9),
+          end: DateTime(2026, 9, 20, 10),
+          id: 7,
+          detail: 'Desk',
+          tagIDs: ['tech'],
+        );
+
+        expect(
+          program.replaceRoleAssignees(roleId: 7, uids: ['b', 'c']),
+          isTrue,
+        );
+        final role = program.roles.single;
+        expect(role['uids'], ['b', 'c']);
+        expect(role['title'], 'Sound');
+        expect(role['detail'], 'Desk');
+        expect(EventProgram.tagIDsOf(role), ['tech']);
+        expect(
+          program.replaceRoleAssignees(roleId: 8, uids: ['z']),
+          isFalse,
+        );
       });
     });
 

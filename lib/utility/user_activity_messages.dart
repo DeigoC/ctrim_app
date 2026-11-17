@@ -3,12 +3,14 @@ class UserActivityMessages {
   static const createdBulletinPost = 'Created a bulletin post';
   static const editedBulletinPost = 'Edited a bulletin post';
   static const updatedPostInterest = 'Updated post interest';
+  static const updatedMinistrySchedule = 'Updated a ministry schedule';
 
   static const registeredVolunteer = 'Registered a person';
   static const editedVolunteerProfile = 'Edited a profile';
   static const updatedProfilePhoto = 'Updated profile photo';
   static const linkedVolunteerAccount = 'Linked an account';
   static const unlinkedVolunteerAccount = 'Unlinked an account';
+  static const mergedPlaceholderIntoUser = 'Merged a placeholder into a profile';
 
   static const createdChurchRecord = 'Created a church record';
   static const createdOutreachRecord = 'Created an outreach record';

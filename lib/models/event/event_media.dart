@@ -21,11 +21,16 @@ class EventMedia {
   }
 
   List<Map<String, dynamic>> _toMedia(final List<Map<String, dynamic>> data) {
-    final List<Map<String, dynamic>> results = List<Map<String, dynamic>>.empty(growable: true);
+    final List<Map<String, dynamic>> results =
+        List<Map<String, dynamic>>.empty(growable: true);
 
     for (final entry in data) {
-      results.add(
-          {'title': entry['title'], 'src': entry['src'], 'type': entry['type'], 'thumbnailSrc': entry['thumbnailSrc']});
+      results.add({
+        'title': entry['title'],
+        'src': entry['src'],
+        'type': entry['type'],
+        'thumbnailSrc': entry['thumbnailSrc']
+      });
     }
 
     return results;
@@ -34,6 +39,23 @@ class EventMedia {
   List<Map<String, dynamic>> get allMedia => UnmodifiableListView(_media);
   void clearAllMedia() => _media.clear();
   void addMediaFile(final Map<String, dynamic> file) => _media.add(file);
-  void addAllMediaFiles(final List<Map<String, dynamic>> mediaFiles) => _media.addAll(mediaFiles);
-  void removeMediaFile(final Map<String, dynamic> file) => _media.remove(file); // test this kind of approach!
+  void addAllMediaFiles(final List<Map<String, dynamic>> mediaFiles) =>
+      _media.addAll(mediaFiles);
+  void removeMediaFile(final Map<String, dynamic> file) => _media.remove(file);
+
+  /// Moves the gallery entry at [from] to index [to].
+  ///
+  /// Both indexes are positions in the list before the move. The same index,
+  /// or an index outside the list, leaves the order unchanged.
+  void moveMediaFile(final int from, final int to) {
+    if (from == to ||
+        from < 0 ||
+        to < 0 ||
+        from >= _media.length ||
+        to >= _media.length) {
+      return;
+    }
+    final Map<String, dynamic> item = _media.removeAt(from);
+    _media.insert(to, item);
+  }
 }

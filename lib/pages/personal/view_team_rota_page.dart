@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -12,13 +13,21 @@ import '../../utility/app_context.dart';
 import '../../utility/app_links.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/catalog/volunteer_locations.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/team_rota.dart';
 import '../../widgets/catalog/colored_chip.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
+import '../../widgets/common/action_sheet.dart';
 import '../../widgets/common/load_progress_body.dart';
-import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/paired_row_list.dart';
+import '../../widgets/personal/team_rota_gaps_card.dart';
+import '../../widgets/personal/team_rota_post_card.dart';
+import '../../widgets/user_avatar.dart';
+import 'team_rota_role_actions.dart';
+import 'view_team_rota_schedule_page.dart';
+
+enum _MinistryScope { mine, all }
 
 /// Signed-in serving view: tagged programme slots over the next few months.
 class ViewTeamRotaPage extends StatefulWidget {
@@ -33,11 +42,10 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
 
   late final AppContext _appContext;
   final EventHeadDBManager _headsDb = EventHeadDBManager();
-  static final DateFormat _eventDateFormat = DateFormat('EEE d MMM');
-  static final DateFormat _timeFormat = DateFormat('HH:mm');
-
   late String _locationFilter;
   late Set<String> _selectedTagIDs;
+  bool _needsPeople = false;
+  bool _showSharedResponsibilities = false;
 
   List<EventHead> _rangeHeads = [];
   final Map<String, EventProgram?> _programs = {};
@@ -56,10 +64,15 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
       _appContext.currentUser.location,
       VolunteerLocations.assignableFrom(_appContext.allLocations),
     );
-    _selectedTagIDs = UserTagHelpers.tagsForUser(
+    _selectedTagIDs = TeamRotaQuery.openingMinistryIds(
       user: _appContext.currentUser,
       allTags: _appContext.allTags,
-    ).map((tag) => tag.id).toSet();
+      locationId: VolunteerLocations.idForName(
+            locations: _appContext.allLocations,
+            name: _locationFilter,
+          ) ??
+          '',
+    );
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _load();
@@ -140,6 +153,7 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
       posts: posts,
       selectedTagIDs: _selectedTagIDs,
       locationFilter: _locationFilter,
+      includeSharedResponsibilities: _showSharedResponsibilities,
     );
   }
 
@@ -148,11 +162,31 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
     context.select((AppContext c) => (c.catalogsEpoch, c.usersEpoch));
     final l10n = AppLocalizations.of(context)!;
 
+    final colorScheme = Theme.of(context).colorScheme;
+    final filtersReady = !_loading && _error == null;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.teamRota),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Theme.of(context).colorScheme.surfaceTint,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        actions: [
+          if (filtersReady)
+            IconButton(
+              onPressed: _showFilterSheet,
+              tooltip: l10n.teamRotaFilterTooltip,
+              style: IconButton.styleFrom(
+                backgroundColor:
+                    colorScheme.primaryContainer.withValues(alpha: 0.3),
+                foregroundColor: colorScheme.primary,
+              ),
+              icon: Badge(
+                isLabelVisible: _showsFilterBanner,
+                child: const Icon(Icons.tune),
+              ),
+            ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: _loading || _error != null
           ? LoadProgressBody(
@@ -170,8 +204,13 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
   Widget _buildLoadedBody(AppLocalizations l10n) {
     final theme = Theme.of(context);
     final matching = _matchingPosts();
-    final groups = TeamRotaQuery.groupByMonth(matching);
+    final visible =
+        _needsPeople ? TeamRotaQuery.postsNeedingPeople(matching) : matching;
+    final groups = TeamRotaQuery.groupByMonth(visible);
     final isWide = ResponsiveLayout.isWideScreenOf(context);
+    final headsStrip = _buildHeadsStrip(l10n);
+    final mine = _myMinistryIds();
+    final gaps = TeamRotaQuery.firstGaps(matching);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -192,12 +231,37 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (mine.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildMinistryScope(l10n, mine),
+            ],
+            if (matching.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              TeamRotaGapsCard(
+                gaps: gaps,
+                onGapTap: (gap) => _onRoleTap(gap.post, gap.role),
+              ),
+            ],
             const SizedBox(height: 16),
-            _buildFilters(l10n, theme),
-            const SizedBox(height: 24),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: _showsFilterBanner
+                  ? Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildFilterBanner(l10n),
+                    )
+                  : const SizedBox(width: double.infinity),
+            ),
+            if (headsStrip != null) ...[
+              headsStrip,
+              const SizedBox(height: 16),
+            ],
             if (groups.isEmpty)
               _buildEmptyState(
                 theme,
+                l10n: l10n,
                 icon: Icons.event_note,
                 title: l10n.teamRotaEmptyTitle,
                 body: l10n.teamRotaEmptyBody,
@@ -207,7 +271,7 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
                 if (i > 0) const SizedBox(height: 28),
                 _buildMonthHeader(theme, groups[i]),
                 const SizedBox(height: 8),
-                _buildPostGrid(groups[i].posts, isWide: isWide, l10n: l10n),
+                _buildPostGrid(groups[i].posts, isWide: isWide),
               ],
           ],
         );
@@ -215,77 +279,324 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
     );
   }
 
-  Widget _buildFilters(AppLocalizations l10n, ThemeData theme) {
+  bool get _showsFilterBanner =>
+      _needsPeople ||
+      _showSharedResponsibilities ||
+      _locationFilter != VolunteerLocations.all ||
+      _selectedTagIDs.isNotEmpty;
+
+  List<String> _filterSummaryParts(AppLocalizations l10n) {
+    final parts = <String>[];
+    if (_locationFilter != VolunteerLocations.all) {
+      parts.add(_locationFilter);
+    }
+    if (_selectedTagIDs.isNotEmpty) {
+      final tags = UserTagHelpers.resolveTags(
+        tagIDs: _selectedTagIDs.toList(),
+        allTags: _appContext.allTags,
+      );
+      parts.add(
+        tags.isEmpty
+            ? l10n.volunteersFilterTagsCount(_selectedTagIDs.length)
+            : tags.map((tag) => tag.name).join(', '),
+      );
+    }
+    if (_needsPeople) parts.add(l10n.teamRotaNeedsPeople);
+    if (_showSharedResponsibilities) {
+      parts.add(l10n.teamRotaSharedResponsibilities);
+    }
+    return parts;
+  }
+
+  Widget _buildFilterBanner(AppLocalizations l10n) {
+    final parts = _filterSummaryParts(l10n);
+    if (parts.isEmpty) return const SizedBox.shrink();
+
+    final accent = Theme.of(context).colorScheme.primary;
+
+    return Material(
+      color: accent.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: accent.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: _showFilterSheet,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Row(
+                      key: ValueKey<String>(parts.join(' · ')),
+                      children: [
+                        Icon(Icons.tune, size: 16, color: accent),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n.bulletinShowing(parts.join(' · ')),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: accent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFilterSheet() {
+    final l10n = AppLocalizations.of(context)!;
     final locationOptions = VolunteerLocations.filterOptionsFrom(
       _appContext.allLocations,
     );
     final tags = _appContext.activeTags;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.teamRotaFilterLocation,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+    HapticFeedback.lightImpact();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      constraints: ResponsiveLayout.bottomSheetConstraintsOf(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final location in locationOptions)
-              ColoredChip(
-                label: location == VolunteerLocations.all
-                    ? l10n.volunteersFilterAll
-                    : location,
-                selected: _locationFilter == location,
-                onTap: () => _onLocationSelected(location),
-              ),
-          ],
-        ),
-        if (tags.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            l10n.teamRotaFilterTeams,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final tag in tags)
-                UserTagChip(
-                  tag: tag,
-                  selected: _selectedTagIDs.contains(tag.id),
-                  onTap: () => _toggleTag(tag),
+      ),
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            void refreshSheet(VoidCallback update) {
+              update();
+              setSheetState(() {});
+              setState(() {});
+            }
+
+            return ActionSheetShell(
+              icon: Icons.tune,
+              title: l10n.teamRotaFilterSheetTitle,
+              subtitle: l10n.teamRotaFilterSheetSubtitle,
+              children: [
+                _filterSectionLabel(l10n.teamRotaFilterLocation),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final location in locationOptions)
+                        ColoredChip(
+                          label: location == VolunteerLocations.all
+                              ? l10n.volunteersFilterAll
+                              : location,
+                          selected: _locationFilter == location,
+                          onTap: () => _onLocationSelected(
+                            location,
+                            refreshSheet: refreshSheet,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-            ],
-          ),
-        ],
-      ],
+                if (tags.isNotEmpty) ...[
+                  _filterSectionLabel(l10n.teamRotaFilterTeams),
+                  if (_selectedTagIDs.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 20, 4),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            refreshSheet(_selectedTagIDs.clear);
+                          },
+                          icon: const Icon(Icons.filter_alt_off, size: 18),
+                          label: Text(l10n.teamRotaClearMinistries),
+                        ),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final tag in tags)
+                          UserTagChip(
+                            tag: tag,
+                            selected: _selectedTagIDs.contains(tag.id),
+                            onTap: () => _toggleTag(
+                              tag,
+                              refreshSheet: refreshSheet,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                _filterSectionLabel(l10n.teamRotaFilterShow),
+                SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  title: Text(l10n.teamRotaNeedsPeople),
+                  subtitle: Text(l10n.teamRotaNeedsPeopleSubtitle),
+                  value: _needsPeople,
+                  onChanged: (value) {
+                    HapticFeedback.selectionClick();
+                    refreshSheet(() => _needsPeople = value);
+                  },
+                ),
+                SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  title: Text(l10n.teamRotaSharedResponsibilities),
+                  subtitle: Text(l10n.teamRotaSharedResponsibilitiesSubtitle),
+                  value: _showSharedResponsibilities,
+                  onChanged: (value) {
+                    HapticFeedback.selectionClick();
+                    refreshSheet(() => _showSharedResponsibilities = value);
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
-  Future<void> _onLocationSelected(final String location) async {
+  Widget _filterSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+
+  Future<void> _onLocationSelected(
+    final String location, {
+    void Function(VoidCallback update)? refreshSheet,
+  }) async {
     if (_locationFilter == location) return;
-    setState(() => _locationFilter = location);
+    HapticFeedback.selectionClick();
+    void apply() => _locationFilter = location;
+    if (refreshSheet != null) {
+      refreshSheet(apply);
+    } else {
+      setState(apply);
+    }
     await _ensureProgramsForFilter();
     if (mounted) setState(() {});
   }
 
-  void _toggleTag(final UserTag tag) {
-    setState(() {
+  void _toggleTag(
+    final UserTag tag, {
+    void Function(VoidCallback update)? refreshSheet,
+  }) {
+    HapticFeedback.selectionClick();
+    void apply() {
       if (_selectedTagIDs.contains(tag.id)) {
         _selectedTagIDs.remove(tag.id);
       } else {
         _selectedTagIDs.add(tag.id);
       }
+    }
+
+    if (refreshSheet != null) {
+      refreshSheet(apply);
+    } else {
+      setState(apply);
+    }
+  }
+
+  Set<String> _myMinistryIds() {
+    return TeamRotaQuery.openingMinistryIds(
+      user: _appContext.currentUser,
+      allTags: _appContext.allTags,
+      locationId: VolunteerLocations.idForName(
+            locations: _appContext.allLocations,
+            name: _locationFilter,
+          ) ??
+          '',
+    );
+  }
+
+  bool _selectionMatches(Set<String> other) {
+    return _selectedTagIDs.length == other.length &&
+        _selectedTagIDs.containsAll(other);
+  }
+
+  Set<_MinistryScope> _ministryScopeSelection(Set<String> mine) {
+    if (_selectedTagIDs.isEmpty) return {_MinistryScope.all};
+    if (_selectionMatches(mine)) return {_MinistryScope.mine};
+    return const {};
+  }
+
+  Widget _buildMinistryScope(AppLocalizations l10n, Set<String> mine) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SegmentedButton<_MinistryScope>(
+        showSelectedIcon: false,
+        emptySelectionAllowed: true,
+        segments: [
+          ButtonSegment(
+            value: _MinistryScope.mine,
+            label: Text(l10n.teamRotaMine),
+          ),
+          ButtonSegment(
+            value: _MinistryScope.all,
+            label: Text(l10n.teamRotaAll),
+          ),
+        ],
+        selected: _ministryScopeSelection(mine),
+        onSelectionChanged: (next) {
+          if (next.isEmpty) return;
+          if (next.first == _MinistryScope.mine) {
+            _selectMyMinistries(mine);
+          } else {
+            _clearMinistries();
+          }
+        },
+      ),
+    );
+  }
+
+  void _selectMyMinistries(Set<String> mine) {
+    if (mine.isEmpty || _selectionMatches(mine)) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectedTagIDs
+        ..clear()
+        ..addAll(mine);
     });
+  }
+
+  void _clearMinistries() {
+    if (_selectedTagIDs.isEmpty) return;
+    HapticFeedback.selectionClick();
+    setState(_selectedTagIDs.clear);
   }
 
   Widget _buildMonthHeader(ThemeData theme, TeamRotaMonthGroup group) {
@@ -297,17 +608,99 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
     );
   }
 
+  Widget? _buildHeadsStrip(AppLocalizations l10n) {
+    if (_selectedTagIDs.length != 1 ||
+        _locationFilter == VolunteerLocations.all) {
+      return null;
+    }
+    final locationId = VolunteerLocations.idForName(
+      locations: _appContext.allLocations,
+      name: _locationFilter,
+    );
+    if (locationId == null) return null;
+    UserTag? tag;
+    for (final candidate in _appContext.allTags) {
+      if (candidate.id == _selectedTagIDs.single) {
+        tag = candidate;
+        break;
+      }
+    }
+    if (tag == null) return null;
+    final heads = UserTagHelpers.visibleHeadsAtLocation(
+      tag: tag,
+      locationId: locationId,
+      users: _appContext.allUsers,
+    );
+    if (heads.isEmpty) return null;
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.teamRotaMinistryHeads(tag.name),
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final user in heads)
+              Material(
+                color:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => DialogManager.showUserProfile(
+                    selectedUser: user,
+                    context: context,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 4, 12, 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        MyUserAvatar(user, radius: 14),
+                        const SizedBox(width: 8),
+                        Text(
+                          user.nameForViewer(guest: false),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildPostGrid(
     List<TeamRotaPost> posts, {
     required bool isWide,
-    required AppLocalizations l10n,
   }) {
+    Widget card(TeamRotaPost post) {
+      return TeamRotaPostCard(
+        post: post,
+        onViewSchedule: () => _openSchedule(post),
+        onOpenPost: () => _openPost(post.head),
+        onRoleTap: (role) => _onRoleTap(post, role),
+      );
+    }
+
     if (!isWide) {
       return Column(
         children: [
           for (var i = 0; i < posts.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            _buildPostCard(posts[i], l10n),
+            card(posts[i]),
           ],
         ],
       );
@@ -315,179 +708,49 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
     return PairedRowList(
       itemCount: posts.length,
       runSpacing: 12,
-      itemBuilder: (_, i) => _buildPostCard(posts[i], l10n),
+      itemBuilder: (_, i) => card(posts[i]),
     );
   }
 
-  Widget _buildPostCard(TeamRotaPost post, AppLocalizations l10n) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final dateLabel = post.head.eventDate != null
-        ? _eventDateFormat.format(post.head.eventDate!)
-        : l10n.personalScheduleDateTbc;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => _openPost(post.head),
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border:
-                Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadow.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            dateLabel,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            post.head.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          if (post.head.location.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              VolunteerLocations.normalizePostLocation(
-                                post.head.location,
-                              ),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.chevron_right_rounded,
-                        color: colorScheme.onSurfaceVariant),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(
-                    height: 1,
-                    color: colorScheme.outline.withValues(alpha: 0.12),
-                  ),
-                ),
-                for (var i = 0; i < post.roles.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 12),
-                  _buildRoleRow(post.roles[i], l10n, theme),
-                ],
-              ],
-            ),
-          ),
+  void _openSchedule(TeamRotaPost post) {
+    final program = _programs[post.head.id];
+    if (program == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewTeamRotaSchedulePage(
+          head: post.head,
+          program: program,
+          selectedTagIDs: Set<String>.from(_selectedTagIDs),
+          onProgramUpdated: (updated) {
+            _programs[post.head.id] = updated;
+            if (mounted) setState(() {});
+          },
         ),
       ),
     );
   }
 
-  Widget _buildRoleRow(
-    Map<String, dynamic> role,
-    AppLocalizations l10n,
-    ThemeData theme,
-  ) {
-    final colorScheme = theme.colorScheme;
-    final start = role['start'] as DateTime?;
-    final end = role['end'] as DateTime?;
-    final timeLabel = start != null && end != null
-        ? '${_timeFormat.format(start)} – ${_timeFormat.format(end)}'
-        : null;
-    final assigned = _assignedUsers(role);
-    final tags = UserTagHelpers.resolveTags(
-      tagIDs: EventProgram.tagIDsOf(role),
-      allTags: _appContext.allTags,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                role['title'] as String? ?? '',
-                style: theme.textTheme.bodyMedium,
-              ),
-            ),
-            if (timeLabel != null) ...[
-              const SizedBox(width: 12),
-              Text(
-                timeLabel,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 6),
-        if (assigned.isNotEmpty)
-          MyAvatarStack(
-            users: assigned,
-            height: 28,
-            width: (28.0 * assigned.length.clamp(1, 4)).clamp(28, 88),
-            borderWidth: 1.2,
-          )
-        else
-          Text(
-            l10n.teamRotaUnassigned,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        if (tags.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          UserTagChipRow(tags: tags, dense: true),
-        ],
-      ],
-    );
-  }
-
-  List<User> _assignedUsers(Map<String, dynamic> role) {
-    final users = <User>[];
-    for (final id in TeamRotaQuery.uidsOf(role)) {
-      final user = _appContext.userById(id);
-      if (user != null) users.add(user);
-    }
-    return users;
+  Future<void> _onRoleTap(TeamRotaPost post, Map<String, dynamic> role) {
+    return TeamRotaRoleActions(
+      context: context,
+      appContext: _appContext,
+      onProgramUpdated: (postId, program) {
+        _programs[postId] = program;
+        if (mounted) setState(() {});
+      },
+    ).openRole(head: post.head, role: role);
   }
 
   Widget _buildEmptyState(
     ThemeData theme, {
+    required AppLocalizations l10n,
     required IconData icon,
     required String title,
     required String body,
   }) {
     final colorScheme = theme.colorScheme;
+    final canClearMinistries = _selectedTagIDs.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
@@ -521,6 +784,21 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
               color: colorScheme.onSurfaceVariant,
             ),
           ),
+          if (canClearMinistries || _showsFilterBanner) ...[
+            const SizedBox(height: 24),
+            if (canClearMinistries) ...[
+              FilledButton.tonalIcon(
+                onPressed: _clearMinistries,
+                icon: const Icon(Icons.filter_alt_off, size: 20),
+                label: Text(l10n.teamRotaClearMinistries),
+              ),
+              const SizedBox(height: 8),
+            ],
+            TextButton(
+              onPressed: _showFilterSheet,
+              child: Text(l10n.teamRotaChangeFilter),
+            ),
+          ],
         ],
       ),
     );

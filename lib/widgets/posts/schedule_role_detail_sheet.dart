@@ -7,6 +7,8 @@ import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
+import '../../utility/schedule_assignee_suggestions.dart';
+import '../../utility/schedule_role_times.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 import '../catalog/user_tag_chip.dart';
@@ -22,7 +24,12 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
     required this.assignedUsers,
     required this.canEdit,
     required this.onEdit,
+    this.editLabel,
+    this.claimLabel,
+    this.onClaim,
     this.onClose,
+    this.suggestions = const [],
+    this.onUseAssignees,
   });
 
   final Map<String, dynamic> role;
@@ -30,8 +37,21 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
   final bool canEdit;
   final VoidCallback onEdit;
 
+  /// Button label when [canEdit] is true. Defaults to the full task editor.
+  final String? editLabel;
+
+  /// Adds or removes the signed-in person. Null hides that button.
+  final String? claimLabel;
+  final VoidCallback? onClaim;
+
   /// Shown as a close affordance when the detail lives in a side pane.
   final VoidCallback? onClose;
+
+  /// People on another line who share a ministry. Empty hides the actions.
+  final List<ScheduleAssigneeSuggestion> suggestions;
+
+  /// Copies [suggestions] onto this line. Null on surfaces that assign elsewhere.
+  final void Function(ScheduleAssigneeSuggestion suggestion)? onUseAssignees;
 
   static final DateFormat _timeFormat = DateFormat('HH:mm');
 
@@ -43,6 +63,8 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
     final detail = (role['detail'] as String?) ?? '';
     final start = role['start'] as DateTime?;
     final end = role['end'] as DateTime?;
+    final standing = EventProgram.isStanding(role);
+    final timeLabel = _timeLabel(l10n, start, end, standing);
     final staffOnly = role['for_guests'] != true;
     final hideGuestTags =
         context.select((AppContext c) => c.isCurrentUserGuest);
@@ -82,7 +104,7 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        if (start != null && end != null)
+        if (timeLabel != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
@@ -91,8 +113,7 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    '${_timeFormat.format(start)} - ${_timeFormat.format(end)}'
-                    ' | ${_durationLabel(end.difference(start))}',
+                    timeLabel,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -142,17 +163,65 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
               ),
             ),
         ],
+        if (canEdit && onUseAssignees != null && suggestions.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final suggestion in suggestions) ...[
+                  FilledButton.tonalIcon(
+                    onPressed: () => onUseAssignees!(suggestion),
+                    icon: const Icon(Icons.group_add, size: 18),
+                    label: Text(
+                      l10n.scheduleUseAssignees(suggestion.sourceTitle),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ],
+            ),
+          ),
+        if (onClaim != null && claimLabel != null)
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, canEdit ? 0 : 8),
+            child: FilledButton.icon(
+              onPressed: onClaim,
+              icon: const Icon(Icons.person_outline, size: 18),
+              label: Text(claimLabel!),
+            ),
+          ),
         if (canEdit)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: FilledButton.tonalIcon(
               onPressed: onEdit,
               icon: const Icon(Icons.edit, size: 18),
-              label: Text(l10n.scheduleEditTask),
+              label: Text(editLabel ?? l10n.scheduleEditTask),
             ),
           ),
         const SizedBox(height: 8),
       ],
+    );
+  }
+
+  static String? _timeLabel(
+    final AppLocalizations l10n,
+    final DateTime? start,
+    final DateTime? end,
+    final bool standing,
+  ) {
+    return ScheduleRoleTimes.label(
+      start: start,
+      end: end,
+      standing: standing,
+      wholeEvent: l10n.scheduleWholeEventLabel,
+      formatTime: _timeFormat.format,
+      startsAt: l10n.scheduleStartsAt,
+      prefixWholeEvent: true,
+      range: (start, end) =>
+          '${_timeFormat.format(start)} - ${_timeFormat.format(end)}'
+          ' | ${_durationLabel(end.difference(start))}',
     );
   }
 
@@ -176,6 +245,12 @@ Future<void> showScheduleRoleDetailSheet({
   required List<User> assignedUsers,
   required bool canEdit,
   required VoidCallback onEdit,
+  String? editLabel,
+  String? claimLabel,
+  VoidCallback? onClaim,
+  void Function(ScheduleAssigneeSuggestion suggestion)? onUseAssignees,
+  List<Map<String, dynamic>> allRoles = const [],
+  List<User> Function(Map<String, dynamic> role)? usersForRole,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -189,15 +264,36 @@ Future<void> showScheduleRoleDetailSheet({
         topRight: Radius.circular(28),
       ),
     ),
-    builder: (_) => SafeArea(
-      child: SingleChildScrollView(
-        child: ScheduleRoleDetailSheet(
-          role: role,
-          assignedUsers: assignedUsers,
-          canEdit: canEdit,
-          onEdit: onEdit,
-        ),
-      ),
+    builder: (_) => StatefulBuilder(
+      builder: (context, setSheetState) {
+        final liveSuggestions = onUseAssignees == null
+            ? const <ScheduleAssigneeSuggestion>[]
+            : ScheduleAssigneeSuggestions.forRole(
+                role: role,
+                roles: allRoles,
+              );
+        final liveUsers = usersForRole?.call(role) ?? assignedUsers;
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: ScheduleRoleDetailSheet(
+              role: role,
+              assignedUsers: liveUsers,
+              canEdit: canEdit,
+              editLabel: editLabel,
+              claimLabel: claimLabel,
+              onClaim: onClaim,
+              suggestions: liveSuggestions,
+              onUseAssignees: onUseAssignees == null
+                  ? null
+                  : (suggestion) {
+                      onUseAssignees!(suggestion);
+                      setSheetState(() {});
+                    },
+              onEdit: onEdit,
+            ),
+          ),
+        );
+      },
     ),
   );
 }

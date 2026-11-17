@@ -6,6 +6,7 @@ import '../../../utility/app_context.dart';
 import '../../../utility/bulk_post_dates.dart';
 import '../../../utility/cell_group_meeting_setup.dart';
 import '../../../utility/post_template_mapper.dart';
+import '../../../widgets/posts/expected_attendance_preset_picker.dart';
 import '../../../widgets/posts/schedule_preset_picker.dart';
 import '../add_event_page.dart';
 
@@ -26,13 +27,13 @@ Future<bool> startPostFromTemplate({
   final appContext = Provider.of<AppContext>(context, listen: false);
 
   final shouldPickDate = template.startTime != null ||
-      template.defaultDayOfWeek != null ||
+      template.defaultDaysOfWeek.isNotEmpty ||
       template.schedulePresets.any((preset) => preset.startTime != null);
   DateTime? selectedDate;
   if (shouldPickDate) {
     selectedDate = await _selectDate(
       context,
-      preferredDayOfWeek: template.defaultDayOfWeek,
+      preferredDaysOfWeek: template.defaultDaysOfWeek,
     );
     if (selectedDate == null || !context.mounted) return false;
   }
@@ -48,12 +49,24 @@ Future<bool> startPostFromTemplate({
     if (schedulePreset == null || !context.mounted) return false;
   }
 
+  ExpectedAttendancePreset? expectedAttendancePreset;
+  if (template.expectedAttendancePresets.length > 1) {
+    expectedAttendancePreset = await showExpectedAttendancePresetPicker(
+      context: context,
+      presets: template.expectedAttendancePresets,
+      title: 'Expected attendance preset',
+      subtitle: 'Choose the expected-member list for this post',
+    );
+    if (expectedAttendancePreset == null || !context.mounted) return false;
+  }
+
   final eventContext = PostTemplateMapper.mapTemplateToEventContext(
     template: template,
     currentUserID: appContext.currentUser.id,
     parentID: parentID,
     allUsers: appContext.allUsers,
     schedulePreset: schedulePreset,
+    expectedAttendancePreset: expectedAttendancePreset,
   );
   eventContext.applyCellGroupIDs(
     CellGroupMeetingSetup.cellGroupIdsForNewMeeting(
@@ -79,14 +92,13 @@ Future<bool> startPostFromTemplate({
 
 Future<DateTime?> _selectDate(
   final BuildContext context, {
-  final int? preferredDayOfWeek,
+  final List<int> preferredDaysOfWeek = const [],
 }) async {
   final now = DateTime.now();
   final firstDate = now.subtract(const Duration(days: 30));
   final lastDate = now.add(const Duration(days: 60));
-  var initialDate = preferredDayOfWeek != null
-      ? nextDateForDayOfWeek(dayOfWeek: preferredDayOfWeek, now: now)
-      : now;
+  var initialDate =
+      nextDateForDaysOfWeek(daysOfWeek: preferredDaysOfWeek, now: now) ?? now;
   if (initialDate.isBefore(firstDate)) initialDate = firstDate;
   if (initialDate.isAfter(lastDate)) initialDate = lastDate;
   return showDatePicker(

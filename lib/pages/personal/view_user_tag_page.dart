@@ -12,12 +12,14 @@ import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/app_links.dart';
+import '../../utility/cache/directory_cache.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/gallery_viewer.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/schedule_role_times.dart';
 import '../../utility/team_rota.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
@@ -26,6 +28,7 @@ import '../../widgets/catalog/colored_chip.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/catalog/user_tag_graphic.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import '../../widgets/information/info_section_card.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/my_avatar_stack.dart';
@@ -48,6 +51,7 @@ class ViewUserTagPage extends StatefulWidget {
     required this.tagId,
     this.onEdit,
     this.initialLocationId,
+    this.initialTag,
   });
 
   final String tagId;
@@ -58,6 +62,10 @@ class ViewUserTagPage extends StatefulWidget {
   /// Location selected on open. The reader's own default is used when this
   /// is missing or not an active location.
   final String? initialLocationId;
+
+  /// Optional session tag from an in-app open. Cold links resolve from the
+  /// catalogue once it is ready.
+  final UserTag? initialTag;
 
   @override
   State<ViewUserTagPage> createState() => _ViewUserTagPageState();
@@ -86,6 +94,7 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
   List<EventHead> _rangeHeads = [];
   final Map<String, EventProgram?> _programs = {};
 
+  bool _catalogLoading = true;
   bool _scheduleLoading = true;
   bool _programsLoading = false;
   bool _saving = false;
@@ -100,6 +109,17 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
     super.initState();
     _appContext = Provider.of<AppContext>(context, listen: false);
     _locationId = _resolveLocationId(_appContext);
+    final initial = widget.initialTag;
+    final ready = (initial != null && initial.id == widget.tagId) ||
+        _appContext.tagById(widget.tagId) != null ||
+        _appContext.allTags.isNotEmpty ||
+        DirectoryCacheCoordinator.instance.initialPassCompleted;
+    _catalogLoading = !ready;
+    if (!ready) {
+      DirectoryCacheCoordinator.instance.catalogsReady.then((_) {
+        if (mounted) setState(() => _catalogLoading = false);
+      });
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _loadSchedule();
     });
@@ -253,20 +273,59 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
     );
   }
 
+  UserTag? _resolvedTag(AppContext appContext) {
+    final fromContext = appContext.tagById(widget.tagId);
+    if (fromContext != null) return fromContext;
+    final initial = widget.initialTag;
+    if (initial != null && initial.id == widget.tagId) return initial;
+    return null;
+  }
+
+  UserTag? _visibleTag(AppContext appContext) {
+    final tag = _resolvedTag(appContext);
+    if (tag == null) return null;
+    if (!UserTagHelpers.canBrowseTag(
+      tag: tag,
+      isGuest: appContext.isCurrentUserGuest,
+      canManage: appContext.currentUser.canManageVolunteers,
+    )) {
+      return null;
+    }
+    return tag;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     context.select((AppContext c) => (c.catalogsEpoch, c.usersEpoch));
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final tag = appContext.tagById(widget.tagId);
+    final tag = _catalogLoading ? null : _visibleTag(appContext);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final active = _activeLocations(appContext);
     final location = _selectedLocation(active);
+    final leading = PermalinkAppBarLeading.homeOrNull(context);
+
+    if (_catalogLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: leading,
+          title: Text(l10n.manageUserTagsTitle),
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
+        ),
+        body: LoadProgressBody(
+          message: l10n.userTagsLoading,
+          completedSteps: 0,
+          totalSteps: 1,
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(tag?.name ?? l10n.manageUserTagsMenuTitle),
+        leading: leading,
+        title: Text(tag?.name ?? l10n.manageUserTagsTitle),
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
         actions: [
@@ -327,8 +386,14 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
         if (tag.imageUrl != null) ...[
           UserTagGraphic(
             imageUrl: tag.imageUrl,
-            height: 200,
-            heroTag: 'user_tag_cover_${tag.id}',
+            height: UserTagGraphic.detailHeight,
+            heroTag: UserTagGraphic.coverHeroTag(tag.id),
+            onTap: () => UserTagGraphic.openCoverViewer(
+              context,
+              tagId: tag.id,
+              tagName: tag.name,
+              imageUrl: tag.imageUrl,
+            ),
           ),
           const SizedBox(height: 16),
         ],
@@ -848,11 +913,16 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
     ThemeData theme,
   ) {
     final colorScheme = theme.colorScheme;
-    final start = role['start'] as DateTime?;
-    final end = role['end'] as DateTime?;
-    final timeLabel = start != null && end != null
-        ? '${_timeFormat.format(start)} – ${_timeFormat.format(end)}'
-        : null;
+    final timeLabel = ScheduleRoleTimes.label(
+      start: role['start'] as DateTime?,
+      end: role['end'] as DateTime?,
+      standing: EventProgram.isStanding(role),
+      wholeEvent: l10n.scheduleWholeEventLabel,
+      formatTime: _timeFormat.format,
+      startsAt: l10n.scheduleStartsAt,
+      range: (start, end) =>
+          '${_timeFormat.format(start)} – ${_timeFormat.format(end)}',
+    );
     final assigned = _assignedUsers(role);
 
     return Column(
@@ -924,7 +994,6 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
           selectedUIDs: tag.headsForLocation(location.id),
           includeCurrentUser: true,
           includePlaceholders: false,
-          preferServing: true,
           lockedLocation: location.name,
           title: l10n.userTagDetailChooseHeads,
         ),
@@ -1007,6 +1076,7 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
         actorUserId: appContext.currentUser.id,
         log: UserActivityMessages.editedUserTag,
         documentId: tag.id,
+        title: tag.name,
       );
     } catch (e, st) {
       debugPrint('Could not save team tag ${tag.id}: $e\n$st');

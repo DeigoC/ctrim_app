@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'event/event_program.dart';
+import 'event/lead_speaker.dart';
 
 /// Hardcoded grouping for post templates (Services vs Cell Groups).
 enum PostTemplateCategory {
@@ -126,6 +127,8 @@ class SchedulePreset {
         'for_guests': entry['for_guests'],
         'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch,
         'tagIDs': EventProgram.tagIDsOf(entry),
+        'standing': EventProgram.isStanding(entry),
+        'requiresPeople': EventProgram.requiresPeople(entry),
       });
     }
     return result;
@@ -145,6 +148,8 @@ class SchedulePreset {
         'for_guests': entry['for_guests'],
         'id': entry['id'],
         'tagIDs': EventProgram.tagIDsOf(entry),
+        'standing': EventProgram.isStanding(entry),
+        'requiresPeople': EventProgram.requiresPeople(entry),
       });
     }
     return result;
@@ -160,6 +165,8 @@ class SchedulePreset {
       'for_guests': role['for_guests'],
       'id': role['id'],
       'tagIDs': EventProgram.tagIDsOf(role),
+      'standing': EventProgram.isStanding(role),
+      'requiresPeople': EventProgram.requiresPeople(role),
     };
   }
 
@@ -181,6 +188,79 @@ class SchedulePreset {
   }
 }
 
+/// Named expected-member list on a [PostTemplate].
+///
+/// Independent of [SchedulePreset]: the same meeting kind can have different
+/// usual people (Team A / Team B) without changing the running order.
+class ExpectedAttendancePreset {
+  static const String defaultId = 'default';
+  static const String defaultName = 'Default';
+
+  late String _id, _name;
+  late List<String> _userIds;
+
+  ExpectedAttendancePreset({
+    required String id,
+    required String name,
+    List<String>? userIds,
+  }) {
+    _id = id;
+    _name = name;
+    _userIds = _normalizeUserIds(userIds ?? const []);
+  }
+
+  ExpectedAttendancePreset.emptyDefault()
+      : this(id: defaultId, name: defaultName);
+
+  ExpectedAttendancePreset.fromMap(final Map<String, dynamic> data) {
+    _id = (data['id'] as String?)?.trim().isNotEmpty == true
+        ? data['id'] as String
+        : defaultId;
+    _name = (data['name'] as String?)?.trim().isNotEmpty == true
+        ? data['name'] as String
+        : defaultName;
+    _userIds = _normalizeUserIds(
+      List<String>.from(data['userIds'] ?? data['UserIds'] ?? const []),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': _id,
+      'name': _name,
+      'userIds': List<String>.from(_userIds),
+    };
+  }
+
+  String get id => _id;
+  String get name => _name;
+  List<String> get userIds => UnmodifiableListView(_userIds);
+
+  void setName(final String name) => _name = name;
+  void setUserIds(final List<String> userIds) =>
+      _userIds = _normalizeUserIds(userIds);
+
+  ExpectedAttendancePreset copy({String? id, String? name}) {
+    return ExpectedAttendancePreset(
+      id: id ?? _id,
+      name: name ?? _name,
+      userIds: _userIds,
+    );
+  }
+
+  static String newId() => DateTime.now().millisecondsSinceEpoch.toString();
+
+  static List<String> _normalizeUserIds(final List<String> userIds) {
+    final seen = <String>{};
+    final result = <String>[];
+    for (final id in userIds) {
+      if (id.isEmpty || !seen.add(id)) continue;
+      result.add(id);
+    }
+    return result;
+  }
+}
+
 class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
   PostTemplateCategory _category = PostTemplateCategory.service;
@@ -190,12 +270,13 @@ class PostTemplate {
       _expectedAttendeeUserIDs,
       _contributorUIDs,
       _subtitles;
+  late List<ExpectedAttendancePreset> _expectedAttendancePresets;
   late List<Map<String, dynamic>> _headMedia,
       _media,
       _headMediaPool,
       _bodyMediaPool;
   late List<Map<String, dynamic>> _logs;
-  String? _leadSpeakerUID;
+  List<String> _leadSpeakerUIDs = [];
   bool _isPeriodParent = false;
 
   // * Event Program related
@@ -204,7 +285,7 @@ class PostTemplate {
   late List<Map<String, dynamic>> _roles;
   late List<SchedulePreset> _schedulePresets;
   bool _allDay = false, _online = false;
-  int? _defaultDayOfWeek;
+  List<int> _defaultDaysOfWeek = [];
 
   PostTemplate.fromMap(
       final bool forLocal, final String id, final Map<String, dynamic> data) {
@@ -220,16 +301,25 @@ class PostTemplate {
     _cellGroupIDs = data['CellGroupIDs'] != null
         ? List<String>.from(data['CellGroupIDs'])
         : <String>[];
-    _expectedAttendeeUserIDs = data['ExpectedAttendeeUserIDs'] != null
+    final topLevelExpected = data['ExpectedAttendeeUserIDs'] != null
         ? List<String>.from(data['ExpectedAttendeeUserIDs'])
         : <String>[];
+    _expectedAttendeeUserIDs = topLevelExpected;
+    _expectedAttendancePresets = _parseExpectedAttendancePresets(
+      data['ExpectedAttendancePresets'],
+      topLevelExpected: topLevelExpected,
+    );
+    _mirrorFirstExpectedPresetToTopLevel();
     _contributorUIDs = List.from(data['Contributors']);
     _subtitles = data['Subtitles'] != null
         ? List<String>.from(data['Subtitles'])
         : <String>[];
     _location = data['Location'];
     _category = PostTemplateCategory.fromFirestore(data['Category']);
-    _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
+    _leadSpeakerUIDs = LeadSpeakerSnapshot.uidsFromFields(
+      data['LeadSpeakerUIDs'],
+      data['LeadSpeakerUID'],
+    );
     _isPeriodParent = data['IsPeriodParent'] == true;
 
     // body
@@ -263,14 +353,14 @@ class PostTemplate {
     _bodyMediaPool = data['BodyMediaPool'] != null
         ? _parseMedia(asStringKeyedMapList(data['BodyMediaPool']))
         : <Map<String, dynamic>>[];
-    _defaultDayOfWeek = data['DefaultDayOfWeek'] != null
-        ? data['DefaultDayOfWeek'] as int?
-        : null;
+    _defaultDaysOfWeek = _parseDefaultDaysOfWeek(
+        data['DefaultDaysOfWeek'], data['DefaultDayOfWeek']);
     _logs = _parseLogs(forLocal, data['Logs']);
   }
 
   Map<String, dynamic> toJson(final bool forLocal) {
     _mirrorFirstPresetToTopLevel();
+    _mirrorFirstExpectedPresetToTopLevel();
     return {
       'Title': _title,
       'Description': _description,
@@ -282,8 +372,11 @@ class PostTemplate {
       'TagIDs': _tagIDs,
       'CellGroupIDs': _cellGroupIDs,
       'ExpectedAttendeeUserIDs': _expectedAttendeeUserIDs,
+      'ExpectedAttendancePresets':
+          _expectedAttendancePresets.map((preset) => preset.toJson()).toList(),
       'Contributors': _contributorUIDs,
-      'LeadSpeakerUID': _leadSpeakerUID,
+      'LeadSpeakerUID': leadSpeakerUID,
+      'LeadSpeakerUIDs': List<String>.from(_leadSpeakerUIDs),
       'IsPeriodParent': _isPeriodParent,
       'Subtitles': _subtitles,
       'AllDay': _allDay,
@@ -294,7 +387,8 @@ class PostTemplate {
       'Media': _media,
       'HeadMediaPool': _headMediaPool,
       'BodyMediaPool': _bodyMediaPool,
-      'DefaultDayOfWeek': _defaultDayOfWeek,
+      'DefaultDaysOfWeek': List<int>.from(_defaultDaysOfWeek),
+      'DefaultDayOfWeek': defaultDayOfWeek,
       'StartTime': SchedulePreset._dateTimeToJson(forLocal, _startTime),
       'FinishTime': SchedulePreset._dateTimeToJson(forLocal, _finishTime),
       'Roles': SchedulePreset.rolesToJson(forLocal, _roles),
@@ -322,7 +416,13 @@ class PostTemplate {
   DateTime? get finishTime => _schedulePresets.isEmpty
       ? _finishTime
       : _schedulePresets.first.finishTime;
-  int? get defaultDayOfWeek => _defaultDayOfWeek;
+
+  /// Weekdays this template usually runs on (1 = Mon … 7 = Sun), sorted.
+  List<int> get defaultDaysOfWeek => UnmodifiableListView(_defaultDaysOfWeek);
+
+  /// First of [defaultDaysOfWeek]; older app versions only read this one.
+  int? get defaultDayOfWeek =>
+      _defaultDaysOfWeek.isEmpty ? null : _defaultDaysOfWeek.first;
 
   List<Map<String, dynamic>> get headMedia => _headMedia;
   List<Map<String, dynamic>> get media => _media;
@@ -341,10 +441,15 @@ class PostTemplate {
   List<String> get topics => _topics;
   List<String> get tagIDs => UnmodifiableListView(_tagIDs);
   List<String> get cellGroupIDs => UnmodifiableListView(_cellGroupIDs);
-  List<String> get expectedAttendeeUserIDs =>
-      UnmodifiableListView(_expectedAttendeeUserIDs);
+  List<String> get expectedAttendeeUserIDs => _expectedAttendancePresets.isEmpty
+      ? UnmodifiableListView(_expectedAttendeeUserIDs)
+      : UnmodifiableListView(_expectedAttendancePresets.first.userIds);
+  List<ExpectedAttendancePreset> get expectedAttendancePresets =>
+      UnmodifiableListView(_expectedAttendancePresets);
   List<String> get subtitles => _subtitles;
-  String? get leadSpeakerUID => _leadSpeakerUID;
+  String? get leadSpeakerUID =>
+      _leadSpeakerUIDs.isEmpty ? null : _leadSpeakerUIDs.first;
+  List<String> get leadSpeakerUIDs => UnmodifiableListView(_leadSpeakerUIDs);
   bool get isPeriodParent => _isPeriodParent;
 
   /// Change history entries: `{uid, log, ts}` — newest first after [addLog].
@@ -355,8 +460,25 @@ class PostTemplate {
   void setCellGroupIDs(final List<String> cellGroupIDs) =>
       _cellGroupIDs = List<String>.from(cellGroupIDs);
 
-  void setExpectedAttendeeUserIDs(final List<String> userIds) =>
-      _expectedAttendeeUserIDs = List<String>.from(userIds);
+  void setExpectedAttendeeUserIDs(final List<String> userIds) {
+    final normalized = ExpectedAttendancePreset._normalizeUserIds(userIds);
+    if (_expectedAttendancePresets.isEmpty) {
+      if (normalized.isEmpty) {
+        _expectedAttendeeUserIDs = <String>[];
+        return;
+      }
+      _expectedAttendancePresets = [
+        ExpectedAttendancePreset(
+          id: ExpectedAttendancePreset.defaultId,
+          name: ExpectedAttendancePreset.defaultName,
+          userIds: normalized,
+        ),
+      ];
+    } else {
+      _expectedAttendancePresets.first.setUserIds(normalized);
+    }
+    _mirrorFirstExpectedPresetToTopLevel();
+  }
 
   SchedulePreset? presetById(final String id) {
     for (final preset in _schedulePresets) {
@@ -365,9 +487,23 @@ class PostTemplate {
     return null;
   }
 
+  ExpectedAttendancePreset? expectedAttendancePresetById(final String id) {
+    for (final preset in _expectedAttendancePresets) {
+      if (preset.id == id) return preset;
+    }
+    return null;
+  }
+
   void setSchedulePresets(final List<SchedulePreset> presets) {
     _schedulePresets = presets.map((preset) => preset.copy()).toList();
     _mirrorFirstPresetToTopLevel();
+  }
+
+  void setExpectedAttendancePresets(
+      final List<ExpectedAttendancePreset> presets) {
+    _expectedAttendancePresets =
+        presets.map((preset) => preset.copy()).toList();
+    _mirrorFirstExpectedPresetToTopLevel();
   }
 
   /// Prepends a change-history entry (same shape as post [EventLog] entries).
@@ -387,7 +523,18 @@ class PostTemplate {
   void setOnline(final bool newState) => _online = newState;
   void setMapLink(final String mapLink) => _mapLink = mapLink;
   void setAddress(final String address) => _address = address;
-  void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;
+  void setLeadSpeakerUIDs(final List<String> uids) {
+    _leadSpeakerUIDs = LeadSpeakerSnapshot.normalizeUids(uids);
+  }
+
+  void setLeadSpeakerUID(final String? uid) {
+    if (uid == null || uid.isEmpty) {
+      _leadSpeakerUIDs = [];
+      return;
+    }
+    setLeadSpeakerUIDs([uid]);
+  }
+
   void setIsPeriodParent(final bool value) => _isPeriodParent = value;
   void setCategory(final PostTemplateCategory value) => _category = value;
 
@@ -405,7 +552,31 @@ class PostTemplate {
     }
   }
 
-  void setDefaultDayOfWeek(final int? day) => _defaultDayOfWeek = day;
+  void setDefaultDaysOfWeek(final Iterable<int> days) =>
+      _defaultDaysOfWeek = normalizeDaysOfWeek(days);
+
+  /// Saves merge fields, so an older app that only knows [legacyDay] can change
+  /// it and leave [rawDays] behind. The list counts only while its first day
+  /// still matches [legacyDay].
+  static List<int> _parseDefaultDaysOfWeek(
+      final dynamic rawDays, final dynamic legacyDay) {
+    final legacy = normalizeDaysOfWeek([legacyDay]);
+    if (rawDays is! List) return legacy;
+    final days = normalizeDaysOfWeek(rawDays);
+    final firstDay = days.isEmpty ? null : days.first;
+    final legacyFirst = legacy.isEmpty ? null : legacy.first;
+    return firstDay == legacyFirst ? days : legacy;
+  }
+
+  /// Unique weekdays in 1–7, sorted Monday first. Other values are dropped.
+  static List<int> normalizeDaysOfWeek(final Iterable<dynamic> days) {
+    final result = <int>{
+      for (final day in days)
+        if (day is num && day.toInt() >= 1 && day.toInt() <= 7) day.toInt(),
+    }.toList()
+      ..sort();
+    return result;
+  }
 
   // subtitle list management
   void addSubtitle(final String subtitle) {
@@ -491,6 +662,33 @@ class PostTemplate {
     _startTime = first.startTime;
     _finishTime = first.finishTime;
     _roles = first.roles;
+  }
+
+  void _mirrorFirstExpectedPresetToTopLevel() {
+    if (_expectedAttendancePresets.isEmpty) {
+      _expectedAttendeeUserIDs = <String>[];
+      return;
+    }
+    _expectedAttendeeUserIDs =
+        List<String>.from(_expectedAttendancePresets.first.userIds);
+  }
+
+  static List<ExpectedAttendancePreset> _parseExpectedAttendancePresets(
+    final dynamic raw, {
+    required List<String> topLevelExpected,
+  }) {
+    final parsed = asStringKeyedMapList(raw)
+        .map((entry) => ExpectedAttendancePreset.fromMap(entry))
+        .toList();
+    if (parsed.isNotEmpty) return parsed;
+    if (topLevelExpected.isEmpty) return <ExpectedAttendancePreset>[];
+    return [
+      ExpectedAttendancePreset(
+        id: ExpectedAttendancePreset.defaultId,
+        name: ExpectedAttendancePreset.defaultName,
+        userIds: topLevelExpected,
+      ),
+    ];
   }
 
   static List<SchedulePreset> _parseSchedulePresets(

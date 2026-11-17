@@ -8,12 +8,13 @@ Definitions for **post**, **interest**, **bookmark**, **template**, and related 
 
 - Scroll and open posts (title, details, media, schedule, related posts)
 - On bulletin cards, a **tall photo** sits along the side next to the title; a **wide photo** fills the bottom of the card. When there are several photos, portraits stay on the side and the rest share a strip along the bottom
+- When a post has no photos, the card shows the **speakers** (up to three) with their photos and names. The first speaker’s photo is also the picture at the top of the post
 - A post’s tag sits in the same label as Upcoming or Recent, for example **Upcoming • Sunday Worship**, in that label’s colour. The date and time stay on their own line under the description
-- Share a post from its content to send a **link** (`ctrim.app/post/…`). Guests and members who open the link land on that post — they can bookmark the address and come back later
+- **Share** (top of an open post, on every tab) sends the post’s **link** (`ctrim.org/post/…`), or the **write-up** (the title, the link, and the About text). On a phone this opens the usual share menu. When that menu is not available, the link is copied so you can paste it. Guests and members who open the link land on that post. If the post is the first page (a shared link, a bookmark, or a refresh), **Home** in the top corner opens the bulletin. Opening the post from inside the app still uses Back
 - Other browseable records work the same way: cell groups, churches, information topics, testimonials, and people profiles each have an address you can share or bookmark
-- On many posts, see **interest** and **attendance** counts
-- When signed in: mark **interest** (“follow updates” for that post) and see who else is interested
-- Guests can browse and see counts; signing in unlocks interest and richer people details
+- Bulletin cards can still show **interest** and **attendance** counts
+- Open the **People** tab to see who is interested or attending. Guests see shortened names unless that person turned on **Full Surname for Guests**
+- When signed in: mark **interest** (“follow updates” for that post) on the People tab
 - **Bookmark** posts to keep track of them (long-press a card on the bulletin, or use the bookmark control on an open post)
 
 ## Finding posts (sort & filters)
@@ -50,9 +51,9 @@ Opening a post shows tabs when that content exists:
 | Tab | What’s there |
 |-----|----------------|
 | **About** | Title, details, and main description |
-| **People** | Interest, expected attendees, and attendance |
+| **People** | Interest, expected attendees, and attendance (guests can browse names; signing in unlocks marking interest) |
 | **Schedule** | Programme / roles and times (guests may see a filtered view — see below) |
-| **Media** | Photos and video |
+| **Media** | Photos and video, in the order set on the post. The first image is the cover |
 | **Related** | Linked parent, sibling, or child posts |
 
 Tap a photo or video to open it. Pinch a photo to look closer, swipe sideways for the next item, and swipe down to close. Video playback includes pause, a timeline, and a loop control.
@@ -61,10 +62,10 @@ Tap a photo or video to open it. Pinch a photo to look closer, swipe sideways fo
 
 | Idea | In plain language |
 |------|-------------------|
-| **Interest** | “I want to **follow updates** about this post.” Not a formal RSVP. Signed-in people can opt in; guests see counts only. |
+| **Interest** | “I want to **follow updates** about this post.” Not a formal RSVP. Signed-in people opt in on the People tab; guests can see who is interested but must sign in to mark their own. |
 | **Bookmark** | Keep the post on your shortlist and (when organisers save with an update log) get notified about changes. Separate from interest — you can bookmark without marking interest. |
 | **Expected attendees** | The **usual people** for a meeting (often set on a **template**, or filled from a linked cell group). They see the meeting on **My Schedule**; on the day, organisers can check them off into attendance quickly. |
-| **Attendance** | Who is (or was) attending — registered people or **placeholders**. Interested people can be promoted to attending; expected people can be checked off. **Post contributors** (and the author) manage the lists; they stay editable after the event. When you **create** a post dated **before today**, the draft shows **Who attended** only (not expected people) so you can record who was there before the post is saved. |
+| **Attendance** | Who is (or was) attending — registered people or **placeholders**. Interested people can be promoted to attending; expected people can be checked off. **Post contributors** (and the author) manage the lists; they stay editable after the event. On the people picker, two or more people with the same surname have a tick box for that group, so a family can be marked together. On a phone, nine or more people in **Expected** or **Attendance** fold to a few names, their faces, and a **+** count of who is hidden. A wide screen lists about twice that many before folding. **+ more** opens the full list. **New** marks someone’s first time on the attendance list for that cell group, and **Back again** marks their second and third time. After that the mark goes away. A post that is not a cell group meeting uses its post tag instead, and when it has several tags it follows the one they already know best. A post with no cell group and no tag has no marks. Marks also wait until that series already has three saved attendance lists, so the first weeks of recording do not label the whole room as new. When you **create** a post dated **before today**, the draft shows **Who attended** only (not expected people) so you can record who was there before the post is saved. |
 
 ## Reading the schedule
 
@@ -72,9 +73,13 @@ The Schedule tab shows the running order as a **timeline of the day** rather tha
 
 Anything happening **at the same time** appears side by side. On a narrow phone screen, if more items overlap than will fit, a small **“+2 parallel”** marker opens the rest.
 
-Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with their times and who is assigned. They used to be drawn as full-height blocks, which filled the screen and pushed the actual running order out of view. Keeping them in the band means the timeline shows what is happening and when, while the standing jobs stay visible at a glance. Their real times are unchanged, so an early setup call still reads as, say, 09:00 even when the service starts at 10:00.
+Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with who is assigned. Mark a role **Whole event** when you add it, so those jobs do not need a padded start and finish just to leave the running order. Each time can be cleared. Leave both empty and the role reads as Whole event. Set only a start when you know when people should arrive and the duty runs on to the end of the post — that reads as from 09:00. Add a finish only when the duty itself stops at a set time. Longer jobs that were saved before this still appear in the band.
 
-Tap any item to see its full details: exact times, notes, who is assigned, and any **ministries** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline. Ministries an area admin has hidden from guests are left off that detail for people who are not signed in.
+On a later item that shares a ministry, **Use Technical Media** adds the people already set for the whole event. When either line has no ministry, the offer still appears: an item with no ministry can take any whole-event team, and a whole-event team with no ministry can be applied to any item. Items with different ministries are not matched, and an item marked as not needing a named person never gets the offer. An earlier timed item, such as opening worship, is not offered. You can still add or remove someone afterwards. Changing the whole-event team does not change items you have already filled.
+
+Choosing people for an item that already has one or more ministries opens the list filtered to those ministries and that post’s location. You can still change those filters.
+
+Tap any item to see its full details: exact times, notes, who is assigned, and any **ministries** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline. The **author** and **contributors** can press and hold an item — including a whole-event duty and an item with no time — to open that item’s editor. Everyone else still only sees the details. Ministries an area admin has hidden from guests are left off that detail for people who are not signed in.
 
 ## Guest-visible schedule
 
@@ -82,7 +87,7 @@ Programme lines can be marked so **guests do not see** staff-only items. Guests 
 
 ## Rearranging the running order
 
-Organisers who can edit a post get an **Arrange schedule** screen (from the Schedule tab or the edit menu). Press and hold an item, then drag it to a new time. Two modes decide what happens to everything else:
+Organisers who can edit a post get an **Arrange schedule** screen (from the Schedule tab, or from **Schedule** in the edit menu). Press and hold an item, then drag it to a new time. Two modes decide what happens to everything else:
 
 | Mode | What it does |
 |------|--------------|
@@ -93,7 +98,7 @@ Items that started before the point you drop into are left alone, so a long back
 
 Adding a role into a **free slot** on the timeline leaves everything else where it is. You are only asked about later items if the new time **overlaps** something already in the running order (not the all-event band). **Keep times** is the usual choice — items can run together — or you can push later items back to make room.
 
-On the Schedule tab, tap an empty time to add an item that starts then. You still choose the length on the form. The first item is added from the edit menu, because an empty schedule has no timeline to tap. Arrange schedule stays for dragging.
+On the Schedule tab, tap an empty time to add an item that starts then. You still choose the length on the form. The first item is added from **Schedule** in the edit menu, because an empty schedule has no timeline to tap. Arrange schedule stays for dragging.
 
 After you save a new item, you can add the next one starting at that finish time. The new form keeps that start and clears the title, people, and length, so each slot is filled in on its own. **Done** returns to the schedule. The item you just saved stays either way.
 
@@ -115,7 +120,8 @@ People with **Leader** access can create posts (usually by picking a **template*
 
 The **author** of a post, plus anyone listed as a **contributor** on that post, can edit it — for example:
 
-- Title, about text, and details. On a saved post, **Title & details** includes **Add who attended** when people are already marked attended. It keeps the title and adds shuffled shortened names from that list (for example `w/ John D., Mary S. +3`), staying within the title length. The same group does not always show the same names first. The create screen and templates do not offer this.  
+- Title, about text, and details. On a saved post, **Title & details** includes **Add who attended** when people are already marked attended. It keeps the title and adds shuffled shortened names from that list (for example `w/ John D., Mary S. +3`), staying within the title length. The same group does not always show the same names first. When you **create** a cell group post, leave the title as the template’s title, and mark who attended, saving does that fill for you. A title you have changed stays as you wrote it. Templates do not offer this button.
+- **Speakers**, up to three, in sermon order. The first person’s photo is the cover when the post has no pictures. On Title & details, move someone earlier or later to change who that cover is. Templates can store the same list.  
 - Media (photos / video)  
 - Schedule and role assignments  
 - Who is attending / who is expected (including **Fill from cell group** when the post is linked to a cell group)  
@@ -129,26 +135,30 @@ When saving important edits, organisers can write a short **update log**. That n
 
 ## Templates & recurring programmes
 
-**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles including which **ministries** own each slot, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
+**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles including which **ministries** own each slot, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Both kinds start as closed cards; open the kind you want to edit or to add a template. Existing templates sit under **Services** until a leader moves them.
 
 A template can hold more than one **schedule preset** — named variants of the running order (different people, ministries, or times) for the same kind of meeting. Duplicate a preset to start Team B from Team A, then edit it. Venue (address / online) stays on the template, not on each preset.
 
-When **choosing a template** to create a post, browse by **Cell Groups** / **Services**, and filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name. If the template has several schedule presets, pick one after the date; if it has only one, that running order is applied automatically.
+A template can also hold more than one **expected attendance preset** — named lists of the usual people for the People checklist. These are independent of schedule presets (Team A’s running order and Team B’s expected people can differ). Manage them on the template’s **Header** tab next to expected attendees.
+
+When **choosing a template** to create a post, **Cell Groups** and **Services** start as closed cards. Open the kind you want, then pick a template. You can still filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name. A search or location filter opens any kind that has a match. If the template has several schedule presets, pick one after the date; if it has only one, that running order is applied automatically. The same applies for expected attendance presets when there is more than one.
 
 When **creating or editing a template**, leaders set its **category** (Services or Cell Groups) and can set a **default broadcast audience**: whether new posts from that template should pre-select **All {location} updates** (using the location on the template’s Schedule tab). Organisers can still change notify settings when publishing each post.
 
-**Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date. When the template has several schedule presets, each date can use a different one, or **Apply schedule to all**. Programme slots for a ministry on those future dates show on Personal → **Team rota**, so departments can see what they are down for without those posts filling the bulletin.
+**Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date. Pick one or more days of the week (the template’s default days are ticked to start with) and how many weeks to cover; you get a post on every chosen day in each of those weeks, up to 30 posts at a time. Starting from an existing post, the dates begin the day after it, so the rest of that week is included. When the template has several schedule presets, each date can use a different one, or **Apply schedule to all**. The same applies for expected attendance presets (**Apply expected to all**). Programme slots for a ministry on those future dates show on Personal → **Ministry Schedule**, so departments can see what they are down for without those posts filling the bulletin.
 
-On an existing post, the author or a contributor can **Apply schedule preset** from the edit menu to replace the running order (and start/finish times) with a preset from **any** template. Attendance and expected people stay. Save the post to keep the change; people added or removed from roles are notified the same way as a normal schedule edit.
+On an existing post, the author or a contributor can **Apply schedule preset** from **Schedule** in the edit menu to replace the running order (and start/finish times) with a preset from **any** template. Attendance and expected people stay. Save the post to keep the change; people added or removed from roles are notified the same way as a normal schedule edit.
+
+They can also **Apply expected attendance** from **People & team** in the edit menu to replace the expected-people checklist with a preset from any template. Interest and who has already been marked as attending stay. Save the post to keep the change.
 
 ## Related posts & period parents
 
 Posts can form a family:
 
 - **Related** tab — parent, sibling, and child posts for a series or meeting group  
-- **Period parent** — mark a post as a container for a term or season, then attach individual meeting posts underneath  
+- **Period parent** — mark a post as a container for a term or season, then attach individual meeting posts underneath. You can switch this on while creating the post (the **Related posts** card on the Header tab) or later from **Title & details**  
 
-Organisers create or attach related posts from the post’s edit actions.
+Leaders open **Related posts** in the edit menu to create a child under this post, a sibling under the same parent, or several posts at once.
 
 ## Posts and cell groups
 

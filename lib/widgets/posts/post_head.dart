@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../models/event/event_head.dart';
+import '../../models/event/lead_speaker.dart';
 import '../../models/post_tag.dart';
 import '../../utility/app_context.dart';
 import '../../utility/catalog/post_tag_helpers.dart';
@@ -581,8 +582,7 @@ class _PostHeadState extends State<PostHead>
                 style: label,
                 children: [
                   TextSpan(text: widget.thisHead.eventStatusText),
-                  for (final tag in postTags)
-                    TextSpan(text: ' • ${tag.name}'),
+                  for (final tag in postTags) TextSpan(text: ' • ${tag.name}'),
                 ],
               ),
               maxLines: 1,
@@ -873,9 +873,9 @@ class _PostHeadState extends State<PostHead>
   }
 }
 
-/// Lead-speaker block for posts with no media. Owns the [context.select]
+/// Speaker block for posts with no media. Owns the [context.select]
 /// so the lookup runs inside this widget's [build], not the card's layout
-/// callback.
+/// callback. The first face carries the cover hero.
 class _LeadSpeakerPortrait extends StatelessWidget {
   const _LeadSpeakerPortrait({required this.head});
 
@@ -885,18 +885,19 @@ class _LeadSpeakerPortrait extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final imgSrc = head.leadSpeakerImgSrc;
-    final name = context.select((AppContext appContext) {
-      final uid = head.leadSpeakerUID;
-      final user = uid == null || uid.isEmpty ? null : appContext.userById(uid);
-      return PersonDisplayName.leadSpeakerLabel(
-        storedName: head.leadSpeakerName,
-        user: user,
-        guest: appContext.isCurrentUserGuest,
-      );
-    });
-    final hasImage = imgSrc != null && imgSrc.isNotEmpty;
-
+    final guest = context
+        .select((AppContext appContext) => appContext.isCurrentUserGuest);
+    context.select((AppContext appContext) => appContext.usersEpoch);
+    final appContext = context.read<AppContext>();
+    final speakers = head.leadSpeakers;
+    final labels = [
+      for (final speaker in speakers)
+        PersonDisplayName.leadSpeakerLabel(
+          storedName: speaker.name,
+          user: appContext.userById(speaker.uid),
+          guest: guest,
+        ),
+    ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -908,32 +909,60 @@ class _LeadSpeakerPortrait extends StatelessWidget {
         ),
         child: Column(
           children: [
-            if (hasImage)
-              ClipOval(
-                child: CachedImageWidget(
-                  imageUrl: imgSrc,
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.cover,
-                  heroTag: head.media.every((entry) => entry['type'] != 'img')
-                      ? 'post_cover_${head.id}'
-                      : null,
-                ),
-              )
-            else
-              _initialsAvatar(theme, colorScheme, name),
-            const SizedBox(height: 12),
-            Text(
-              name,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final count = speakers.length;
+                final natural = count <= 1
+                    ? 120.0
+                    : count == 2
+                        ? 96.0
+                        : 72.0;
+                final slot =
+                    count == 0 ? natural : constraints.maxWidth / count;
+                final diameter =
+                    (count <= 1 ? natural : slot - 8).clamp(40.0, natural);
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var index = 0; index < speakers.length; index++)
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Column(
+                            children: [
+                              _speakerFace(
+                                theme,
+                                colorScheme,
+                                speaker: speakers[index],
+                                name: labels[index],
+                                diameter: diameter,
+                                hero: index == 0 &&
+                                    speakers[index].imgSrc != null &&
+                                    speakers[index].imgSrc!.isNotEmpty,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                labels[index],
+                                style: (count > 1
+                                        ? theme.textTheme.titleSmall
+                                        : theme.textTheme.titleMedium)
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
-              'Lead speaker',
+              speakers.length > 1 ? 'Speakers' : 'Lead speaker',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -944,8 +973,35 @@ class _LeadSpeakerPortrait extends StatelessWidget {
     );
   }
 
+  Widget _speakerFace(
+    ThemeData theme,
+    ColorScheme colorScheme, {
+    required LeadSpeakerSnapshot speaker,
+    required String name,
+    required double diameter,
+    required bool hero,
+  }) {
+    final imgSrc = speaker.imgSrc;
+    if (imgSrc != null && imgSrc.isNotEmpty) {
+      return ClipOval(
+        child: CachedImageWidget(
+          imageUrl: imgSrc,
+          width: diameter,
+          height: diameter,
+          fit: BoxFit.cover,
+          heroTag: hero ? 'post_cover_${head.id}' : null,
+        ),
+      );
+    }
+    return _initialsAvatar(theme, colorScheme, name, diameter / 2);
+  }
+
   Widget _initialsAvatar(
-      ThemeData theme, ColorScheme colorScheme, String name) {
+    ThemeData theme,
+    ColorScheme colorScheme,
+    String name,
+    double radius,
+  ) {
     final parts = name.trim().split(RegExp(r'\s+'));
     final initials = parts.isEmpty
         ? '?'
@@ -954,11 +1010,14 @@ class _LeadSpeakerPortrait extends StatelessWidget {
             .map((part) => part.isNotEmpty ? part[0].toUpperCase() : '')
             .join();
     return CircleAvatar(
-      radius: 60,
+      radius: radius,
       backgroundColor: colorScheme.primaryContainer,
       child: Text(
         initials,
-        style: theme.textTheme.headlineMedium?.copyWith(
+        style: (radius >= 48
+                ? theme.textTheme.headlineMedium
+                : theme.textTheme.titleLarge)
+            ?.copyWith(
           color: colorScheme.onPrimaryContainer,
           fontWeight: FontWeight.bold,
         ),

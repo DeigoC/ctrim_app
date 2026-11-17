@@ -46,20 +46,20 @@ class FcmPayloadTests(unittest.TestCase):
     def test_web_click_link(self):
         self.assertEqual(
             web_click_link({'PostID': 'post-42'}),
-            'https://ctrim.app/post/post-42',
+            'https://ctrim.org/post/post-42',
         )
         self.assertEqual(
             web_click_link({'InfoPage': 'core values'}),
-            'https://ctrim.app/info/core%20values',
+            'https://ctrim.org/info/core%20values',
         )
         self.assertEqual(
             web_click_link(
                 {'InfoPage': 'assets/info/ctrim_info/core_values.json'}
             ),
-            'https://ctrim.app/info/core_values',
+            'https://ctrim.org/info/core_values',
         )
-        self.assertEqual(web_click_link({}), 'https://ctrim.app/')
-        self.assertEqual(web_click_link(None), 'https://ctrim.app/')
+        self.assertEqual(web_click_link({}), 'https://ctrim.org/')
+        self.assertEqual(web_click_link(None), 'https://ctrim.org/')
 
 
 if __name__ == '__main__':

@@ -20,7 +20,8 @@ void main() {
       });
 
       test('creates with optional parentID', () {
-        final meta = EventMetadata(authorUID: 'user-1', parentID: 'parent-post');
+        final meta =
+            EventMetadata(authorUID: 'user-1', parentID: 'parent-post');
 
         expect(meta.parentID, 'parent-post');
         expect(meta.hasParent, true);
@@ -90,7 +91,27 @@ void main() {
         final meta = EventMetadata.fromMap(map);
 
         expect(meta.leadSpeakerUID, 'speaker-9');
+        expect(meta.leadSpeakerUIDs, ['speaker-9']);
         expect(meta.hasLeadSpeaker, true);
+      });
+
+      test('prefers LeadSpeakerUIDs and caps the list', () {
+        final map = {
+          'AuthorUID': 'user-1',
+          'LastUID': 'user-1',
+          'ParentID': null,
+          'ContributorUIDs': <String>[],
+          'ChildrenIDs': <String>[],
+          'LeadSpeakerUID': 'legacy',
+          'LeadSpeakerUIDs': ['a', 'b', 'a', 'c', 'd', ''],
+        };
+
+        final meta = EventMetadata.fromMap(map);
+
+        expect(meta.leadSpeakerUIDs, ['a', 'b', 'c']);
+        expect(meta.leadSpeakerUID, 'a');
+        expect(meta.toJson()['LeadSpeakerUID'], 'a');
+        expect(meta.toJson()['LeadSpeakerUIDs'], ['a', 'b', 'c']);
       });
     });
 
@@ -112,6 +133,7 @@ void main() {
         expect(json['ContributorUIDs'], isEmpty);
         expect(json['ChildrenIDs'], isEmpty);
         expect(json['LeadSpeakerUID'], 'speaker-1');
+        expect(json['LeadSpeakerUIDs'], ['speaker-1']);
         expect(json['IsPeriodParent'], false);
       });
     });

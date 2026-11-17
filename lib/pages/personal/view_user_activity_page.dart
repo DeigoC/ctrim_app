@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart';
 import '../../models/user_activity_log.dart';
-import '../../models/user_activity_record.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_lookups.dart';
+import '../../utility/user_activity_subjects.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/personal/user_activity_tile.dart';
 import '../../widgets/role_access_gate.dart';
 
 class ViewUserActivityPage extends StatefulWidget {
@@ -25,7 +29,11 @@ class _ViewUserActivityPageState extends State<ViewUserActivityPage> {
 
   bool _loading = true;
   Object? _loadError;
+  String _statusMessage = 'Loading activity…';
+  int _completedSteps = 0;
   UserActivityLog _log = UserActivityLog();
+  List<UserActivitySubject> _subjects = const [];
+  UserActivityLookupData _lookupData = UserActivityLookupData.empty;
 
   @override
   void initState() {
@@ -37,12 +45,33 @@ class _ViewUserActivityPageState extends State<ViewUserActivityPage> {
     setState(() {
       _loading = true;
       _loadError = null;
+      _statusMessage = 'Loading activity…';
+      _completedSteps = 0;
     });
     try {
+      final appContext = Provider.of<AppContext>(context, listen: false);
       final log = await _userDBManager.fetchActivity(widget.selectedUser.id);
       if (!mounted) return;
       setState(() {
+        _completedSteps = 1;
+        _statusMessage = 'Finding posts and people…';
+      });
+      final lookupData = await UserActivityLookupLoader.load(
+        records: log.records,
+        appContext: appContext,
+      );
+      if (!mounted) return;
+      setState(() {
         _log = log;
+        _lookupData = lookupData;
+        _subjects = [
+          for (final record in log.records)
+            UserActivitySubjects.resolve(
+              record,
+              lookups: lookupData.lookups,
+              guest: appContext.isCurrentUserGuest,
+            ),
+        ];
         _loading = false;
       });
     } catch (e, st) {
@@ -68,9 +97,9 @@ class _ViewUserActivityPageState extends State<ViewUserActivityPage> {
         ),
         body: (_loading || _loadError != null)
             ? LoadProgressBody(
-                message: 'Loading activity…',
-                completedSteps: _loading ? 0 : 1,
-                totalSteps: 1,
+                message: _statusMessage,
+                completedSteps: _loading ? _completedSteps : 2,
+                totalSteps: 2,
                 error: _loadError,
                 errorTitle: 'Could not load activity',
                 onRetry: _loadActivity,
@@ -111,46 +140,23 @@ class _ViewUserActivityPageState extends State<ViewUserActivityPage> {
           )
         else
           Card(
+            clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
                 for (var i = 0; i < records.length; i++) ...[
                   if (i > 0)
                     const Divider(height: 1, indent: 16, endIndent: 16),
-                  _ActivityTile(
+                  UserActivityTile(
                     record: records[i],
+                    subject: _subjects[i],
                     dateLabel: _dateFormat.format(records[i].ts),
-                    documentLabel:
-                        l10n.userActivityDocumentId(records[i].documentId),
+                    lookupData: _lookupData,
                   ),
                 ],
               ],
             ),
           ),
       ],
-    );
-  }
-}
-
-class _ActivityTile extends StatelessWidget {
-  const _ActivityTile({
-    required this.record,
-    required this.dateLabel,
-    required this.documentLabel,
-  });
-
-  final UserActivityRecord record;
-  final String dateLabel;
-  final String documentLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return ListTile(
-      leading: Icon(Icons.history, color: colorScheme.primary),
-      title: Text(record.log),
-      subtitle: Text('$dateLabel\n$documentLabel'),
-      isThreeLine: true,
     );
   }
 }

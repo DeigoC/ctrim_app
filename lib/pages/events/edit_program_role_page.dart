@@ -14,6 +14,10 @@ import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/schedule_duration_picker.dart';
 import '../../widgets/schedule_start_picker.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/catalog/volunteer_locations.dart';
+import '../../utility/schedule_assignee_suggestions.dart';
+import '../../utility/schedule_member_picker_seed.dart';
+import '../../utility/schedule_role_times.dart';
 import '../../utility/schedule_timeline_layout.dart';
 
 /// Add or edit a program role. Pass [programEntry] when editing an existing item.
@@ -65,11 +69,16 @@ class _EventProgramPageState extends State<EventProgramPage> {
 
   DateTime? _start;
   DateTime? _end;
+  bool _standing = false;
 
   /// Start time offered for a follow-on item. Set only after the user chooses
   /// to add the next item; null on a fresh add or while editing.
   DateTime? _followOnStart;
-  bool _canSave = false, _forGuests = true, _isSaved = false, _allowPop = false;
+  bool _canSave = false,
+      _forGuests = true,
+      _requiresPeople = true,
+      _isSaved = false,
+      _allowPop = false;
 
   bool get _isEditing => widget.isEditing;
 
@@ -96,8 +105,10 @@ class _EventProgramPageState extends State<EventProgramPage> {
     final entry = widget.programEntry;
     if (entry != null) {
       _forGuests = entry['for_guests'];
+      _requiresPeople = EventProgram.requiresPeople(entry);
       _start = entry['start'];
       _end = entry['end'];
+      _standing = EventProgram.isStanding(entry);
       _tecDetail = TextEditingController(text: entry['detail']);
       _tecTitle = TextEditingController(text: entry['title']);
       _selectedUsers = List<String>.from(entry['uids']);
@@ -131,7 +142,9 @@ class _EventProgramPageState extends State<EventProgramPage> {
         _followOnStart != null &&
         _start == _followOnStart &&
         _end == null &&
+        !_standing &&
         _forGuests &&
+        _requiresPeople &&
         _tecTitle.text.trim().isEmpty &&
         _tecDetail.text.trim().isEmpty &&
         _selectedUsers.isEmpty &&
@@ -163,6 +176,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   Widget _buildBody() {
+    final l10n = AppLocalizations.of(context)!;
     final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
         MediaQuery.sizeOf(context).width,
         narrowPadding: 16);
@@ -195,25 +209,41 @@ class _EventProgramPageState extends State<EventProgramPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _standing,
+                    onChanged: _onStandingChange,
+                    title: Text(l10n.scheduleWholeEventLabel),
+                    subtitle: Text(l10n.scheduleWholeEventHint),
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
                         child: _buildTimeSelector(
-                          label: 'Start Time',
+                          label: _standing
+                              ? l10n.scheduleCallTimeLabel
+                              : 'Start Time',
                           time: _start,
-                          isRequired: !_isEditing,
+                          isRequired: !_standing,
+                          optional: _standing,
                           onTap: _onStartTimeTap,
+                          onClear: _start == null ? null : _clearStart,
                           icon: Icons.play_arrow,
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildTimeSelector(
-                          label: 'End Time',
+                          label: _standing
+                              ? l10n.scheduleCallTimeFinishLabel
+                              : 'End Time',
                           time: _end,
-                          isRequired: !_isEditing,
+                          isRequired: !_standing,
+                          optional: _standing,
                           onTap: _start == null ? null : _onEndTimeTap,
+                          onClear: _end == null ? null : _clearEnd,
                           icon: Icons.stop,
                           isEnabled: _start != null,
                         ),
@@ -375,6 +405,21 @@ class _EventProgramPageState extends State<EventProgramPage> {
                             child: const Text('Clear'),
                           ),
                         ],
+                        if (_assigneeSuggestions.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          for (final suggestion in _assigneeSuggestions) ...[
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: FilledButton.tonalIcon(
+                                onPressed: () => _useSuggestion(suggestion),
+                                icon: const Icon(Icons.group_add),
+                                label: Text(l10n.scheduleUseAssignees(
+                                    suggestion.sourceTitle)),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        ],
                         const SizedBox(height: 12),
                         FilledButton.icon(
                           onPressed: _onManageMembersTap,
@@ -423,6 +468,16 @@ class _EventProgramPageState extends State<EventProgramPage> {
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
+                  SwitchListTile(
+                    value: _requiresPeople,
+                    onChanged: _onRequiresPeopleChange,
+                    title: Text(l10n.scheduleNeedsNamedPerson),
+                    subtitle: Text(l10n.scheduleNeedsNamedPersonHint),
+                    secondary: Icon(
+                      _requiresPeople ? Icons.person : Icons.groups,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -459,101 +514,141 @@ class _EventProgramPageState extends State<EventProgramPage> {
     required String label,
     required DateTime? time,
     required bool isRequired,
+    required bool optional,
     required VoidCallback? onTap,
+    required VoidCallback? onClear,
     required IconData icon,
     bool isEnabled = true,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final bool hasTime = time != null;
     final bool showWarning = isRequired && !hasTime;
+    final bool showClear = hasTime && onClear != null;
 
-    return GestureDetector(
-      onTap: isEnabled ? onTap : null,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: showWarning
-                ? Colors.amber
-                : isEnabled
-                    ? Theme.of(context).colorScheme.outline
-                    : Theme.of(context)
-                        .colorScheme
-                        .outline
-                        .withValues(alpha: 0.5),
-            width: showWarning ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
-          color: isEnabled
-              ? Theme.of(context).colorScheme.surface
-              : Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 16,
-                  color: isEnabled
-                      ? (showWarning
-                          ? Colors.amber
-                          : Theme.of(context).colorScheme.primary)
-                      : Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.5),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  label + (isRequired ? '*' : ''),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isEnabled
-                        ? Theme.of(context)
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: isEnabled ? onTap : null,
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(12, 12, showClear ? 28 : 12, 12),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: showWarning
+                    ? Colors.amber
+                    : isEnabled
+                        ? Theme.of(context).colorScheme.outline
+                        : Theme.of(context)
                             .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.7)
+                            .outline
+                            .withValues(alpha: 0.5),
+                width: showWarning ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              color: isEnabled
+                  ? Theme.of(context).colorScheme.surface
+                  : Theme.of(context)
+                      .colorScheme
+                      .surface
+                      .withValues(alpha: 0.5),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      icon,
+                      size: 16,
+                      color: isEnabled
+                          ? (showWarning
+                              ? Colors.amber
+                              : Theme.of(context).colorScheme.primary)
+                          : Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        label + (isRequired ? '*' : ''),
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isEnabled
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.7)
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    if (showWarning) ...[
+                      const SizedBox(width: 4),
+                      const Icon(Icons.warning_amber,
+                          size: 14, color: Colors.amber),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  hasTime
+                      ? _timeFormat.format(time)
+                      : (optional ? l10n.scheduleTimeOptional : 'Tap to set'),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isEnabled
+                        ? (hasTime
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.7))
                         : Theme.of(context)
                             .colorScheme
                             .onSurface
                             .withValues(alpha: 0.5),
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                if (showWarning) ...[
-                  const SizedBox(width: 4),
-                  const Icon(Icons.warning_amber,
-                      size: 14, color: Colors.amber),
-                ],
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              hasTime ? _timeFormat.format(time) : 'Tap to set',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isEnabled
-                    ? (hasTime
-                        ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.7))
-                    : Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.5),
+          ),
+        ),
+        if (showClear)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: IconButton(
+              tooltip: l10n.scheduleClearTime,
+              onPressed: onClear,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              icon: Icon(
+                Icons.close,
+                size: 18,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 
   Future<void> _onManageMembersTap() async {
+    final seed = ScheduleMemberPickerSeed.forRole(
+      tagIDs: _selectedTagIDs,
+      postLocation: widget.eventContext.head.location,
+      assignableLocations:
+          VolunteerLocations.assignableFrom(_appContext.allLocations),
+    );
     final result = await Navigator.push<List<String>>(
       context,
       MaterialPageRoute(
@@ -561,12 +656,13 @@ class _EventProgramPageState extends State<EventProgramPage> {
           selectedUIDs: List<String>.from(_selectedUsers),
           includeCurrentUser: true,
           allowTaskCheck: true,
-          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,
           ),
           postIdForPlaceholderCreate: widget.eventContext.id,
+          initialLocation: seed.location,
+          initialTagIDs: seed.tagIDs,
         ),
       ),
     );
@@ -595,6 +691,11 @@ class _EventProgramPageState extends State<EventProgramPage> {
     if (_isEditing) _onFieldsChanged();
   }
 
+  void _onRequiresPeopleChange(final bool newState) {
+    setState(() => _requiresPeople = newState);
+    _onFieldsChanged();
+  }
+
   void _onFieldsChanged() {
     if (_isEditing) {
       _updateCanSaveForEdit();
@@ -603,56 +704,94 @@ class _EventProgramPageState extends State<EventProgramPage> {
     }
   }
 
+  /// Both times for a running-order line. Whole event may omit the finish.
+  bool get _timesAreValid => ScheduleRoleTimes.areSavable(
+        start: _start,
+        end: _end,
+        standing: _standing,
+      );
+
   void _updateCanSaveForAdd() {
-    if (_tecTitle.text.trim().isEmpty ||
-        _start == null ||
-        _end == null && _canSave) {
-      setState(() {
-        _canSave = false;
-      });
-    } else if (_tecTitle.text.trim().isNotEmpty &&
-        _start != null &&
-        _end != null &&
-        !_canSave) {
-      setState(() {
-        _canSave = true;
-      });
-    }
+    final canSave = _tecTitle.text.trim().isNotEmpty && _timesAreValid;
+    if (canSave == _canSave) return;
+    setState(() => _canSave = canSave);
   }
 
   void _updateCanSaveForEdit() {
     final role = _canonicalRole();
-    if (_canSave &&
-        (_areTimesTheSame() &&
-            _tecDetail.text.trim().compareTo(role['detail'] as String) == 0 &&
-            (_tecTitle.text.trim().compareTo(role['title'] as String) == 0 ||
-                _tecTitle.text.trim().isEmpty)) &&
+    final unchanged = _timesMatch(role) &&
+        _tecDetail.text.trim().compareTo(role['detail'] as String) == 0 &&
+        _tecTitle.text.trim().compareTo(role['title'] as String) == 0 &&
         _forGuests == role['for_guests'] &&
+        _requiresPeople == EventProgram.requiresPeople(role) &&
         _selectedUsers
                 .toString()
                 .compareTo((role['uids'] as List<String>).toString()) ==
             0 &&
-        _sameTagIDs(EventProgram.tagIDsOf(role), _tagIDsToSave())) {
-      setState(() {
-        _canSave = false;
-      });
-    } else if (!_canSave) {
-      setState(() {
-        _canSave = true;
-      });
-    }
+        _sameTagIDs(EventProgram.tagIDsOf(role), _tagIDsToSave()) &&
+        _standing == EventProgram.isStanding(role);
+    final canSave =
+        !unchanged && _tecTitle.text.trim().isNotEmpty && _timesAreValid;
+    if (canSave == _canSave) return;
+    setState(() => _canSave = canSave);
   }
 
-  bool _areTimesTheSame() {
-    final role = _canonicalRole();
-    final originalStart = role['start'] as DateTime;
-    final originalEnd = role['end'] as DateTime;
-    return _start != null &&
-        _end != null &&
-        _start!.hour.compareTo(originalStart.hour) == 0 &&
-        _start!.minute.compareTo(originalStart.minute) == 0 &&
-        _end!.hour.compareTo(originalEnd.hour) == 0 &&
-        _end!.minute.compareTo(originalEnd.minute) == 0;
+  bool _timesMatch(final Map<String, dynamic> role) {
+    return ScheduleRoleTimes.sameClock(
+          _start,
+          role['start'] as DateTime?,
+        ) &&
+        ScheduleRoleTimes.sameClock(
+          _end,
+          role['end'] as DateTime?,
+        );
+  }
+
+  /// Clearing the start also clears the finish, which cannot stand alone.
+  void _clearStart() {
+    setState(() {
+      _start = null;
+      _end = null;
+    });
+    _onFieldsChanged();
+  }
+
+  void _clearEnd() {
+    setState(() => _end = null);
+    _onFieldsChanged();
+  }
+
+  List<ScheduleAssigneeSuggestion> get _assigneeSuggestions {
+    final draftId = _isEditing ? _canonicalRole()['id'] as int : -1;
+    return ScheduleAssigneeSuggestions.forRole(
+      role: {
+        'id': draftId,
+        'uids': _selectedUsers,
+        'tagIDs': _tagIDsToSave(),
+        'standing': _standing,
+        'requiresPeople': _requiresPeople,
+        'start': _start,
+      },
+      roles: widget.eventContext.program.roles,
+    );
+  }
+
+  void _useSuggestion(final ScheduleAssigneeSuggestion suggestion) {
+    final next = ScheduleAssigneeSuggestions.unionAssignees(
+      current: _selectedUsers,
+      adding: suggestion.uids,
+    );
+    setState(() {
+      _selectedUsers
+        ..clear()
+        ..addAll(next);
+    });
+    _onFieldsChanged();
+  }
+
+  void _onStandingChange(final bool value) {
+    setState(() => _standing = value);
+    _onFieldsChanged();
   }
 
   List<String> _tagIDsToSave() {
@@ -689,12 +828,12 @@ class _EventProgramPageState extends State<EventProgramPage> {
         _end = _start!.add(duration);
       });
       _onFieldsChanged();
-    } else {
-      setState(() {
-        _start = newStart;
-      });
-      _onEndTimeTap();
+      return;
     }
+
+    setState(() => _start = newStart);
+    _onFieldsChanged();
+    if (!_standing) _onEndTimeTap();
   }
 
   Future<void> _onEndTimeTap() async {
@@ -717,17 +856,29 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   Future<void> _saveAdd() async {
-    final bool? shiftFollowing = await _resolveShiftFollowing(
-      start: _start!,
-      end: _end!,
-      shiftThreshold: _start!,
-    );
-    if (shiftFollowing == null || !mounted) return;
+    var shiftFollowing = false;
+    if (_start != null && _end != null) {
+      final bool? choice = await _resolveShiftFollowing(
+        start: _start!,
+        end: _end!,
+        shiftThreshold: _start!,
+      );
+      if (choice == null || !mounted) return;
+      shiftFollowing = choice;
+    } else {
+      final bool confirmed = await _confirmSaveDetails();
+      if (!confirmed || !mounted) return;
+    }
 
-    final DateTime savedEnd = _end!;
+    final DateTime? savedEnd = _end;
     _addProgramRoleToEventContext(shiftFollowing: shiftFollowing);
     widget.eventContext.allowSavingOfTheEdit();
     _isSaved = true;
+
+    if (savedEnd == null || !mounted) {
+      _popRouteAfterAllowing();
+      return;
+    }
 
     final bool addNext = await DialogManager.askAddNextScheduleItem(
       context: context,
@@ -751,7 +902,9 @@ class _EventProgramPageState extends State<EventProgramPage> {
     setState(() {
       _start = start;
       _end = null;
+      _standing = false;
       _forGuests = true;
+      _requiresPeople = true;
       _canSave = false;
       _isSaved = false;
       _allowPop = false;
@@ -776,11 +929,13 @@ class _EventProgramPageState extends State<EventProgramPage> {
       widget.eventContext.addRoleAdditionNotification(_selectedUsers, id);
     }
 
-    widget.eventContext.program.applyInsertShift(
-      start: _start!,
-      end: _end!,
-      shiftFollowing: shiftFollowing,
-    );
+    if (_start != null && _end != null) {
+      widget.eventContext.program.applyInsertShift(
+        start: _start!,
+        end: _end!,
+        shiftFollowing: shiftFollowing,
+      );
+    }
     widget.eventContext.program.addRole(
         uids: _selectedUsers,
         title: _tecTitle.text.trim(),
@@ -790,6 +945,8 @@ class _EventProgramPageState extends State<EventProgramPage> {
         forGuests: _forGuests,
         priority: 1,
         tagIDs: _tagIDsToSave(),
+        standing: _standing,
+        requiresPeople: _requiresPeople,
         id: id);
     widget.eventContext.program.orderProgramsByStartTime();
   }
@@ -797,12 +954,12 @@ class _EventProgramPageState extends State<EventProgramPage> {
   Future<void> _saveEdit() async {
     final role = _canonicalRole();
     bool shiftFollowing = false;
-    if (!_areTimesTheSame()) {
-      final DateTime oldEnd = role['end'] as DateTime;
+    if (!_timesMatch(role) && _start != null && _end != null) {
+      final DateTime? oldEnd = role['end'] as DateTime?;
       final bool? choice = await _resolveShiftFollowing(
         start: _start!,
         end: _end!,
-        shiftThreshold: oldEnd,
+        shiftThreshold: oldEnd ?? _start!,
         excludeRoleId: role['id'] as int,
       );
       if (choice == null || !mounted) return;
@@ -875,8 +1032,10 @@ class _EventProgramPageState extends State<EventProgramPage> {
     role['detail'] = _tecDetail.text.trim();
     role['title'] = _tecTitle.text.trim();
     role['for_guests'] = _forGuests;
+    role['requiresPeople'] = _requiresPeople;
     role['priority'] = 1;
     role['tagIDs'] = _tagIDsToSave();
+    role['standing'] = _standing;
 
     if (_start != null && _end != null) {
       final oldEnd = role['end'] as DateTime?;

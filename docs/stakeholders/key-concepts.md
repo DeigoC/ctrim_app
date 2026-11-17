@@ -20,8 +20,8 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 | **Guest** | Anyone using the app **without** signing in. Can browse public content; richer actions need an account. |
 | **Signed-in person** | Someone with an account. Unlocks interest, fuller personal options, and (when they have a profile) schedule and directory features. |
 | **Community profile** | A person listed in the **People** directory — the record organisers assign to programmes, attendance, and cell groups. Registering creates this; it does not mean they serve. |
-| **Serving** | People the directory shows by default: Leader or Admin, a **ministry**, or cell-group leadership. Turn **Serving** off to see everyone. |
-| **Placeholder** | A temporary directory entry created by organisers **before** someone has signed in — so they can still be listed on posts or in a cell group. |
+| **Serving** | Optional People-directory refine: Leader or Admin, a **ministry**, or cell-group leadership. Off by default so the list shows everyone; turn it on to narrow. |
+| **Placeholder** | A temporary directory entry created by organisers **before** someone has signed in — so they can still be listed on posts or in a cell group. If one was created by mistake when a real profile already exists, an area admin can **merge** it into that profile so posts keep working. |
 | **Leader** | Elevated access to create posts/templates, register people, and edit Information content. Covers hats such as department and cell group leaders. |
 | **Area admin** | A **Leader** plus admin for assigned **area(s)** — people, tags, locations, and cell groups. Every area admin is a Leader. |
 | **Site admin** *(planned)* | Admin without the area location restriction. |
@@ -32,7 +32,7 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 
 | Term | Meaning |
 |------|---------|
-| **Interest** (“follow updates”) | Signed-in “I want updates about this post” — not a formal RSVP. Shows on the post’s People tab; guests see counts only. |
+| **Interest** (“follow updates”) | Signed-in “I want updates about this post” — not a formal RSVP. Shows on the post’s People tab; guests can browse names but must sign in to opt in. |
 | **Bookmark** | Keep a post on your shortlist (long-press a card, or the bookmark control on an open post). Bookmarks drive the **Bookmarks** bulletin filter and can receive **update log** alerts when organisers save changes. |
 | **Expected attendees** | The usual people for a meeting (often from a template or filled from a linked cell group). Organisers check them off into attendance. |
 | **Attendance** | Who is (or was) at the event — registered people or placeholders. Managed by the author and contributors. |
@@ -43,13 +43,14 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 |------|---------|
 | **Template** | A reusable blueprint for a kind of event (title pattern, location, tags, roles, expected people, and similar). Leaders manage these under Personal → **Post Templates**, grouped as **Cell Groups** or **Services**. |
 | **Schedule preset** | A named running order on a template (who is assigned, times, ministries). A template can have several; pick one when creating a post, or apply one onto an existing post. |
+| **Expected attendance preset** | A named list of **expected people** on a template (the usual checklist for the People tab). Independent of schedule presets; a template can have several; pick one when creating a post, or apply one onto an existing post. |
 | **Bulk create** | Create many dated posts from one template (e.g. a weekly series) without a push blast for every date. |
 | **Post tag** | A label on posts for **browsing and filtering** the bulletin (for example Sunday Worship or Midweek). Not used for push notification opt-in. |
 | **Location notification** | A push opt-in tied to a church **location** — for example **All Belfast updates**. Broadcasts about a post can reach everyone who turned that location on. |
-| **Ministry** | A department on a person and on programme slots (Worship, Technical, and similar), with an optional short description and one main image. Anyone can open **Ministry** under Personal → **People & teams**. Area admins can hide the label from **guests**. The person and the schedule line still show. |
+| **Ministry** | A department on a person and on programme slots (Worship, Technical, and similar), with an optional short description and one main image. Anyone can open **View Ministries** under Personal → **People & Teams**. Area admins can hide the label from **guests**. The person and the schedule line still show. |
 | **Programme** / **schedule** | Timed roles and items on a post (who does what, when). Organisers can mark a line with **ministries** (which departments own it). Some lines can be hidden from **guests**. |
 | **My Schedule** | Personal list of programme roles assigned to **you**, plus posts where you are an **expected attendee**. Far-ahead assignments stay here even when the post is not on the bulletin yet. |
-| **Team rota** | Personal view of upcoming programme slots for a **ministry** (including empty slots), over the next few months. Filter by location and ministry. |
+| **Ministry Schedule** | Personal view of upcoming programme slots for a **ministry** (including empty slots), over the next few months. **Mine** and **All** switch your ministries and every tagged slot. Location and a custom ministry mix open from the **Filter** button. |
 | **My Posts** | Shortcut to posts where you are **author** or **contributor** — matched against the bulletin posts loaded in the session, not the full archive. |
 | **Related posts** | Parent, sibling, or child links between posts (a series, term, or meeting group). Shown on the post’s **Related** tab when present. |
 | **Period parent** | A post marked as a container for a term or season; other meeting posts can attach underneath it. |

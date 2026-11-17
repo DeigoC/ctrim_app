@@ -7,15 +7,49 @@ import '../models/info/church_page.dart';
 import '../models/info/ctrim_info.dart';
 import '../models/info/testimonial_info.dart';
 import '../models/user.dart';
+import '../models/user_tag.dart';
+
+/// In-app extras when opening a ministry permalink.
+///
+/// [onEdit] is only used from View Ministries while an area admin is managing
+/// the catalogue. Cold links never carry a callback.
+class OpenMinistryArgs {
+  const OpenMinistryArgs({
+    this.tag,
+    this.onEdit,
+    this.locationId,
+  });
+
+  final UserTag? tag;
+  final VoidCallback? onEdit;
+  final String? locationId;
+}
 
 /// Public permalinks and in-app navigation for shareable records.
 ///
 /// Path URLs are the shareable form. Legacy `?postId=` / `?infoPage=` query
-/// params still redirect here. Editors and other screens stay on [Navigator.push].
+/// params still redirect here. Editors and most Personal screens stay on
+/// [Navigator.push]; View Ministries uses `/ministries` paths like people.
 class AppLinks {
   AppLinks._();
 
-  static const String webOrigin = 'https://ctrim.app';
+  static const String webOrigin = 'https://ctrim.org';
+
+  /// Main shell tabs, in home-page order (Bulletin, CTRIM, Cell Groups, Personal).
+  ///
+  /// One route (`/:homeTab`) owns all four so the page key stays stable and
+  /// the shell keeps its scroll position when the address changes.
+  static const int bulletinTab = 0;
+  static const int ctrimTab = 1;
+  static const int cellGroupsTab = 2;
+  static const int personalTab = 3;
+
+  static const List<String> homeTabSegments = <String>[
+    'bulletin',
+    'ctrim',
+    'cell-groups',
+    'personal',
+  ];
 
   static const Map<String, String> _legacyInfoIds = {
     'assets/info/ctrim_info/core_values.json': 'core_values',
@@ -47,6 +81,78 @@ class AppLinks {
 
   static String personPath(String id) => '/people/${_seg(id)}';
 
+  static const String ministriesPath = '/ministries';
+
+  static String ministryPath(String id, {String? locationId}) {
+    final path = '$ministriesPath/${_seg(id)}';
+    final location = locationId?.trim() ?? '';
+    if (location.isEmpty) return path;
+    return '$path?location=${Uri.encodeQueryComponent(location)}';
+  }
+
+  static const String donationsPath = '/donations';
+
+  /// Keeps a stored startup-tab index inside the four shell tabs.
+  static int clampHomeTab(int index) {
+    if (index < 0 || index >= homeTabSegments.length) return ctrimTab;
+    return index;
+  }
+
+  static String homeTabPath(int index) =>
+      '/${homeTabSegments[clampHomeTab(index)]}';
+
+  /// Where a permalink goes when it is the first page and cannot pop.
+  ///
+  /// A post opens the bulletin, a cell group opens Cell Groups, a church,
+  /// topic, or testimonial opens CTRIM, and a person or View Ministries list
+  /// opens Personal. A ministry detail steps up to `/ministries`. A nested
+  /// church page (pastors, statistics, or an extra page) steps up to that
+  /// church. The shell itself is already home.
+  static String upPath(String path) {
+    final uri = Uri.parse(path);
+    final segments = uri.pathSegments.where((segment) => segment.isNotEmpty);
+    final parts = segments.toList();
+    if (parts.isEmpty) return homeTabPath(ctrimTab);
+    switch (parts.first) {
+      case 'post':
+        return homeTabPath(bulletinTab);
+      case 'cell-groups':
+        return parts.length >= 2
+            ? homeTabPath(cellGroupsTab)
+            : homeTabPath(ctrimTab);
+      case 'people':
+        return homeTabPath(personalTab);
+      case 'ministries':
+        return parts.length >= 2
+            ? ministriesPath
+            : homeTabPath(personalTab);
+      case 'churches':
+        if (parts.length >= 3) return churchPath(parts[1]);
+        return homeTabPath(ctrimTab);
+      case 'info':
+      case 'testimonials':
+      case 'donations':
+        return homeTabPath(ctrimTab);
+      default:
+        return homeTabPath(ctrimTab);
+    }
+  }
+
+  static int? homeTabIndexForSegment(String segment) {
+    final index = homeTabSegments.indexOf(segment);
+    return index < 0 ? null : index;
+  }
+
+  /// Index when [path] is exactly one shell tab, otherwise null.
+  ///
+  /// Record links such as `/cell-groups/:id` stay null so they are not
+  /// treated as the Cell Groups tab.
+  static int? homeTabIndexForPath(String path) {
+    final uri = path.startsWith('/') ? Uri(path: path) : Uri.parse(path);
+    if (uri.pathSegments.length != 1) return null;
+    return homeTabIndexForSegment(uri.pathSegments.first);
+  }
+
   static String postUrl(String id) => '$webOrigin${postPath(id)}';
 
   static String cellGroupUrl(String id) => '$webOrigin${cellGroupPath(id)}';
@@ -58,6 +164,13 @@ class AppLinks {
   static String testimonialUrl(String id) => '$webOrigin${testimonialPath(id)}';
 
   static String personUrl(String id) => '$webOrigin${personPath(id)}';
+
+  static String ministriesUrl() => '$webOrigin$ministriesPath';
+
+  static String ministryUrl(String id, {String? locationId}) =>
+      '$webOrigin${ministryPath(id, locationId: locationId)}';
+
+  static String donationsUrl() => '$webOrigin$donationsPath';
 
   /// Maps legacy JSON asset paths (and current document ids) to `/info/:id`.
   static String infoDocumentIdFromPayload(String rawValue) {
@@ -75,6 +188,28 @@ class AppLinks {
       return infoPath(infoDocumentIdFromPayload(infoPage));
     }
     return null;
+  }
+
+  /// Legacy query redirects, then `/` to the saved startup tab.
+  ///
+  /// A section address such as `/personal` is left alone so a shared link
+  /// wins over the startup tab.
+  static String? redirectLocation(Uri uri, {required int preferredHomeTab}) {
+    final legacy = redirectFromUri(uri);
+    if (legacy != null) return legacy;
+    if (uri.path == '/' || uri.path.isEmpty) {
+      return homeTabPath(preferredHomeTab);
+    }
+    return null;
+  }
+
+  /// Sends an unknown `/:homeTab` segment to the startup tab.
+  static String? redirectHomeTabSegment(
+    String segment, {
+    required int preferredHomeTab,
+  }) {
+    if (homeTabIndexForSegment(segment) != null) return null;
+    return homeTabPath(preferredHomeTab);
   }
 
   static Future<T?> openPost<T extends Object?>(
@@ -151,11 +286,35 @@ class AppLinks {
     return context.push<T>(testimonialPath(id), extra: extra);
   }
 
+  static Future<T?> openDonations<T extends Object?>(BuildContext context) {
+    return context.push<T>(donationsPath);
+  }
+
   static Future<T?> openPerson<T extends Object?>(
     BuildContext context, {
     required String id,
     User? extra,
   }) {
     return context.push<T>(personPath(id), extra: extra);
+  }
+
+  static Future<T?> openMinistries<T extends Object?>(BuildContext context) {
+    return context.push<T>(ministriesPath);
+  }
+
+  static Future<T?> openMinistry<T extends Object?>(
+    BuildContext context, {
+    required String id,
+    UserTag? tag,
+    String? locationId,
+    VoidCallback? onEdit,
+  }) {
+    final extra = (tag != null || onEdit != null || locationId != null)
+        ? OpenMinistryArgs(tag: tag, onEdit: onEdit, locationId: locationId)
+        : null;
+    return context.push<T>(
+      ministryPath(id, locationId: locationId),
+      extra: extra,
+    );
   }
 }

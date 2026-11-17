@@ -7,9 +7,17 @@ import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
 
 class PostMetadataSection extends StatelessWidget {
-  const PostMetadataSection({super.key, required this.eventContext, required this.update});
+  const PostMetadataSection({
+    super.key,
+    required this.eventContext,
+    required this.update,
+    this.onOpenHistory,
+  });
   final EventContext eventContext;
   final Function update;
+
+  /// When set (post view), waits for deferred logs before opening Change History.
+  final Future<void> Function()? onOpenHistory;
   static final DateFormat _recentDateFormat = DateFormat('d MMM, HH:mm');
 
   @override
@@ -50,8 +58,18 @@ class PostMetadataSection extends StatelessWidget {
   }
 
   // * Logic
-  void _onMetaTap(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewMetaLogsPage(eventContext: eventContext)))
-        .then((_) => update());
+  Future<void> _onMetaTap(BuildContext context) async {
+    final open = onOpenHistory;
+    if (open != null) {
+      await open();
+      return;
+    }
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewMetaLogsPage(eventContext: eventContext),
+      ),
+    );
+    update();
   }
 }

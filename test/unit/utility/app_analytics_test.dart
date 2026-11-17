@@ -89,6 +89,7 @@ void main() {
       analytics.logPostSave('p1');
       analytics.logPostBulkCreate(4);
       analytics.logSchedulePresetApply('p1');
+      analytics.logExpectedAttendancePresetApply('p1');
       analytics.logPost(postId: 'p1', source: 'in_app');
       analytics.logTestimonial('t1');
 

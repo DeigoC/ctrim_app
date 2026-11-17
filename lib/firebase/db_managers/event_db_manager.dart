@@ -8,6 +8,7 @@ import '../../models/event/event_log.dart';
 import '../../models/event/event_media.dart';
 import '../../models/event/event_metadata.dart';
 import '../../models/event/event_program.dart';
+import '../../utility/schedule_assignment_log.dart';
 import 'id_tracker.dart';
 
 class EventHeadDBManager {
@@ -72,6 +73,51 @@ class EventHeadDBManager {
         .where('EventDate',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startInclusive))
         .where('EventDate', isLessThan: Timestamp.fromDate(endExclusive))
+        .get();
+    return snapshot.docs.map((doc) => doc.data()).toList();
+  }
+
+  /// Newest posts linked to [cellGroupId] with [EventHead.eventDate] before
+  /// [before]. Composite index: `CellGroupIDs` array-contains + `EventDate`.
+  Future<List<EventHead>> fetchEarlierHeadsWithCellGroup({
+    required String cellGroupId,
+    required DateTime before,
+    int limit = 40,
+  }) {
+    return _fetchEarlierHeads(
+      arrayField: 'CellGroupIDs',
+      id: cellGroupId,
+      before: before,
+      limit: limit,
+    );
+  }
+
+  /// Newest posts carrying [tagId] with [EventHead.eventDate] before [before].
+  /// Composite index: `TagIDs` array-contains + `EventDate`.
+  Future<List<EventHead>> fetchEarlierHeadsWithPostTag({
+    required String tagId,
+    required DateTime before,
+    int limit = 40,
+  }) {
+    return _fetchEarlierHeads(
+      arrayField: 'TagIDs',
+      id: tagId,
+      before: before,
+      limit: limit,
+    );
+  }
+
+  Future<List<EventHead>> _fetchEarlierHeads({
+    required String arrayField,
+    required String id,
+    required DateTime before,
+    required int limit,
+  }) async {
+    final snapshot = await _ref
+        .where(arrayField, arrayContains: id)
+        .where('EventDate', isLessThan: Timestamp.fromDate(before))
+        .orderBy('EventDate', descending: true)
+        .limit(limit)
         .get();
     return snapshot.docs.map((doc) => doc.data()).toList();
   }
@@ -211,6 +257,93 @@ class EventSupplementalDBManager {
     await _colRef.doc('program').update(program.toJson());
   }
 
+  /// Replaces assignees on one programme role and leaves every other field.
+  ///
+  /// When the people change, the same write adds a [ScheduleAssignmentLog]
+  /// line to the post's logs, sets `LastUID` to [editorUid], and moves the
+  /// head's `RecentDate` to [now] — an opened post is cached against that
+  /// date, so without it the post keeps showing the old programme.
+  ///
+  /// Returns null when the document or role is missing. [log] is null and
+  /// only the programme is written when the server already had these people.
+  Future<
+      ({
+        EventProgram program,
+        String? log,
+        List<String> removedUids,
+      })?> updateRoleAssignees({
+    required int roleId,
+    required List<String> uids,
+    required String editorUid,
+    required DateTime now,
+  }) async {
+    final firestore = FirebaseFirestore.instance;
+    final programRef = _colRef.doc('program');
+    final logsRef = _colRef.doc('logs');
+    final metadataRef = _colRef.doc('metadata');
+    final headRef = firestore.collection('events').doc(_postId);
+
+    final result = await firestore.runTransaction((tx) async {
+      final snap = await tx.get(programRef);
+      final data = snap.data();
+      if (!snap.exists || data is! Map) return null;
+      final logsSnap = await tx.get(logsRef);
+      final metadataSnap = await tx.get(metadataRef);
+
+      final program = EventProgram.fromMap(Map<String, dynamic>.from(data));
+      Map<String, dynamic>? role;
+      for (final entry in program.roles) {
+        if (entry['id'] == roleId) role = entry;
+      }
+      if (role == null) return null;
+      final before = _uidsOf(role);
+      program.replaceRoleAssignees(roleId: roleId, uids: uids);
+      tx.update(programRef, program.toJson());
+
+      final log = ScheduleAssignmentLog.describe(
+        role: role,
+        wholeEvent: ScheduleAssignmentLog.isWholeEventRole(
+          program: program,
+          roleId: roleId,
+        ),
+        before: before,
+        after: uids,
+      );
+      if (log == null) {
+        return (program: program, log: null, removedUids: const <String>[]);
+      }
+
+      final logsData = logsSnap.data();
+      final EventLog eventLog;
+      if (logsSnap.exists && logsData is Map) {
+        eventLog = EventLog.fromMap(Map<String, dynamic>.from(logsData));
+        eventLog.addLog(log: log, uid: editorUid, ts: now);
+      } else {
+        eventLog = EventLog({'uid': editorUid, 'log': log, 'ts': now});
+      }
+      tx.set(logsRef, eventLog.toJson());
+      if (metadataSnap.exists) {
+        tx.update(metadataRef, {'LastUID': editorUid});
+      }
+      tx.update(headRef, {'RecentDate': Timestamp.fromDate(now)});
+
+      final kept = uids.toSet();
+      return (
+        program: program,
+        log: log,
+        removedUids: before.where((id) => !kept.contains(id)).toList(),
+      );
+    });
+    if (result?.log != null) await _touchEventsLastUpdate();
+    return result;
+  }
+
+  static List<String> _uidsOf(final Map<String, dynamic> role) {
+    final raw = role['uids'];
+    if (raw is! List) return const [];
+    return raw.map((e) => e.toString()).where((id) => id.isNotEmpty).toList();
+  }
+
   // * Supplemental - MetaData
 
   Future<EventMetadata> fetchMetadata() async {
@@ -229,11 +362,14 @@ class EventSupplementalDBManager {
   /// Bidirectionally syncs [ChildrenIDs] when a post's parent changes.
   ///
   /// Does not write the child's [ParentID] — caller updates that via [updateMetadata].
+  /// Each touched parent's head `RecentDate` moves to [now]; opened posts are
+  /// cached against that date, so without it the parent keeps its old children.
   /// Returns updated parent metadata keyed by parent post id (for AppContext cache).
   Future<Map<String, EventMetadata>> syncChildrenLinkage({
     required String childId,
     required String? oldParentId,
     required String? newParentId,
+    required DateTime now,
   }) async {
     final String? oldId =
         (oldParentId == null || oldParentId.isEmpty) ? null : oldParentId;
@@ -260,6 +396,15 @@ class EventSupplementalDBManager {
       newMeta.addChildID(childId);
       await newManager.updateMetadata(newMeta);
       updated[newId] = newMeta;
+    }
+
+    final heads = FirebaseFirestore.instance.collection('events');
+    for (final parentId in updated.keys) {
+      await heads.doc(parentId).update({'RecentDate': Timestamp.fromDate(now)});
+    }
+    if (updated.isNotEmpty) {
+      await IDTrackerDBManager()
+          .tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
     }
 
     return updated;
@@ -305,7 +450,7 @@ class EventSupplementalDBManager {
     await _colRef.doc('logs').update(log.toJson());
   }
 
-  // * Attendance (private lists; counts live on EventHead)
+  // * Attendance (lists are publicly readable; counts also live on EventHead)
 
   Future<EventAttendance> fetchAttendance() async {
     final doc = await _colRef.doc('attendance').get();

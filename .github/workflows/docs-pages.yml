@@ -3,8 +3,11 @@ name: Deploy stakeholder docs
 
 on:
   push:
+    # Each new development branch must also be allowed under
+    # Settings → Environments → github-pages → Deployment branches.
     branches:
       - main
+      - "*_development*"
     paths:
       - "docs/stakeholders/**"
       - "docs/stakeholders-theme/**"

@@ -17,8 +17,8 @@ What stakeholders should know is **shipping, finishing, or planned** — not a f
 ## In place or finishing
 
 - **Interest** on posts (“follow updates”) and attendance lists for organisers  
-- **Post tags** for bulletin browsing; **location-based** push opt-in (for example All Belfast updates)  
-- **People** directory (Serving default, tags, placeholders)  
+- **Post Tags** for bulletin browsing; **location-based** push opt-in (for example All Belfast updates)  
+- **People** directory (all members by default; Serving / Placeholders refine)  
 - **Cell Groups** foundation in the app (catalogue, leaders, roster, meeting trail) — expanding through testing  
 - **Stakeholder documentation** (this site)
 

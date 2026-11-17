@@ -13,6 +13,8 @@ class PostTemplateMapper {
     Iterable<User> allUsers = const [],
     SchedulePreset? schedulePreset,
     String? schedulePresetId,
+    ExpectedAttendancePreset? expectedAttendancePreset,
+    String? expectedAttendancePresetId,
   }) {
     final EventContext eventContext =
         EventContext.adding(currentUserID: currentUserID, parentID: parentID);
@@ -64,8 +66,14 @@ class PostTemplateMapper {
     // meta related
     eventContext.applyTagIDs(List<String>.from(template.tagIDs));
     eventContext.applyCellGroupIDs(List<String>.from(template.cellGroupIDs));
-    eventContext.applyExpectedAttendeeUserIDs(
-        List<String>.from(template.expectedAttendeeUserIDs));
+    applyExpectedAttendancePreset(
+      eventContext,
+      resolveExpectedAttendancePreset(
+        template,
+        expectedAttendancePreset: expectedAttendancePreset,
+        expectedAttendancePresetId: expectedAttendancePresetId,
+      ),
+    );
     eventContext.syncNotificationTopics(
       includeLocationUmbrella: BroadcastAudience.includesLocationUmbrella(
         topics: template.topics,
@@ -81,9 +89,8 @@ class PostTemplateMapper {
     if (templateContributors.isNotEmpty) {
       eventContext.contributorAdditionUIDs.addAll(templateContributors);
     }
-    if (template.leadSpeakerUID != null &&
-        template.leadSpeakerUID!.isNotEmpty) {
-      eventContext.metadata.setLeadSpeakerUID(template.leadSpeakerUID);
+    if (template.leadSpeakerUIDs.isNotEmpty) {
+      eventContext.metadata.setLeadSpeakerUIDs(template.leadSpeakerUIDs);
       eventContext.syncLeadSpeakerHeadFromUsers(allUsers);
     }
     eventContext.applyIsPeriodParent(template.isPeriodParent);
@@ -119,6 +126,57 @@ class PostTemplateMapper {
     return template.schedulePresets.first;
   }
 
+  /// Picks an explicit expected preset, else the only/first, else null.
+  static ExpectedAttendancePreset? resolveExpectedAttendancePreset(
+    PostTemplate template, {
+    ExpectedAttendancePreset? expectedAttendancePreset,
+    String? expectedAttendancePresetId,
+  }) {
+    if (expectedAttendancePreset != null) return expectedAttendancePreset;
+    if (expectedAttendancePresetId != null) {
+      return template.expectedAttendancePresetById(expectedAttendancePresetId);
+    }
+    if (template.expectedAttendancePresets.isEmpty) return null;
+    return template.expectedAttendancePresets.first;
+  }
+
+  /// Replaces expected members on [eventContext] with [preset].
+  ///
+  /// Always updates the draft expected list. When [applyToLiveAttendance] is
+  /// true and attendance is loaded, also replaces live expected user IDs
+  /// (interest and checked attendees stay).
+  static void applyExpectedAttendancePreset(
+    EventContext eventContext,
+    ExpectedAttendancePreset? preset, {
+    bool applyToLiveAttendance = false,
+  }) {
+    final ids = List<String>.from(preset?.userIds ?? const []);
+    eventContext.applyExpectedAttendeeUserIDs(ids);
+    if (applyToLiveAttendance) {
+      eventContext.replaceExpectedUserIds(ids);
+    }
+  }
+
+  /// Snapshots the draft expected list onto a named preset.
+  static ExpectedAttendancePreset captureExpectedAsPreset({
+    required ExpectedAttendancePreset existing,
+    required EventContext eventContext,
+  }) {
+    return ExpectedAttendancePreset(
+      id: existing.id,
+      name: existing.name,
+      userIds: eventContext.expectedAttendeeUserIDs,
+    );
+  }
+
+  /// Loads a preset into the template editor (draft expected list only).
+  static void loadExpectedAttendancePresetForEditing(
+    EventContext eventContext,
+    ExpectedAttendancePreset preset,
+  ) {
+    applyExpectedAttendancePreset(eventContext, preset);
+  }
+
   /// Replaces the programme on [eventContext] with [preset].
   ///
   /// Venue, title, body, cover, expected attendees, and attendance are left
@@ -139,6 +197,34 @@ class PostTemplateMapper {
       finishTime: eventContext.program.finishTime,
       roles: eventContext.program.roles,
     );
+  }
+
+  /// Copies the template's schedule lines into the editor.
+  ///
+  /// Role ids stay put. A whole-event role keeps its flag, including one that
+  /// has a start and no finish.
+  static void loadTemplateRolesForEditing(
+    EventContext eventContext,
+    PostTemplate template,
+  ) {
+    eventContext.program.clearRoles();
+    for (final role in template.roles) {
+      eventContext.program.addRole(
+        detail: (role['detail'] as String?) ?? '',
+        uids: List<String>.from(role['uids'] ?? const []),
+        title: (role['title'] as String?) ?? '',
+        start: role['start'] as DateTime?,
+        end: role['end'] as DateTime?,
+        id: role['id'] is int
+            ? role['id'] as int
+            : DateTime.now().millisecondsSinceEpoch,
+        forGuests:
+            role['for_guests'] is bool ? role['for_guests'] as bool : true,
+        tagIDs: EventProgram.tagIDsOf(role),
+        standing: EventProgram.isStanding(role),
+        requiresPeople: EventProgram.requiresPeople(role),
+      );
+    }
   }
 
   /// Loads a preset into the template editor without minting new role ids.
@@ -204,6 +290,8 @@ class PostTemplateMapper {
           forGuests:
               role['for_guests'] is bool ? role['for_guests'] as bool : true,
           tagIDs: EventProgram.tagIDsOf(role),
+          standing: EventProgram.isStanding(role),
+          requiresPeople: EventProgram.requiresPeople(role),
           id: roleId);
 
       if (roleUids.isNotEmpty) {

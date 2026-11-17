@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/event/event_program.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/schedule_role_times.dart';
 import '../../utility/schedule_timeline_layout.dart';
 import '../my_avatar_stack.dart';
 
@@ -17,12 +19,16 @@ class ScheduleCoverageBand extends StatelessWidget {
     required this.coverageRoles,
     required this.usersForRole,
     required this.onRoleTap,
+    this.onRoleLongPress,
     this.selectedRoleId,
   });
 
   final List<ScheduleCoverageRole> coverageRoles;
   final List<User> Function(Map<String, dynamic> role) usersForRole;
   final void Function(Map<String, dynamic> role) onRoleTap;
+
+  /// Opens the item for editing. Null for viewers.
+  final void Function(Map<String, dynamic> role)? onRoleLongPress;
   final int? selectedRoleId;
 
   static final DateFormat _timeFormat = DateFormat('HH:mm');
@@ -85,12 +91,28 @@ class ScheduleCoverageBand extends StatelessWidget {
     );
   }
 
+  String _timeLabel(
+    final ScheduleCoverageRole coverage,
+    final AppLocalizations l10n,
+  ) {
+    return ScheduleRoleTimes.label(
+          start: coverage.start,
+          end: coverage.end,
+          standing: EventProgram.isStanding(coverage.role),
+          wholeEvent: l10n.scheduleWholeEventLabel,
+          formatTime: _timeFormat.format,
+          startsAt: l10n.scheduleStartsAt,
+        ) ??
+        l10n.scheduleWholeEventLabel;
+  }
+
   Widget _buildEntry(
     final BuildContext context,
     final ScheduleCoverageRole coverage,
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final role = coverage.role;
     final staffOnly = role['for_guests'] == false;
     final selected =
@@ -123,6 +145,8 @@ class ScheduleCoverageBand extends StatelessWidget {
       shape: shape,
       child: InkWell(
         onTap: () => onRoleTap(role),
+        onLongPress:
+            onRoleLongPress == null ? null : () => onRoleLongPress!(role),
         customBorder: shape,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -157,7 +181,7 @@ class ScheduleCoverageBand extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      '${_timeFormat.format(coverage.start)} - ${_timeFormat.format(coverage.end)}',
+                      _timeLabel(coverage, l10n),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.labelSmall

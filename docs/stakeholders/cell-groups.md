@@ -9,7 +9,7 @@
 The Cell Groups section has two areas (like CTRIM’s About / Churches tabs):
 
 - **Overview** — a short introduction to cell group life: what a meeting is like (Bible study, care and prayer, fellowship), a way to **find a group**, a verse, and a photo. **Browse groups** opens the catalogue. If you are signed in and already in a group, that group and its leader appear first. People who **serve** (a ministry, leading a cell group, or Leader / area admin) also see an **activity** snapshot of linked meetings. Guests, and signed-in people who do not serve, do not see that card. A single group’s own page still has its activity too.  
-- **Groups** — the catalogue list of cell groups members and guests can browse (larger cards with leader photo, location on the title line, description, and — when signed in — member avatar stacks). Search by **name** or a **UK postcode** (or area code such as BT9) to see the nearest groups that have shared a postcode, with distance on the card and a map of approximate areas. Opening a group updates the address so you can share or bookmark it. A church hub’s **View all** cell groups control opens this same list, already limited to that church’s location.  
+- **Groups** — the catalogue list of cell groups members and guests can browse (larger cards with leader photo, location on the title line, description, and — when signed in — member avatar stacks). Search by **name** or a **UK postcode** (or area code such as BT9) to see the nearest groups that have shared a postcode, with distance on the card and a map of approximate areas. Opening a group updates the address so you can share or bookmark it. If the group is the first page, **Home** opens Cell Groups. A church hub’s **View all** cell groups control opens this same list, already limited to that church’s location.  
 
 Also in the app and being tested:
 
@@ -28,7 +28,7 @@ When a bulletin **post** or **template** is linked to a cell group, organisers c
 
 ### Adding a meeting from the group
 
-An area admin can choose two things on the edit group page: the **parent post** for the current period (for example “Diego’s cell group 2026”) and the **template** that group’s meetings use. Leaders then see **Add meeting** next to Recent meetings. That starts a new post from the template, already filed under that parent. The parent’s title is shown there, so it is clear which period the meeting belongs to. Until both are chosen, only area admins see **Set up meeting posts**.
+An area admin can choose two things on the edit group page: the **parent post** for the current period (for example “Diego’s cell group 2026”) and the **template** that group’s meetings use. Leaders then see **Add meeting** next to Recent meetings. That starts a new post from the template, already filed under that parent. The parent’s title is shown there, so it is clear which period the meeting belongs to. Until both are chosen, only area admins see **Set up meeting posts**. If the meeting date is already in the past and you mark who attended, and you leave the title as the template’s title, saving adds those shortened names to the title. A title you edit yourself is kept as written.
 
 More on posts: [Events & bulletin](events-and-bulletin.md).
 

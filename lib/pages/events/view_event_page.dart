@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -5,16 +7,20 @@ import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
+import '../../models/event/event_log.dart';
+import '../../models/event/lead_speaker.dart';
 import '../../models/post_template.dart';
+import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notifications/notification_topics.dart';
-import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/post_template_mapper.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/event_log_dialog.dart';
+import '../../widgets/posts/lead_speaker_field.dart';
 import '../../widgets/posts/post_edit_sheet.dart';
+import '../../widgets/posts/post_share_sheet.dart';
 import '../../widgets/posts/post_metadata_section.dart';
 import '../../widgets/posts/view_attendance_tab.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
@@ -27,13 +33,15 @@ import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
 import 'post_templates/select_post_template_page.dart';
+import 'select_expected_attendance_preset_page.dart';
 import 'select_schedule_preset_page.dart';
 import 'send_broadcast_notification_page.dart';
 import 'view_meta_logs_page.dart';
-import '../personal/select_users_page.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import 'view_event_local_store.dart';
 import 'view_event_notify_helpers.dart';
+import 'view_event_remote_load.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({
@@ -60,9 +68,7 @@ class _ViewEventPageState extends State<ViewEventPage>
   late String _originalTitle, _originalSubtitle;
   late final String _currentUID;
   late DateTime? _originalEventDate;
-  late String? _originalLeadSpeakerUID,
-      _originalLeadSpeakerImgSrc,
-      _originalLeadSpeakerName;
+  late List<LeadSpeakerSnapshot> _originalLeadSpeakers;
   late int _originalAttendeeCount;
 
   final List<Widget> _appBarTabs = [
@@ -76,6 +82,7 @@ class _ViewEventPageState extends State<ViewEventPage>
   bool _openFlightDone = false;
   Animation<double>? _routeAnimation;
   bool _allowPop = false;
+  bool _showPeopleTab = false;
   bool _showScheduleTab = false;
   bool _showMediaTab = false;
   bool _showRelatedTab = false;
@@ -84,18 +91,27 @@ class _ViewEventPageState extends State<ViewEventPage>
   int _loadCompletedSteps = 0;
   int _loadTotalSteps = 1;
 
+  /// Completes when the deferred activity-log fetch finishes (or null if unused).
+  Future<void>? _logsLoadFuture;
+
+  final GlobalKey _shareButtonKey = GlobalKey();
+
   int _aboutTabIndex = 0;
-  int _peopleTabIndex = 1;
+  int? _peopleTabIndex;
   int? _scheduleTabIndex;
   int? _mediaTabIndex;
-
-  static const int _remoteFetchStepCount = 5;
 
   void _popRouteAfterAllowing() {
     setState(() => _allowPop = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) Navigator.of(context).pop();
     });
+  }
+
+  /// A shared link has no page underneath. Confirm before leaving unsaved edits.
+  Future<bool> _confirmLeaveToHome() async {
+    if (!_canSaveEditing) return true;
+    return DialogManager.discardChanges(context: context);
   }
 
   @override
@@ -142,9 +158,8 @@ class _ViewEventPageState extends State<ViewEventPage>
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
     _originalEventDate = widget.eventHead.eventDate;
-    _originalLeadSpeakerUID = widget.eventHead.leadSpeakerUID;
-    _originalLeadSpeakerImgSrc = widget.eventHead.leadSpeakerImgSrc;
-    _originalLeadSpeakerName = widget.eventHead.leadSpeakerName;
+    _originalLeadSpeakers =
+        List<LeadSpeakerSnapshot>.from(widget.eventHead.leadSpeakers);
     _originalAttendeeCount = widget.eventHead.attendeeCount;
   }
 
@@ -163,19 +178,12 @@ class _ViewEventPageState extends State<ViewEventPage>
       widget.eventHead.setTitle(_originalTitle);
       widget.eventHead.setSubtitle(_originalSubtitle);
       widget.eventHead.setEventDate(_originalEventDate);
-      widget.eventHead.setLeadSpeaker(
-        uid: _originalLeadSpeakerUID,
-        imgSrc: _originalLeadSpeakerImgSrc,
-        name: _originalLeadSpeakerName,
-      );
+      widget.eventHead.setLeadSpeakers(_originalLeadSpeakers);
       widget.eventHead.setAttendeeCount(_originalAttendeeCount);
       if (_haveFetchedPost) {
-        if (_originalLeadSpeakerUID == null ||
-            _originalLeadSpeakerUID!.isEmpty) {
-          _eventContext.metadata.clearLeadSpeakerUID();
-        } else {
-          _eventContext.metadata.setLeadSpeakerUID(_originalLeadSpeakerUID);
-        }
+        _eventContext.metadata.setLeadSpeakerUIDs(
+          _originalLeadSpeakers.map((speaker) => speaker.uid).toList(),
+        );
       }
     }
     super.dispose();
@@ -199,6 +207,10 @@ class _ViewEventPageState extends State<ViewEventPage>
         appBar: _showCoverShell
             ? null
             : AppBar(
+                leading: PermalinkAppBarLeading.homeOrNull(
+                  context,
+                  onLeave: _confirmLeaveToHome,
+                ),
                 title: Text(
                   widget.eventHead.title,
                   maxLines: 1,
@@ -235,8 +247,12 @@ class _ViewEventPageState extends State<ViewEventPage>
                 ),
                 const SizedBox(height: 24),
                 FilledButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close Page'),
+                  onPressed: () => PermalinkAppBarLeading.leave(context),
+                  child: Text(
+                    PermalinkAppBarLeading.isRootPermalink(context)
+                        ? AppLocalizations.of(context)!.permalinkGoHome
+                        : 'Close Page',
+                  ),
                 ),
               ],
             ),
@@ -309,11 +325,17 @@ class _ViewEventPageState extends State<ViewEventPage>
         debugPrint('Using existing post data for ID: ${widget.eventHead.id}');
         _eventContext = EventContext.viewing(
             eventHead: widget.eventHead, data: data, currentUID: _currentUID);
+        final needLogs = _eventContext.log.logs.isEmpty;
         _figureOutTabs();
         Provider.of<AppContext>(context, listen: false)
             .setMetadata(_eventContext.id, _eventContext.metadata);
         _checkToUnbookForContributor();
         setState(() => _haveFetchedPost = true);
+        // Empty LOGS in Hive (deferred fetch failed / raced) — pull from DB.
+        if (needLogs) {
+          _startDeferredLogFetch();
+          unawaited(_cachePostWhenLogsReady());
+        }
         return;
       }
 
@@ -324,13 +346,30 @@ class _ViewEventPageState extends State<ViewEventPage>
       Provider.of<AppContext>(context, listen: false)
           .setMetadata(_eventContext.id, _eventContext.metadata);
       _figureOutTabs();
-      writeCachedPostData(_eventContext, trackPost: true);
       _checkToUnbookForContributor();
       setState(() => _haveFetchedPost = true);
+      unawaited(_cachePostWhenLogsReady());
     } catch (e, stack) {
       debugPrint('Something went wrong loading the post: $e\n$stack');
       if (!mounted) return;
       setState(() => _loadError = e);
+    }
+  }
+
+  /// Waits for the deferred log fetch so Change History / save cache stay complete.
+  Future<void> _ensureLogsLoaded() async {
+    final pending = _logsLoadFuture;
+    if (pending == null) return;
+    await pending;
+  }
+
+  Future<void> _cachePostWhenLogsReady() async {
+    try {
+      await _ensureLogsLoaded();
+      if (!mounted) return;
+      await writeCachedPostData(_eventContext, trackPost: true);
+    } catch (e, stack) {
+      debugPrint('Could not cache post after logs load: $e\n$stack');
     }
   }
 
@@ -380,6 +419,10 @@ class _ViewEventPageState extends State<ViewEventPage>
     final header = <Widget>[
       SliverAppBar(
           key: ValueKey('post_cover_bar_${widget.eventHead.id}'),
+          leading: PermalinkAppBarLeading.homeOrNull(
+            context,
+            onLeave: _confirmLeaveToHome,
+          ),
           expandedHeight: keyGraphic != null
               ? MediaQuery.of(context).size.height * 0.33
               : null,
@@ -411,7 +454,10 @@ class _ViewEventPageState extends State<ViewEventPage>
 
     final List<Widget> metaChildren = [
       PostMetadataSection(
-          eventContext: _eventContext, update: _updateWholePostBody)
+        eventContext: _eventContext,
+        update: _updateWholePostBody,
+        onOpenHistory: _openChangeHistory,
+      ),
     ];
 
     if (!_eventContext.isUserAuthor(_currentUID) &&
@@ -431,10 +477,19 @@ class _ViewEventPageState extends State<ViewEventPage>
           Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: metaChildren),
-          if (_canSaveEditing) ...[
-            const SizedBox(height: 8),
-            _buildUnsavedChangesBanner(theme, colorScheme),
-          ],
+          AnimatedSize(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _canSaveEditing
+                ? Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      _buildUnsavedChangesBanner(theme, colorScheme),
+                    ],
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
           const SizedBox(height: 8),
           TabBar(
               labelColor: colorScheme.primary,
@@ -490,9 +545,19 @@ class _ViewEventPageState extends State<ViewEventPage>
         appContext.sharedPref.bookmarkedPosts.contains(_eventContext.id);
     return IconButton.filled(
         onPressed: () => _bookmarkClick(appContext, bookmarked),
-        icon: bookmarked
-            ? const Icon(Icons.bookmark)
-            : const Icon(Icons.bookmark_border));
+        icon: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(scale: animation, child: child),
+            );
+          },
+          child: Icon(
+            bookmarked ? Icons.bookmark : Icons.bookmark_border,
+            key: ValueKey<bool>(bookmarked),
+          ),
+        ));
   }
 
   Widget _buildTitle() {
@@ -541,11 +606,13 @@ class _ViewEventPageState extends State<ViewEventPage>
         updateBody: _updateWholePostBody,
         currentUID: _currentUID,
       ),
-      ViewAttendanceTab(
+    ];
+    if (_showPeopleTab) {
+      tabs.add(ViewAttendanceTab(
         eventContext: _eventContext,
         onChanged: _updateWholePostBody,
-      ),
-    ];
+      ));
+    }
     if (_showScheduleTab) {
       tabs.add(ViewAllPrograms(
         key: ValueKey(_eventContext.program.scheduleLayoutSignature),
@@ -563,13 +630,28 @@ class _ViewEventPageState extends State<ViewEventPage>
     return tabs;
   }
 
-  List<Widget>? _buildAppBarActions() {
+  List<Widget> _buildAppBarActions() {
+    final l10n = AppLocalizations.of(context)!;
     final bool canEdit = _eventContext.isUserAuthor(_currentUID) ||
         _eventContext.isUserContributor(_currentUID);
-    if (!canEdit) return null;
-
     final colorScheme = Theme.of(context).colorScheme;
-    final actions = <Widget>[];
+    final actions = <Widget>[
+      IconButton.filledTonal(
+        key: _shareButtonKey,
+        tooltip: l10n.sharePostTooltip,
+        onPressed: _showShareSheet,
+        icon: const Icon(Icons.share, size: 20),
+        style: IconButton.styleFrom(
+          backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
+          foregroundColor: colorScheme.onPrimaryContainer,
+        ),
+      ),
+    ];
+
+    if (!canEdit) {
+      actions.add(const SizedBox(width: 4));
+      return actions;
+    }
 
     if (_canSaveEditing) {
       actions.add(
@@ -608,46 +690,64 @@ class _ViewEventPageState extends State<ViewEventPage>
   Future<void> _fetchEssentialPostData() async {
     final EventSupplementalDBManager dbManager =
         EventSupplementalDBManager(widget.eventHead.id);
-    const total = _remoteFetchStepCount;
 
-    _updateLoadProgress(completed: 0, total: total, message: 'Loading media…');
-    final media = await dbManager.fetchMedia();
-
-    _updateLoadProgress(
-        completed: 1, total: total, message: 'Loading details…');
-    final meta = await dbManager.fetchMetadata();
-
-    _updateLoadProgress(
-        completed: 2, total: total, message: 'Loading schedule…');
-    final program = await dbManager.fetchProgram();
-
-    _updateLoadProgress(
-        completed: 3, total: total, message: 'Loading activity log…');
-    final logs = await dbManager.fetchLog();
-
-    _updateLoadProgress(
-        completed: 4, total: total, message: 'Loading post content…');
-    final body = await dbManager.fetchBody();
-
-    _updateLoadProgress(completed: 5, total: total, message: 'Finishing…');
+    _updateLoadProgress(completed: 0, total: 1, message: 'Loading post…');
+    final essentials = await fetchPostEssentialsParallel(
+      media: dbManager.fetchMedia(),
+      metadata: dbManager.fetchMetadata(),
+      program: dbManager.fetchProgram(),
+      body: dbManager.fetchBody(),
+    );
 
     _eventContext = EventContext.viewing(
         eventHead: widget.eventHead, currentUID: _currentUID);
-    _eventContext.setFetchedMedia(media);
-    _eventContext.setFetchedMetadata(meta);
-    _eventContext.setFetchedProgram(program);
-    _eventContext.setFetchedLogs(logs);
-    _eventContext.setFetchedBody(body);
+    _eventContext.setFetchedMedia(essentials.media);
+    _eventContext.setFetchedMetadata(essentials.metadata);
+    _eventContext.setFetchedProgram(essentials.program);
+    _eventContext.setFetchedBody(essentials.body);
+    // Placeholder so .log is safe until the background fetch finishes.
+    _eventContext.setFetchedLogs(EventLog.fromMap(const {'Logs': <dynamic>[]}));
+    _startDeferredLogFetch(dbManager: dbManager);
+  }
+
+  /// Background activity-log fetch for network opens and empty-cache opens.
+  void _startDeferredLogFetch({EventSupplementalDBManager? dbManager}) {
+    final manager =
+        dbManager ?? EventSupplementalDBManager(widget.eventHead.id);
+    _logsLoadFuture = () async {
+      try {
+        final logs = await manager.fetchLog();
+        _eventContext.setFetchedLogs(logs);
+      } catch (e, stack) {
+        // Keep the empty placeholder; Save / About still work.
+        debugPrint('Deferred post log fetch failed: $e\n$stack');
+      }
+    }();
+  }
+
+  Future<void> _openChangeHistory() async {
+    await _ensureLogsLoaded();
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewMetaLogsPage(eventContext: _eventContext),
+      ),
+    );
+    if (mounted) _updateWholePostBody();
   }
 
   void _figureOutTabs() {
+    final appContext = Provider.of<AppContext>(context, listen: false);
     final bool isAuthor =
         _eventContext.metadata.authorUID.compareTo(_currentUID) == 0;
     final bool isContributor =
         _eventContext.metadata.contributorUIDs.contains(_currentUID);
-    final bool isLeader =
-        Provider.of<AppContext>(context, listen: false).currentUser.isLeader;
+    final bool isLeader = appContext.currentUser.isLeader;
 
+    // People tab is for everyone: guests see attendance with shortened names;
+    // signed-in people can also mark interest and manage lists when allowed.
+    _showPeopleTab = true;
     _showScheduleTab = _eventContext.head.eventDate != null || isAuthor;
     _showMediaTab =
         _eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor;
@@ -663,10 +763,13 @@ class _ViewEventPageState extends State<ViewEventPage>
     _aboutTabIndex = length;
     length++;
 
-    _peopleTabIndex = length;
-    _appBarTabs
-        .add(const Tab(icon: Icon(Icons.groups_outlined), text: 'People'));
-    length++;
+    _peopleTabIndex = null;
+    if (_showPeopleTab) {
+      _peopleTabIndex = length;
+      _appBarTabs
+          .add(const Tab(icon: Icon(Icons.groups_outlined), text: 'People'));
+      length++;
+    }
 
     _scheduleTabIndex = null;
     if (_showScheduleTab) {
@@ -720,7 +823,9 @@ class _ViewEventPageState extends State<ViewEventPage>
     });
   }
 
-  void _updateClick() {
+  Future<void> _updateClick() async {
+    await _ensureLogsLoaded();
+    if (!mounted) return;
     showDialog(
         context: context,
         barrierDismissible: false,
@@ -733,6 +838,19 @@ class _ViewEventPageState extends State<ViewEventPage>
               _captureOriginalHeadState();
               setState(() {});
             }));
+  }
+
+  void _showShareSheet() {
+    final box =
+        _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
+    final origin = box != null && box.hasSize
+        ? box.localToGlobal(Offset.zero) & box.size
+        : null;
+    showPostShareSheet(
+      context: context,
+      eventContext: _eventContext,
+      sharePositionOrigin: origin,
+    );
   }
 
   void _showSettings() {
@@ -753,6 +871,8 @@ class _ViewEventPageState extends State<ViewEventPage>
         onAddSchedule: _onAddScheduleItem,
         onArrangeSchedule: _onArrangeSchedule,
         onApplySchedulePreset: _onApplySchedulePresetFromSheet,
+        onApplyExpectedAttendancePreset:
+            _onApplyExpectedAttendancePresetFromSheet,
         onEditMedia: _onEditMediaClick,
         onManageContributors: _onManageContributorsFromSheet,
         onManageLeadSpeaker: _onManageLeadSpeakerFromSheet,
@@ -771,8 +891,10 @@ class _ViewEventPageState extends State<ViewEventPage>
     _onTitleTap();
   }
 
-  void _onManageContributorsFromSheet() {
+  Future<void> _onManageContributorsFromSheet() async {
     Navigator.of(context).pop();
+    await _ensureLogsLoaded();
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -782,44 +904,19 @@ class _ViewEventPageState extends State<ViewEventPage>
 
   Future<void> _onManageLeadSpeakerFromSheet() async {
     Navigator.of(context).pop();
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final currentUid = _eventContext.metadata.leadSpeakerUID ??
-        _eventContext.head.leadSpeakerUID;
-    final result = await Navigator.push<List<String>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SelectUsersPage(
-          selectedUIDs: currentUid == null ? <String>[] : [currentUid],
-          includeCurrentUser: true,
-          maxSelection: 1,
-          title: 'Select lead speaker',
-          preferServing: true,
-          allowCreatePlaceholder: canCreatePlaceholderUser(
-            actor: appContext.currentUser,
-            postAuthorUid: _eventContext.metadata.authorUID,
-          ),
-          postIdForPlaceholderCreate: _eventContext.id,
-        ),
-      ),
+    final applied = await pickLeadSpeakers(
+      context: context,
+      eventContext: _eventContext,
     );
-    if (result == null || !mounted) return;
-
-    if (result.isEmpty) {
-      _eventContext.applyLeadSpeaker(uid: null);
-    } else {
-      final user = appContext.userById(result.first);
-      if (user != null) {
-        _eventContext.applyLeadSpeaker(
-            uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
-      }
-    }
+    if (!applied || !mounted) return;
     _eventContext.allowSavingOfTheEdit();
     setState(() {});
   }
 
   void _onOpenPeopleTabFromSheet() {
     Navigator.of(context).pop();
-    _tabController.animateTo(_peopleTabIndex);
+    final peopleIndex = _peopleTabIndex;
+    if (peopleIndex != null) _tabController.animateTo(peopleIndex);
   }
 
   void _onEditBodyClick() {
@@ -911,6 +1008,70 @@ class _ViewEventPageState extends State<ViewEventPage>
     );
   }
 
+  Future<void> _onApplyExpectedAttendancePresetFromSheet() async {
+    Navigator.of(context).pop();
+    final selected = await Navigator.push<
+        ({PostTemplate template, ExpectedAttendancePreset preset})>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectExpectedAttendancePresetPage(
+          preferredTitle: _eventContext.head.title,
+          preferredLocation: _eventContext.head.location,
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+
+    final templateTitle = selected.template.title;
+    final presetName = selected.preset.name;
+    final confirm = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Replace expected people?',
+      content:
+          'This replaces the expected attendance list with “$presetName” from '
+          '“$templateTitle”. Interest and who has been marked as attending stay. '
+          'Save the post to keep the change.',
+      confirmText: 'Replace',
+      icon: Icons.groups_outlined,
+    );
+    if (!confirm || !mounted) return;
+
+    if (!_eventContext.hasLoadedAttendance) {
+      final ok = await DialogManager.runWithProgressDialog(
+        context: context,
+        title: 'Loading attendance…',
+        action: () async {
+          final attendance =
+              await EventSupplementalDBManager(_eventContext.id)
+                  .fetchAttendance();
+          _eventContext.setFetchedAttendance(
+            attendance,
+            forceReplace: !_eventContext.isAttendanceDirty,
+          );
+        },
+      );
+      if (!ok || !mounted) return;
+    }
+
+    PostTemplateMapper.applyExpectedAttendancePreset(
+      _eventContext,
+      selected.preset,
+      applyToLiveAttendance: true,
+    );
+    Provider.of<AppContext>(context, listen: false)
+        .analytics
+        .logExpectedAttendancePresetApply(_eventContext.id);
+    setState(() {});
+    final peopleIndex = _peopleTabIndex;
+    if (peopleIndex != null) _tabController.animateTo(peopleIndex);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            'Expected people updated to “$presetName” — save the post to keep the change'),
+      ),
+    );
+  }
+
   void _onEditMediaClick() {
     Navigator.of(context).pop();
     Navigator.push(
@@ -940,9 +1101,10 @@ class _ViewEventPageState extends State<ViewEventPage>
                             .currentUser
                             .id,
                     parentID: parentID)))).then((_) {
-      setState(() {
-        // rebuild? - will this update when creating sibling posts?
-      });
+      // A later Save writes the whole metadata doc, so pick up the new child
+      // first or it would overwrite ChildrenIDs without it.
+      _syncChildrenMetadataFromAppContext();
+      setState(() {});
     });
   }
 

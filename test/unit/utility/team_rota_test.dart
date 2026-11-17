@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:ctrim_app/models/event/event_program.dart';
+import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/models/user_tag.dart';
 import 'package:ctrim_app/utility/catalog/volunteer_locations.dart';
 import 'package:ctrim_app/utility/team_rota.dart';
 
@@ -34,6 +36,7 @@ void main() {
           end: role['end'] as DateTime?,
           id: role['id'] as int,
           tagIDs: List<String>.from(role['tagIDs'] as List? ?? const []),
+          requiresPeople: EventProgram.requiresPeople(role),
         );
       }
       return program;
@@ -74,6 +77,76 @@ void main() {
       expect(
         TeamRotaQuery.rangeEndExclusive(now, months: 1),
         DateTime(2026, 10, 19),
+      );
+    });
+
+    test('omits shared responsibilities unless the filter includes them', () {
+      final shared = <String, dynamic>{
+        'uids': <String>[],
+        'title': 'Welcome',
+        'start': DateTime(2026, 9, 20, 10, 15),
+        'end': DateTime(2026, 9, 20, 10, 20),
+        'id': 9,
+        'tagIDs': ['worship'],
+        'requiresPeople': false,
+      };
+      final posts = [
+        (
+          head: head(id: 'p1', eventDate: DateTime(2026, 9, 20)),
+          program: programWith([worshipSlot, shared]),
+        ),
+      ];
+
+      final hidden = TeamRotaQuery.matchingPosts(
+        posts: posts,
+        selectedTagIDs: {'worship'},
+        locationFilter: VolunteerLocations.all,
+      );
+      expect(hidden.single.roles.map((role) => role['title']), ['Worship']);
+
+      final shown = TeamRotaQuery.matchingPosts(
+        posts: posts,
+        selectedTagIDs: {'worship'},
+        locationFilter: VolunteerLocations.all,
+        includeSharedResponsibilities: true,
+      );
+      expect(
+        shown.single.roles.map((role) => role['title']),
+        ['Worship', 'Welcome'],
+      );
+    });
+
+    test('a shared responsibility is not a gap', () {
+      final shared = <String, dynamic>{
+        'uids': <String>[],
+        'title': 'Welcome',
+        'start': DateTime(2026, 9, 20, 10, 15),
+        'end': DateTime(2026, 9, 20, 10, 20),
+        'id': 9,
+        'tagIDs': ['worship'],
+        'requiresPeople': false,
+      };
+      final post = TeamRotaPost(
+        head: head(id: 'p1', eventDate: DateTime(2026, 9, 20)),
+        roles: [worshipSlot, shared],
+      );
+
+      expect(TeamRotaQuery.isSharedResponsibility(shared), isTrue);
+      expect(TeamRotaQuery.unassignedCount(post), 1);
+      expect(
+        TeamRotaQuery.firstGaps([post]).single.role['title'],
+        'Worship',
+      );
+      expect(
+        TeamRotaQuery.postsNeedingPeople([post]).single.roles.single['title'],
+        'Worship',
+      );
+      expect(
+        TeamRotaQuery.hidesAssigneeLine({
+          'uids': <String>[],
+          'requiresPeople': false,
+        }),
+        isTrue,
       );
     });
 
@@ -226,6 +299,550 @@ void main() {
       expect(groups.first.month, 9);
       expect(groups.last.month, 10);
       expect(groups.first.posts.single.head.id, 'sep');
+    });
+
+    test('visibleRoleCount keeps short lists open and previews long ones', () {
+      expect(TeamRotaQuery.visibleRoleCount(5), 5);
+      expect(
+        TeamRotaQuery.visibleRoleCount(6),
+        TeamRotaQuery.previewRoleCount,
+      );
+    });
+
+    test('rolesInStartOrder keeps untagged lines and sorts by start', () {
+      final untimed = <String, dynamic>{
+        'uids': <String>[],
+        'title': 'Notices',
+        'start': null,
+        'end': null,
+        'id': 4,
+        'tagIDs': <String>[],
+      };
+      final titles = TeamRotaQuery.rolesInStartOrder(
+        programWith([worshipSlot, untimed, untaggedAssigned, techSlot]),
+      ).map((role) => role['title']);
+
+      expect(titles, ['Sound', 'Worship', 'Host', 'Notices']);
+    });
+
+    User person({
+      required String id,
+      bool isAreaAdmin = false,
+      bool isLeader = false,
+      List<String> tagIDs = const [],
+    }) {
+      return User(
+        id: id,
+        forname: 'Ada',
+        surname: 'Lane',
+        isAreaAdmin: isAreaAdmin,
+        isLeader: isLeader,
+        tagIDs: tagIDs,
+      );
+    }
+
+    UserTag ministry({
+      required String id,
+      Map<String, List<String>> headsByLocation = const {},
+      bool isActive = true,
+    }) {
+      return UserTag(
+        id: id,
+        name: id,
+        isActive: isActive,
+        headsByLocation: headsByLocation,
+      );
+    }
+
+    Map<String, dynamic> slot({
+      required int id,
+      required List<String> tagIDs,
+      List<String> uids = const [],
+      DateTime? start,
+    }) {
+      return {
+        'id': id,
+        'title': 'Slot',
+        'uids': uids,
+        'tagIDs': tagIDs,
+        'start': start,
+        'end': start?.add(const Duration(hours: 1)),
+      };
+    }
+
+    final now = DateTime(2026, 9, 20, 9);
+    final later = DateTime(2026, 9, 20, 11);
+    final earlier = DateTime(2026, 9, 20, 8);
+    final eventDay = DateTime(2026, 9, 20, 10, 30);
+
+    test('area admin can assign a tagged slot that has not started', () {
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'admin', isAreaAdmin: true),
+          role: slot(id: 1, tagIDs: ['worship'], start: later),
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [ministry(id: 'worship')],
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a started slot is locked for an area admin', () {
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'admin', isAreaAdmin: true),
+          role: slot(id: 1, tagIDs: ['worship'], start: earlier),
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [ministry(id: 'worship')],
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('ministry head at the post church can assign that slot', () {
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'head'),
+          role: slot(id: 1, tagIDs: ['worship'], start: later),
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [
+            ministry(
+              id: 'worship',
+              headsByLocation: {
+                'belfast': ['head'],
+              },
+            ),
+          ],
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('head of a different ministry cannot assign the slot', () {
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'head', isLeader: true),
+          role: slot(id: 1, tagIDs: ['worship'], start: later),
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [
+            ministry(id: 'worship'),
+            ministry(
+              id: 'welcome',
+              headsByLocation: {
+                'belfast': ['head'],
+              },
+            ),
+          ],
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('a member of the ministry can assign the slot', () {
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'member', tagIDs: ['worship']),
+          role: slot(id: 1, tagIDs: ['worship'], start: later),
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [
+            ministry(
+              id: 'worship',
+              headsByLocation: {
+                'belfast': ['someone-else'],
+              },
+            ),
+          ],
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a member of another ministry cannot assign the slot', () {
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'member', tagIDs: ['welcome']),
+          role: slot(id: 1, tagIDs: ['worship'], start: later),
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [ministry(id: 'worship'), ministry(id: 'welcome')],
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('a started slot is locked for a ministry member', () {
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'member', tagIDs: ['worship']),
+          role: slot(id: 1, tagIDs: ['worship'], start: earlier),
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [ministry(id: 'worship')],
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('a head of one ministry on a shared slot can assign it', () {
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'media-head'),
+          role: slot(
+            id: 1,
+            tagIDs: ['worship', 'media'],
+            start: later,
+          ),
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [
+            ministry(id: 'worship'),
+            ministry(
+              id: 'media',
+              headsByLocation: {
+                'belfast': ['media-head'],
+              },
+            ),
+          ],
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('an untimed slot locks after its calendar day', () {
+      final role = slot(id: 1, tagIDs: ['worship']);
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'admin', isAreaAdmin: true),
+          role: role,
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [ministry(id: 'worship')],
+          now: now,
+        ),
+        isTrue,
+      );
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'admin', isAreaAdmin: true),
+          role: role,
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [ministry(id: 'worship')],
+          now: DateTime(2026, 9, 21, 8),
+        ),
+        isFalse,
+      );
+    });
+
+    test('opening ministries include membership and headship at that church',
+        () {
+      final ids = TeamRotaQuery.openingMinistryIds(
+        user: person(id: 'head', tagIDs: ['welcome']),
+        allTags: [
+          ministry(id: 'welcome'),
+          ministry(
+            id: 'worship',
+            headsByLocation: {
+              'belfast': ['head'],
+            },
+          ),
+          ministry(
+            id: 'media',
+            headsByLocation: {
+              'portadown': ['head'],
+            },
+          ),
+          ministry(
+            id: 'paused',
+            isActive: false,
+            headsByLocation: {
+              'belfast': ['head'],
+            },
+          ),
+        ],
+        locationId: 'belfast',
+      );
+
+      expect(ids, {'welcome', 'worship'});
+    });
+
+    test('a shared responsibility cannot be claimed or assigned', () {
+      final role = slot(id: 1, tagIDs: ['worship'], start: later);
+      role['requiresPeople'] = false;
+      expect(
+        TeamRotaQuery.canClaimRole(
+          actor: person(id: 'member', tagIDs: ['worship']),
+          role: role,
+          eventDate: eventDay,
+          now: now,
+        ),
+        isFalse,
+      );
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'admin', isAreaAdmin: true),
+          role: role,
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [ministry(id: 'worship')],
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('a member can claim an unstarted slot in their ministry', () {
+      final role = slot(id: 1, tagIDs: ['worship'], start: later);
+      expect(
+        TeamRotaQuery.canClaimRole(
+          actor: person(id: 'member', tagIDs: ['worship']),
+          role: role,
+          eventDate: eventDay,
+          now: now,
+        ),
+        isTrue,
+      );
+      expect(
+        TeamRotaQuery.canClaimRole(
+          actor: person(id: 'member', tagIDs: ['worship']),
+          role: slot(
+            id: 1,
+            tagIDs: ['worship'],
+            uids: ['member'],
+            start: later,
+          ),
+          eventDate: eventDay,
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('someone outside the ministry cannot claim the slot', () {
+      expect(
+        TeamRotaQuery.canClaimRole(
+          actor: person(id: 'member', tagIDs: ['welcome']),
+          role: slot(id: 1, tagIDs: ['worship'], start: later),
+          eventDate: eventDay,
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('heading a ministry without belonging to it cannot claim', () {
+      expect(
+        TeamRotaQuery.canClaimRole(
+          actor: person(id: 'head'),
+          role: slot(id: 1, tagIDs: ['worship'], start: later),
+          eventDate: eventDay,
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('an area admin who is not a member cannot claim', () {
+      expect(
+        TeamRotaQuery.canClaimRole(
+          actor: person(id: 'admin', isAreaAdmin: true),
+          role: slot(id: 1, tagIDs: ['worship'], start: later),
+          eventDate: eventDay,
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('a started slot cannot be claimed', () {
+      expect(
+        TeamRotaQuery.canClaimRole(
+          actor: person(id: 'member', tagIDs: ['worship']),
+          role: slot(id: 1, tagIDs: ['worship'], start: earlier),
+          eventDate: eventDay,
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('an untagged slot cannot be claimed', () {
+      expect(
+        TeamRotaQuery.canClaimRole(
+          actor: person(id: 'member', tagIDs: ['worship']),
+          role: slot(id: 1, tagIDs: const []),
+          eventDate: eventDay,
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('gap count and needs-people keep only empty slots', () {
+      final posts = TeamRotaQuery.matchingPosts(
+        posts: [
+          (
+            head: head(id: 'p1', eventDate: DateTime(2026, 9, 20)),
+            program: programWith([
+              worshipSlot,
+              techSlot,
+              {
+                'uids': <String>[],
+                'title': 'Welcome',
+                'start': DateTime(2026, 9, 20, 10, 30),
+                'end': DateTime(2026, 9, 20, 11),
+                'id': 4,
+                'tagIDs': ['welcome'],
+              },
+            ]),
+          ),
+          (
+            head: head(id: 'p2', eventDate: DateTime(2026, 9, 27)),
+            program: programWith([techSlot]),
+          ),
+        ],
+        selectedTagIDs: const {},
+        locationFilter: VolunteerLocations.all,
+      );
+
+      expect(TeamRotaQuery.unassignedRoleCount(posts), 2);
+      final gaps = TeamRotaQuery.postsNeedingPeople(posts);
+      expect(gaps.map((post) => post.head.id), ['p1']);
+      expect(gaps.single.roles.map((role) => role['title']),
+          ['Worship', 'Welcome']);
+    });
+
+    test('unassigned count and serving include roles behind the preview', () {
+      final post = TeamRotaPost(
+        head: head(id: 'p1', eventDate: DateTime(2026, 9, 20)),
+        roles: [
+          for (var i = 0; i < 6; i++)
+            slot(
+              id: i,
+              tagIDs: ['worship'],
+              uids: i == 5
+                  ? ['me']
+                  : i == 1
+                      ? const <String>[]
+                      : ['other'],
+              start: DateTime(2026, 9, 20, 9 + i),
+            ),
+        ],
+      );
+
+      expect(TeamRotaQuery.unassignedCount(post), 1);
+      expect(TeamRotaQuery.viewerIsServing(post, 'me'), isTrue);
+      expect(TeamRotaQuery.viewerIsServing(post, 'other'), isTrue);
+      expect(TeamRotaQuery.viewerIsServing(post, 'nope'), isFalse);
+    });
+
+    test('firstGaps lists empty slots soonest first and stops at five', () {
+      Map<String, dynamic> emptyAt({
+        required int id,
+        required DateTime start,
+        String title = 'Slot',
+      }) {
+        return {
+          'uids': <String>[],
+          'title': title,
+          'start': start,
+          'end': start.add(const Duration(hours: 1)),
+          'id': id,
+          'tagIDs': ['worship'],
+        };
+      }
+
+      final posts = TeamRotaQuery.matchingPosts(
+        posts: [
+          (
+            head: head(
+              id: 'later',
+              eventDate: DateTime(2026, 10, 4),
+              title: 'Later Sunday',
+            ),
+            program: programWith([
+              emptyAt(id: 7, start: DateTime(2026, 10, 4, 9), title: 'A'),
+              emptyAt(id: 8, start: DateTime(2026, 10, 4, 10), title: 'B'),
+              emptyAt(id: 9, start: DateTime(2026, 10, 4, 11), title: 'C'),
+              emptyAt(id: 10, start: DateTime(2026, 10, 4, 12), title: 'D'),
+            ]),
+          ),
+          (
+            head: head(
+              id: 'first',
+              eventDate: DateTime(2026, 9, 20),
+              title: 'First Sunday',
+            ),
+            program: programWith([
+              {
+                'uids': <String>['u1'],
+                'title': 'Sound',
+                'start': DateTime(2026, 9, 20, 9),
+                'end': DateTime(2026, 9, 20, 12),
+                'id': 2,
+                'tagIDs': ['tech'],
+              },
+              emptyAt(
+                id: 4,
+                start: DateTime(2026, 9, 20, 10, 30),
+                title: 'Welcome',
+              ),
+              emptyAt(
+                id: 1,
+                start: DateTime(2026, 9, 20, 10),
+                title: 'Worship',
+              ),
+            ]),
+          ),
+          (
+            head: head(
+              id: 'middle',
+              eventDate: DateTime(2026, 9, 27),
+              title: 'Middle Sunday',
+            ),
+            program: programWith([
+              emptyAt(
+                id: 5,
+                start: DateTime(2026, 9, 27, 9),
+                title: 'Prayer',
+              ),
+              {
+                'uids': <String>['u1'],
+                'title': 'Host',
+                'start': DateTime(2026, 9, 27, 10),
+                'end': DateTime(2026, 9, 27, 11),
+                'id': 6,
+                'tagIDs': ['welcome'],
+              },
+            ]),
+          ),
+        ],
+        selectedTagIDs: const {},
+        locationFilter: VolunteerLocations.all,
+      );
+
+      final gaps = TeamRotaQuery.firstGaps(posts);
+      expect(gaps.map((gap) => gap.role['id']), [1, 4, 5, 7, 8]);
+      expect(gaps.first.post.head.id, 'first');
+      expect(gaps.last.role['title'], 'B');
+    });
+
+    test('sameAssigneeIds ignores order', () {
+      expect(TeamRotaQuery.sameAssigneeIds(['a', 'b'], ['b', 'a']), isTrue);
+      expect(TeamRotaQuery.sameAssigneeIds(['a'], ['a', 'b']), isFalse);
     });
   });
 }

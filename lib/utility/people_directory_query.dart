@@ -31,4 +31,27 @@ class PeopleDirectoryQuery {
         .toList()
       ..sort(UserTagHelpers.compareUsersBySurname);
   }
+
+  /// Whether [user] stays in the directory after the Show chips.
+  ///
+  /// Neither chip: everyone. Serving alone: people who serve. Placeholders
+  /// alone: placeholder profiles. Both: those two groups together (a person
+  /// who serves, or a placeholder). Other members are left out.
+  ///
+  /// Callers must not pass `placeholdersOnly: true` into
+  /// [isVisibleInVolunteerDirectory] while Serving is also on — that drops
+  /// serving members before this check runs.
+  static bool matchesShowFilter({
+    required User user,
+    required bool servingOnly,
+    required bool placeholdersOnly,
+    required bool userServes,
+  }) {
+    if (servingOnly && placeholdersOnly) {
+      return user.isPlaceholder || userServes;
+    }
+    if (placeholdersOnly) return user.isPlaceholder;
+    if (servingOnly) return userServes;
+    return true;
+  }
 }

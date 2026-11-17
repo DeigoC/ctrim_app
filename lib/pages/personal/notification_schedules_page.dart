@@ -443,14 +443,6 @@ class _ScheduleCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Text(
-                    schedule.enabled
-                        ? l10n.notificationSchedulesOn
-                        : l10n.notificationSchedulesOff,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
                   Switch(
                     value: schedule.enabled,
                     onChanged: onEnabled,
@@ -908,15 +900,15 @@ class _NotificationScheduleEditorState
                   Text('${l10n.notificationSchedulesClockLabel} · $_clockText'),
             ),
           ),
-        SwitchListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-          title: Text(
-            _enabled
-                ? l10n.notificationSchedulesOn
-                : l10n.notificationSchedulesOff,
+        Align(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Switch(
+              value: _enabled,
+              onChanged: (value) => setState(() => _enabled = value),
+            ),
           ),
-          value: _enabled,
-          onChanged: (value) => setState(() => _enabled = value),
         ),
         if (_location.isNotEmpty)
           Padding(

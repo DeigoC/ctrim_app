@@ -12,6 +12,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'CTRIM App';
 
   @override
+  String get startupTitle => 'CTRIM';
+
+  @override
+  String get startupOpening => 'Opening CTRIM…';
+
+  @override
+  String get startupCatalogs => 'Loading churches and groups…';
+
+  @override
+  String get startupPosts => 'Loading the bulletin…';
+
+  @override
+  String get startupPeople => 'Loading people…';
+
+  @override
+  String get startupSigningIn => 'Signing in…';
+
+  @override
   String get volunteersTitle => 'People';
 
   @override
@@ -71,13 +89,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerUser => 'Register person';
 
   @override
-  String get volunteersMenuTitle => 'Who\'s who';
+  String get volunteersMenuTitle => 'Who\'s Who';
 
   @override
   String get volunteersMenuSubtitle => 'Leaders, ministries, and members';
 
   @override
-  String get peopleAndTeamsSectionTitle => 'People & teams';
+  String get peopleAndTeamsSectionTitle => 'People & Teams';
 
   @override
   String get mySchedule => 'My Schedule';
@@ -89,15 +107,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalScheduleEmpty => 'No upcoming tasks assigned for now.';
 
   @override
-  String get personalScheduleViewFull => 'View full schedule';
+  String get personalScheduleViewFull => 'View Full Schedule';
 
   @override
   String personalScheduleViewAll(int count) {
-    return 'View all $count upcoming';
+    return 'View All $count Upcoming';
   }
 
   @override
-  String get personalCellGroupsTitle => 'Cell groups';
+  String get personalMinistryScheduleView => 'View ministry schedule';
+
+  @override
+  String get personalMinistryScheduleEmpty => 'No ministry slots coming up.';
+
+  @override
+  String get personalMinistryScheduleCovered => 'Covered';
+
+  @override
+  String get personalMinistryScheduleQuiet => 'Nothing soon';
+
+  @override
+  String get personalMinistryScheduleRetry => 'Try again';
+
+  @override
+  String get personalCellGroupsTitle => 'Cell Groups';
 
   @override
   String get personalCellGroupsSubtitle => 'Your groups and upcoming meetings';
@@ -107,7 +140,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'You are not in a cell group yet. Browse groups to find one that fits you.';
 
   @override
-  String get personalCellGroupsBrowse => 'Browse cell groups';
+  String get personalCellGroupsBrowse => 'Browse Cell Groups';
 
   @override
   String get personalCellGroupsNoUpcoming =>
@@ -138,7 +171,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalScheduleUntitledEvent => 'Untitled event';
 
   @override
-  String get teamRota => 'Team rota';
+  String get teamRota => 'Ministry Schedule';
 
   @override
   String get teamRotaSubtitle => 'What your ministries are down for';
@@ -155,14 +188,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamRotaLoadingProgrammes => 'Loading programmes…';
 
   @override
-  String get teamRotaCouldNotLoad => 'Could not load team rota';
+  String get teamRotaCouldNotLoad => 'Could not load ministry schedule';
 
   @override
   String get teamRotaEmptyTitle => 'No ministry slots in this window';
 
   @override
   String get teamRotaEmptyBody =>
-      'Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Open a post to edit.';
+      'Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Tap a slot to see who is on it.';
 
   @override
   String get teamRotaUnassigned => 'Unassigned';
@@ -172,6 +205,160 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teamRotaFilterTeams => 'Ministry';
+
+  @override
+  String get teamRotaFilterTooltip => 'Filter';
+
+  @override
+  String get teamRotaFilterSheetTitle => 'Filter schedule';
+
+  @override
+  String get teamRotaFilterSheetSubtitle => 'Choose a location and ministries';
+
+  @override
+  String get teamRotaClearMinistries => 'Clear ministries';
+
+  @override
+  String get teamRotaChangeFilter => 'Change filter';
+
+  @override
+  String get teamRotaViewSchedule => 'View schedule';
+
+  @override
+  String get teamRotaOpenPost => 'Open post';
+
+  @override
+  String get teamRotaNoOneAssigned => 'No one assigned';
+
+  @override
+  String get teamRotaFilterShow => 'Show';
+
+  @override
+  String get teamRotaNeedsPeople => 'Needs people';
+
+  @override
+  String get teamRotaNeedsPeopleSubtitle =>
+      'Only slots that still need someone';
+
+  @override
+  String get teamRotaSharedResponsibilities => 'Shared responsibilities';
+
+  @override
+  String get teamRotaSharedResponsibilitiesSubtitle =>
+      'Ministry slots that do not need a named person';
+
+  @override
+  String get teamRotaSharedResponsibility => 'Shared responsibility';
+
+  @override
+  String get scheduleNeedsNamedPerson => 'Needs a named person';
+
+  @override
+  String get scheduleNeedsNamedPersonHint =>
+      'Turn off when Ministry Schedule should not ask anyone to fill this slot';
+
+  @override
+  String get teamRotaYou => 'You';
+
+  @override
+  String teamRotaCardGaps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count need people',
+      one: '1 needs people',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get teamRotaYoureServing => 'You\'re serving';
+
+  @override
+  String teamRotaYoureOnOne(String role) {
+    return 'You\'re on $role';
+  }
+
+  @override
+  String teamRotaYoureOnTwo(String first, String second) {
+    return 'You\'re on $first and $second';
+  }
+
+  @override
+  String teamRotaYoureOnThree(String first, String second, String third) {
+    return 'You\'re on $first, $second, and $third';
+  }
+
+  @override
+  String teamRotaYoureOnMore(String first, String second, int extra) {
+    return 'You\'re on $first, $second, and $extra more';
+  }
+
+  @override
+  String get teamRotaOnDuty => 'On duty';
+
+  @override
+  String get teamRotaRunningOrder => 'Running order';
+
+  @override
+  String teamRotaSameAs(String title) {
+    return 'Same as $title';
+  }
+
+  @override
+  String teamRotaPeopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people',
+      one: '1 person',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get teamRotaGapsCovered => 'Every slot in this view has someone';
+
+  @override
+  String get teamRotaMine => 'Mine';
+
+  @override
+  String get teamRotaAll => 'All';
+
+  @override
+  String get teamRotaClaim => 'I\'ll do this';
+
+  @override
+  String get teamRotaRelease => 'Take me off';
+
+  @override
+  String get teamRotaAssignPeople => 'Assign people';
+
+  @override
+  String get teamRotaSharedSlotTitle => 'This slot is shared';
+
+  @override
+  String teamRotaSharedSlotBody(String ministries) {
+    return 'This slot is tagged for $ministries. Saving updates the people for every ministry on it.';
+  }
+
+  @override
+  String get teamRotaSharedSlotBodyGeneric =>
+      'This slot belongs to more than one ministry. Saving updates the people for every ministry on it.';
+
+  @override
+  String get teamRotaSavingAssignees => 'Saving lineup';
+
+  @override
+  String get teamRotaCouldNotSave => 'Could not save the lineup';
+
+  @override
+  String get teamRotaRoleMissing => 'That slot is no longer on the post.';
+
+  @override
+  String teamRotaMinistryHeads(String ministry) {
+    return '$ministry heads';
+  }
 
   @override
   String get userProfileLeaderBadge => 'Leader';
@@ -309,11 +496,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only area admins can view the full activity log.';
 
   @override
-  String userActivityDocumentId(String id) {
-    return 'Record $id';
-  }
-
-  @override
   String get cancel => 'Cancel';
 
   @override
@@ -331,7 +513,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get userTagsNoneAvailable =>
-      'No ministries yet. Area admins can add them from Ministry.';
+      'No ministries yet. Area admins can add them from View Ministries.';
 
   @override
   String get manageUserTagsTitle => 'Ministry';
@@ -399,7 +581,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get manageUserTagsMenuTitle => 'Ministry';
+  String get manageUserTagsMenuTitle => 'View Ministries';
 
   @override
   String get manageUserTagsMenuSubtitle => 'Create and edit ministries';
@@ -409,7 +591,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manageUserTagsVisibleToGuestsSubtitle =>
-      'Turn off to hide this label from guests on profiles, schedule details, and the Ministry page. People and schedule lines still show.';
+      'Turn off to hide this label from guests on profiles, schedule details, and View Ministries. People and schedule lines still show.';
 
   @override
   String get manageUserTagsHiddenFromGuests => 'Hidden from guests';
@@ -580,7 +762,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postTagsNotifiableFilter => 'Notification streams';
 
   @override
-  String get managePostTagsTitle => 'Post tags';
+  String get managePostTagsTitle => 'Post Tags';
 
   @override
   String get managePostTagsAdd => 'Add tag';
@@ -651,10 +833,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get managePostTagsMenuTitle => 'Post tags';
+  String get managePostTagsMenuTitle => 'Post Tags';
 
   @override
-  String get managePostTagsMenuSubtitle => 'Events and attendance by location';
+  String get managePostTagsMenuSubtitle => 'Attendance and recent posts';
+
+  @override
+  String get managePostTagsDescriptionLabel => 'Description';
+
+  @override
+  String get managePostTagsDescriptionHint => 'What these posts are for';
 
   @override
   String get managePostTagsImageUrlLabel => 'Image URL';
@@ -675,7 +863,136 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postTagDetailStatsTitle => 'By location';
 
   @override
-  String get postTagDetailStatsSubtitle => 'Past 2 months and the next 3 weeks';
+  String get postTagDetailStatsSubtitle =>
+      'Already held, and what\'s still ahead';
+
+  @override
+  String get postTagDetailDescriptionEmpty =>
+      'More about this tag will be added here.';
+
+  @override
+  String get postTagDetailLocation => 'Location';
+
+  @override
+  String get postTagDetailAllLocations => 'All';
+
+  @override
+  String get postTagDetailProgressTitle => 'So far';
+
+  @override
+  String get postTagDetailProgressSubtitle => 'Past 2 months';
+
+  @override
+  String postTagDetailProgressSubtitleAt(String location) {
+    return 'Past 2 months at $location';
+  }
+
+  @override
+  String get postTagDetailProgressFootnote =>
+      'Today and the next 3 weeks are listed under Coming up, and are not part of these totals.';
+
+  @override
+  String get postTagDetailEventsLabel => 'Events';
+
+  @override
+  String get postTagDetailEventsHint => 'Already held';
+
+  @override
+  String get postTagDetailAttendedLabel => 'Attended';
+
+  @override
+  String get postTagDetailAttendedHint => 'Total on these posts';
+
+  @override
+  String get postTagDetailAverageLabel => 'Average';
+
+  @override
+  String get postTagDetailAverageHint => 'Per event, including none recorded';
+
+  @override
+  String postTagDetailAverageShort(String value) {
+    return 'avg $value';
+  }
+
+  @override
+  String get postTagDetailInterestedLabel => 'Interested';
+
+  @override
+  String get postTagDetailInterestedHint => 'Total on these posts';
+
+  @override
+  String postTagDetailComingUp(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count coming up',
+      one: '1 coming up',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get postTagDetailTrendSubtitle => 'Weekly posts with this tag';
+
+  @override
+  String get postTagDetailTrendWeeklyHint => 'Weekly · past 2 months';
+
+  @override
+  String get postTagDetailUpcomingTitle => 'Coming up';
+
+  @override
+  String get postTagDetailUpcomingSubtitle => 'Next 3 weeks';
+
+  @override
+  String postTagDetailUpcomingSubtitleAt(String location) {
+    return 'Next 3 weeks at $location';
+  }
+
+  @override
+  String get postTagDetailUpcomingEmpty =>
+      'Nothing dated with this tag in the next 3 weeks.';
+
+  @override
+  String get postTagDetailRecentTitle => 'Recent posts';
+
+  @override
+  String get postTagDetailRecentSubtitle => 'Past 2 months';
+
+  @override
+  String postTagDetailRecentSubtitleAt(String location) {
+    return 'Past 2 months at $location';
+  }
+
+  @override
+  String get postTagDetailRecentEmpty =>
+      'No dated posts with this tag in the past 2 months.';
+
+  @override
+  String postTagDetailAndMore(int count) {
+    return 'And $count more';
+  }
+
+  @override
+  String get postTagDetailSpeakersTitle => 'Speakers';
+
+  @override
+  String get postTagDetailSpeakersSubtitle => 'From the past 2 months';
+
+  @override
+  String postTagDetailSpeakersSubtitleAt(String location) {
+    return 'From the past 2 months at $location';
+  }
+
+  @override
+  String postTagDetailSpeakerPosts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count posts',
+      one: '1 post',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get postTagDetailEmpty =>
@@ -782,7 +1099,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manageUserLocationsPhotosHint =>
-      'Add photos for this place. The cover appears on the locations list and at the top of Who\'s who when this location is selected.';
+      'Add photos for this place. The cover appears on the locations list and at the top of Who\'s Who when this location is selected.';
 
   @override
   String get manageUserLocationsPhotosEmpty => 'No photos yet.';
@@ -835,6 +1152,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectUsersUnselectAll => 'Unselect all';
+
+  @override
+  String selectUsersSelectSurname(String surname) {
+    return 'Select $surname';
+  }
+
+  @override
+  String selectUsersUnselectSurname(String surname) {
+    return 'Unselect $surname';
+  }
 
   @override
   String selectCatalogSelected(int count) {
@@ -917,6 +1244,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Hidden and archived profiles stay out of People and new assignments. Past events still show their name. They cannot sign in.';
 
   @override
+  String get editUserCopyEmail => 'Copy email';
+
+  @override
+  String get editUserEmailCopied => 'Email copied';
+
+  @override
   String get volunteersStatusConfirmTitle => 'Change profile status?';
 
   @override
@@ -995,6 +1328,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get volunteersFilterShowSection => 'Show';
+
+  @override
+  String get volunteersFilterAudienceHintEveryone =>
+      'Everyone at this location, including people who only follow updates.';
+
+  @override
+  String get volunteersFilterAudienceHintPlaceholders =>
+      'Names added before that person has signed in.';
+
+  @override
+  String get volunteersFilterAudienceHintBoth =>
+      'Serving members and placeholders. People who only follow updates stay off this list.';
+
+  @override
+  String get volunteersEmptyServingAndPlaceholders =>
+      'No serving members or placeholders to show';
 
   @override
   String get volunteersFilterLocationSection => 'Location';
@@ -2221,6 +2570,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sharePostTooltip => 'Share';
 
   @override
+  String get sharePostSheetTitle => 'Share post';
+
+  @override
+  String get sharePostSheetSubtitle => 'Send the link, or the write-up';
+
+  @override
+  String get sharePostLinkTitle => 'Share link';
+
+  @override
+  String get sharePostLinkSubtitle => 'The address for this post';
+
+  @override
+  String get sharePostWriteUpTitle => 'Share the write-up';
+
+  @override
+  String get sharePostWriteUpSubtitle => 'Title, link, and the About text';
+
+  @override
+  String get sharePostLinkCopied => 'Link copied';
+
+  @override
+  String get sharePostCopyDialogTitle => 'Share post';
+
+  @override
+  String get sharePostCopyDialogMessage =>
+      'Your browser may not support native sharing but you can still copy the content to your clipboard:';
+
+  @override
+  String get sharePostCopied => 'Copied to clipboard!';
+
+  @override
+  String get sharePostCopyAction => 'Copy';
+
+  @override
+  String get sharePostExtractFailed => 'Unable to extract post content';
+
+  @override
   String get openPersonPageTitle => 'Profile';
 
   @override
@@ -2253,11 +2639,37 @@ class AppLocalizationsEn extends AppLocalizations {
       'Add schedule items from the edit menu and they will appear here on the timeline.';
 
   @override
-  String get scheduleTapGapToAdd => 'Tap an empty time to add an item';
-
-  @override
   String get scheduleEmptyBodyViewer =>
       'The running order for this post has not been shared yet.';
+
+  @override
+  String get scheduleWholeEventLabel => 'Whole event';
+
+  @override
+  String get scheduleWholeEventHint =>
+      'On for this post, not one turn in the running order. Leave both times empty, or set a start and leave the finish empty.';
+
+  @override
+  String get scheduleCallTimeLabel => 'Call time';
+
+  @override
+  String get scheduleCallTimeFinishLabel => 'Finish';
+
+  @override
+  String get scheduleClearTime => 'Clear time';
+
+  @override
+  String get scheduleTimeOptional => 'Optional';
+
+  @override
+  String scheduleStartsAt(String time) {
+    return 'From $time';
+  }
+
+  @override
+  String scheduleUseAssignees(String title) {
+    return 'Use $title';
+  }
 
   @override
   String get scheduleAllEventSectionTitle => 'All event';
@@ -2299,6 +2711,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'Drag items to reorder the running time';
 
   @override
+  String get postEditScheduleTitle => 'Schedule';
+
+  @override
+  String get postEditScheduleSubtitle =>
+      'Add a slot, reorder, or apply a preset';
+
+  @override
+  String get postEditRelatedTitle => 'Create related posts';
+
+  @override
+  String get postEditRelatedPageTitle => 'Related posts';
+
+  @override
+  String get postEditRelatedSubtitle => 'A child post, or several at once';
+
+  @override
+  String get postEditRelatedWithSiblingSubtitle =>
+      'A sibling, a child, or several at once';
+
+  @override
   String get scheduleArrangeDone => 'Done';
 
   @override
@@ -2320,7 +2752,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Long press an item and drag it. Everything else keeps its time, so items can run at the same time.';
 
   @override
-  String get showFullSurnameToGuestsTitle => 'Full surname for guests';
+  String get showFullSurnameToGuestsTitle => 'Full Surname for Guests';
 
   @override
   String get showFullSurnameToGuestsSubtitle =>
@@ -2342,13 +2774,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get notificationSchedulesMenuTitle => 'Scheduled notifications';
+  String get notificationSchedulesMenuTitle => 'Scheduled Notifications';
 
   @override
   String get notificationSchedulesMenuSubtitle => 'Reminders from tagged posts';
 
   @override
-  String get notificationSchedulesTitle => 'Scheduled notifications';
+  String get notificationSchedulesTitle => 'Scheduled Notifications';
 
   @override
   String get notificationSchedulesEmptyTitle => 'No reminders yet';
@@ -2495,12 +2927,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Add a location before creating a reminder.';
 
   @override
-  String get notificationSchedulesOn => 'On';
-
-  @override
-  String get notificationSchedulesOff => 'Off';
-
-  @override
   String get notificationSchedulesTest => 'Send test to me';
 
   @override
@@ -2574,4 +3000,90 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get postTitleAddAttendeesTooLong =>
       'Title is already too long to add names';
+
+  @override
+  String get postPeriodParentSection => 'Related posts';
+
+  @override
+  String get postPeriodParentIntro =>
+      'A period parent groups meeting posts for a term or season.';
+
+  @override
+  String get postPeriodParentTitle => 'Period parent';
+
+  @override
+  String get postPeriodParentSubtitle =>
+      'Allow other posts to attach under this one';
+
+  @override
+  String get permalinkGoHome => 'Home';
+
+  @override
+  String get donationsTitle => 'Donations';
+
+  @override
+  String get donationsMenuSubtitle => 'Give by bank transfer';
+
+  @override
+  String get donationsOpen => 'How to give';
+
+  @override
+  String get donationsIntroTitle => 'Support CTRIM';
+
+  @override
+  String get donationsIntroBody =>
+      'Gifts are made by bank transfer. Use the account details below.';
+
+  @override
+  String get donationsVerseTitle => 'Scripture';
+
+  @override
+  String get donationsVerseReference => 'Malachi 3:10 (NIV)';
+
+  @override
+  String get donationsVerseBody =>
+      '“Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this,” says the Lord Almighty, “and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it.”';
+
+  @override
+  String get donationsBankTitle => 'Bank transfer';
+
+  @override
+  String get donationsBankSubtitle => 'Send a gift from your bank';
+
+  @override
+  String get donationsBankPending =>
+      'Bank transfer details will be listed here.';
+
+  @override
+  String get donationsAccountName => 'Account name';
+
+  @override
+  String get donationsSortCode => 'Sort code';
+
+  @override
+  String get donationsAccountNumber => 'Account number';
+
+  @override
+  String get donationsReference => 'Payment reference';
+
+  @override
+  String get donationsCopy => 'Copy';
+
+  @override
+  String get donationsCopyAll => 'Copy bank details';
+
+  @override
+  String get donationsCopied => 'Copied';
+
+  @override
+  String get donationsNotesTitle => 'Notes';
+
+  @override
+  String get donationsNotesSubtitle => 'Before you send a gift';
+
+  @override
+  String get attendanceVisitNew => 'New';
+
+  @override
+  String get attendanceVisitReturning => 'Back again';
 }

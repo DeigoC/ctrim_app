@@ -6,6 +6,7 @@ import '../firebase/db_managers/id_tracker.dart';
 import '../models/event/event_attendance.dart';
 import '../models/event/event_body.dart';
 import '../models/event/event_head.dart';
+import '../models/event/lead_speaker.dart';
 import '../models/event/event_log.dart';
 import '../models/event/event_media.dart';
 import '../models/event/event_metadata.dart';
@@ -18,7 +19,8 @@ import 'user_activity_recorder.dart';
 
 class EventContext {
   late final EventHead _head;
-  late final EventLog _log; // ? doesn't have to be late
+  // Not final: views set an empty placeholder, then the deferred fetch replaces it.
+  late EventLog _log;
   late final EventMetadata _metadata;
   late final EventProgram _program;
   late final EventMedia _media; // ? doesn't have to be late
@@ -211,13 +213,7 @@ class EventContext {
       buildAttendanceForNewPost(expectedUserIds: const [], now: now)
           .attendeeCount,
     );
-    if (_head.hasLeadSpeaker) {
-      headToUpload.setLeadSpeaker(
-        uid: _head.leadSpeakerUID,
-        imgSrc: _head.leadSpeakerImgSrc,
-        name: _head.leadSpeakerName,
-      );
-    }
+    headToUpload.setLeadSpeakers(_head.leadSpeakers);
     for (final mediaEntry in _head.media) {
       headToUpload.addMediaItem(
           src: mediaEntry['src']!,
@@ -246,6 +242,7 @@ class EventContext {
       actorUserId: uid,
       log: UserActivityMessages.createdBulletinPost,
       documentId: newID,
+      title: title,
     );
     return newID;
   }
@@ -280,6 +277,7 @@ class EventContext {
         childId: id,
         oldParentId: oldParent,
         newParentId: newParent,
+        now: now,
       );
       _baselineParentID = newParent;
     }
@@ -306,6 +304,8 @@ class EventContext {
       actorUserId: uid,
       log: UserActivityMessages.editedBulletinPost,
       documentId: id,
+      title: _head.title,
+      note: log,
     );
   }
 
@@ -386,6 +386,23 @@ class EventContext {
         for (final id in userIds)
           if (id.isNotEmpty) id
       });
+  }
+
+  /// Replaces expected user IDs on the live attendance doc (if loaded).
+  ///
+  /// Interest and checked attendees are preserved. Marks attendance dirty and
+  /// enables Save. Also keeps the draft expected list in sync.
+  void replaceExpectedUserIds(final List<String> userIds) {
+    applyExpectedAttendeeUserIDs(userIds);
+    if (_attendance == null) return;
+    applyStaffAttendanceEdit(EventAttendance.fromMap({
+      'interested': {
+        for (final e in _attendance!.interested.entries)
+          e.key: e.value.toJson(),
+      },
+      'attendees': _attendance!.attendees.map((e) => e.toJson()).toList(),
+      'expectedUserIds': List<String>.from(_expectedAttendeeUserIDs),
+    }));
   }
 
   /// People marked as attended on a new post before it is published.
@@ -513,7 +530,7 @@ class EventContext {
           '\n${role['end'] != null ? (role['end'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
       result += '\n${role['for_guests'] == true ? '1' : '0'}';
       result +=
-          '\n${EventProgram.encodeRoleIdLine(role['id'] as int, EventProgram.tagIDsOf(role))}';
+          '\n${EventProgram.encodeRoleIdLine(role['id'] as int, EventProgram.tagIDsOf(role), standing: EventProgram.isStanding(role), requiresPeople: EventProgram.requiresPeople(role))}';
     }
     result += '\n----PROGRAM_ROLES_END----';
 
@@ -550,6 +567,7 @@ class EventContext {
     result += '\n${_metadata.topics}';
     result += '\n${_metadata.leadSpeakerUID ?? 'null'}';
     result += '\n${_metadata.isPeriodParent ? '1' : '0'}';
+    result += '\n${_metadata.leadSpeakerUIDs}';
     result += '\n----META_END----';
 
     return result;
@@ -608,8 +626,12 @@ class EventContext {
         lines.indexWhere((element) => element.contains('----LOGS_START----'));
     final int logsEndIndex =
         lines.indexWhere((element) => element.contains('----LOGS_END----'));
-    // build logs from sublist
-    _initialiseLogs(lines.sublist(logsStartIndex + 1, logsEndIndex));
+    // Empty LOGS section is valid (new posts / deferred log fetch before cache).
+    if (logsEndIndex != logsStartIndex + 1) {
+      _initialiseLogs(lines.sublist(logsStartIndex + 1, logsEndIndex));
+    } else {
+      _log = EventLog.fromMap(const {'Logs': <dynamic>[]});
+    }
 
     // * Metadata
     final int metadataStartIndex =
@@ -639,6 +661,15 @@ class EventContext {
         if (!rawPeriod.contains('----META_END----')) {
           _metadata.setIsPeriodParent(rawPeriod == '1');
           _head.setIsPeriodParent(_metadata.isPeriodParent);
+        }
+      }
+      if (lines.length > metadataStartIndex + 9) {
+        final String rawSpeakers = lines.elementAt(metadataStartIndex + 9);
+        if (!rawSpeakers.contains('----META_END----')) {
+          final uids = _getListFromData(rawSpeakers);
+          if (uids.isNotEmpty) {
+            _metadata.setLeadSpeakerUIDs(uids);
+          }
         }
       }
     }
@@ -695,7 +726,9 @@ class EventContext {
               : null,
           forGuests: roleDataSet[5] == '1' ? true : false,
           id: parsedId.id,
-          tagIDs: parsedId.tagIDs);
+          tagIDs: parsedId.tagIDs,
+          standing: parsedId.standing,
+          requiresPeople: parsedId.requiresPeople);
     }
   }
 
@@ -730,6 +763,11 @@ class EventContext {
     // groups of 3
     const int chunkSize = 3;
     final int numberOfChunks = data.length ~/ chunkSize;
+
+    if (numberOfChunks == 0) {
+      _log = EventLog.fromMap(const {'Logs': <dynamic>[]});
+      return;
+    }
 
     final List<List<String>> logs =
         List<List<String>>.generate(numberOfChunks, (index) {
@@ -815,41 +853,51 @@ class EventContext {
     }
   }
 
-  /// Sets or clears the lead speaker on metadata + head denormalized portrait fields.
+  /// Sets or clears speakers on metadata and the head portrait fields.
+  ///
+  /// Order is kept. The first person is the cover photo.
+  void applyLeadSpeakers(final List<LeadSpeakerSnapshot> speakers) {
+    final normalized = LeadSpeakerSnapshot.normalize(speakers);
+    _metadata
+        .setLeadSpeakerUIDs(normalized.map((speaker) => speaker.uid).toList());
+    _head.setLeadSpeakers(normalized);
+  }
+
+  /// Sets or clears a single speaker. Extra speakers are removed.
   void applyLeadSpeaker({
     required String? uid,
     String? imgSrc,
     String? name,
   }) {
     if (uid == null || uid.isEmpty) {
-      _metadata.clearLeadSpeakerUID();
-      _head.clearLeadSpeaker();
+      applyLeadSpeakers(const []);
       return;
     }
-    _metadata.setLeadSpeakerUID(uid);
-    _head.setLeadSpeaker(
-      uid: uid,
-      imgSrc: (imgSrc != null && imgSrc.isNotEmpty) ? imgSrc : null,
-      name: (name != null && name.isNotEmpty) ? name : null,
-    );
+    applyLeadSpeakers([
+      LeadSpeakerSnapshot(uid: uid, imgSrc: imgSrc, name: name),
+    ]);
   }
 
-  /// Resolves [metadata.leadSpeakerUID] against [users] into head portrait fields.
+  /// Resolves [metadata.leadSpeakerUIDs] against [users] into head portraits.
   void syncLeadSpeakerHeadFromUsers(Iterable<User> users) {
-    final uid = _metadata.leadSpeakerUID;
-    if (uid == null || uid.isEmpty) {
-      _head.clearLeadSpeaker();
-      return;
-    }
-    for (final user in users) {
-      if (user.id == uid) {
-        applyLeadSpeaker(uid: uid, imgSrc: user.imgSrc, name: user.fullname);
-        return;
+    final byId = <String, User>{for (final user in users) user.id: user};
+    final previous = <String, LeadSpeakerSnapshot>{
+      for (final speaker in _head.leadSpeakers) speaker.uid: speaker,
+    };
+    final next = <LeadSpeakerSnapshot>[];
+    for (final uid in _metadata.leadSpeakerUIDs) {
+      final user = byId[uid];
+      if (user != null) {
+        next.add(LeadSpeakerSnapshot(
+          uid: user.id,
+          imgSrc: user.imgSrc,
+          name: user.fullname,
+        ));
+      } else {
+        next.add(previous[uid] ?? LeadSpeakerSnapshot(uid: uid));
       }
     }
-    // Keep UID even if user list does not contain them yet.
-    _head.setLeadSpeaker(
-        uid: uid, imgSrc: _head.leadSpeakerImgSrc, name: _head.leadSpeakerName);
+    _head.setLeadSpeakers(next);
   }
 
   // template subtitles

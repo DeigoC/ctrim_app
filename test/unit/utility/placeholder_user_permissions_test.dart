@@ -149,6 +149,63 @@ void main() {
       });
     });
 
+    group('canMergePlaceholderIntoUser', () {
+      test('allows area admin for placeholder without survivor check', () {
+        expect(
+          canMergePlaceholderIntoUser(actor: admin, placeholder: placeholder),
+          isTrue,
+        );
+      });
+
+      test('allows area admin when survivor is linked', () {
+        expect(
+          canMergePlaceholderIntoUser(
+            actor: admin,
+            placeholder: placeholder,
+            survivor: linked,
+          ),
+          isTrue,
+        );
+      });
+
+      test('denies merging into another placeholder', () {
+        final otherPlaceholder = User(
+          id: '12',
+          forname: 'Other',
+          surname: 'Temp',
+          isPlaceholder: true,
+          createdByUserID: '2',
+        );
+        expect(
+          canMergePlaceholderIntoUser(
+            actor: admin,
+            placeholder: placeholder,
+            survivor: otherPlaceholder,
+          ),
+          isFalse,
+        );
+      });
+
+      test('denies non-admin and linked source', () {
+        expect(
+          canMergePlaceholderIntoUser(
+            actor: author,
+            placeholder: placeholder,
+            survivor: linked,
+          ),
+          isFalse,
+        );
+        expect(
+          canMergePlaceholderIntoUser(
+            actor: admin,
+            placeholder: linked,
+            survivor: author,
+          ),
+          isFalse,
+        );
+      });
+    });
+
     group('isTransientVolunteerPlaceholder', () {
       test('true only for placeholders with a creator', () {
         expect(isTransientVolunteerPlaceholder(placeholder), isTrue);
@@ -197,14 +254,14 @@ void main() {
         );
       });
 
-      test('hides all placeholders unless the filter is on', () {
+      test('includes viewer-visible placeholders when filter is off', () {
         expect(
           isVisibleInVolunteerDirectory(
             user: placeholder,
             viewer: admin,
             placeholdersOnly: false,
           ),
-          isFalse,
+          isTrue,
         );
         expect(
           isVisibleInVolunteerDirectory(
@@ -212,15 +269,23 @@ void main() {
             viewer: admin,
             placeholdersOnly: false,
           ),
-          isFalse,
+          isTrue,
         );
         expect(
           isVisibleInVolunteerDirectory(
             user: placeholder,
-            viewer: admin,
-            placeholdersOnly: true,
+            viewer: author,
+            placeholdersOnly: false,
           ),
           isTrue,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: other,
+            placeholdersOnly: false,
+          ),
+          isFalse,
         );
       });
 
@@ -241,9 +306,17 @@ void main() {
           ),
           isFalse,
         );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: admin,
+            placeholdersOnly: true,
+          ),
+          isTrue,
+        );
       });
 
-      test('non-admin only sees own minted placeholders when filter is on', () {
+      test('non-admin only sees own minted placeholders', () {
         expect(
           isVisibleInVolunteerDirectory(
             user: placeholder,
@@ -266,6 +339,14 @@ void main() {
             user: legacyUnlinked,
             viewer: author,
             placeholdersOnly: true,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: legacyUnlinked,
+            viewer: author,
+            placeholdersOnly: false,
           ),
           isFalse,
         );
@@ -296,7 +377,7 @@ void main() {
             placeholdersOnly: false,
             leadsCellGroupContainingUser: true,
           ),
-          isFalse,
+          isTrue,
         );
       });
     });

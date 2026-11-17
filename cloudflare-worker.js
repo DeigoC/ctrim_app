@@ -2,10 +2,15 @@
  * CORS Proxy Worker for CTRIM apps (community + worship).
  * Proxies Google Drive image URLs so Flutter web can load them.
  *
- * Deployment:
- * 1. https://workers.cloudflare.com/ → worker `ctrim-image-proxy`
- * 2. Paste this file → Deploy
- * 3. If the worker URL changes, update:
+ * Also used (unchanged) to fetch Drive `embeddedfolderview` HTML on web so
+ * the app can list a public folder’s files without a Google API key
+ * (see lib/utility/drive_folder_listing.dart).
+ *
+ * Deployment (same worker URL either way):
+ * 1. npx wrangler login   (once; writes auth outside this repo)
+ * 2. npx wrangler deploy  (repo root; see wrangler.toml)
+ * Or paste this file at https://workers.cloudflare.com/ onto worker `ctrim-image-proxy`.
+ * If the worker URL changes, update:
  *    - ctrim_app: lib/utility/network_image_helper.dart
  *    - ctrim_worship: lib/utility/image_url_helper.dart
  *
@@ -27,6 +32,8 @@ addEventListener('fetch', (event) => {
 const ALLOWED_ORIGINS = new Set([
   'https://ctrim.app',
   'https://www.ctrim.app',
+  'https://ctrim.org',
+  'https://www.ctrim.org',
   // Worship web (same image proxy)
   'https://ctrimworship.web.app',
   'https://ctrimworship.firebaseapp.com',

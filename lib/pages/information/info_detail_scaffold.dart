@@ -7,6 +7,7 @@ import '../../utility/app_context.dart';
 import '../../utility/cache/directory_cache.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import 'info_detail_body.dart';
 
 /// Shared detail layout for church / testimonial / CTRIM info pages.
@@ -85,6 +86,7 @@ class InfoDetailPageScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
+        leading: PermalinkAppBarLeading.homeOrNull(context),
         title: Text(title),
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
@@ -260,7 +262,10 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
 
     if (_error != null) {
       return Scaffold(
-        appBar: AppBar(title: Text(widget.pageTitleFallback)),
+        appBar: AppBar(
+          leading: PermalinkAppBarLeading.homeOrNull(context),
+          title: Text(widget.pageTitleFallback),
+        ),
         body: LoadProgressBody(
           message: '',
           completedSteps: 0,
@@ -273,8 +278,12 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
     }
 
     if (_loading) {
-      return const Scaffold(
-        body: LoadProgressBody(
+      return Scaffold(
+        appBar: AppBar(
+          leading: PermalinkAppBarLeading.homeOrNull(context),
+          title: Text(widget.pageTitleFallback),
+        ),
+        body: const LoadProgressBody(
           message: 'Loading…',
           completedSteps: 0,
           totalSteps: 1,
@@ -283,7 +292,10 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.pageTitleFallback)),
+      appBar: AppBar(
+        leading: PermalinkAppBarLeading.homeOrNull(context),
+        title: Text(widget.pageTitleFallback),
+      ),
       body: Center(child: Text(widget.notFoundMessage)),
     );
   }

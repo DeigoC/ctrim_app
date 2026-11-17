@@ -105,7 +105,7 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Edit profile picture')),
+        appBar: AppBar(title: const Text('Edit Profile Picture')),
         body: ListView(
           padding:
               EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 32),
@@ -357,6 +357,7 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
           actorUserId: _appContext.currentUser.id,
           log: UserActivityMessages.updatedProfilePhoto,
           documentId: _appContext.currentUser.id,
+          title: _appContext.currentUser.fullname,
         );
       },
     );

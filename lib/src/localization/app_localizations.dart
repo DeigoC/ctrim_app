@@ -100,6 +100,42 @@ abstract class AppLocalizations {
   /// **'CTRIM App'**
   String get appTitle;
 
+  /// Title on the opening progress screen
+  ///
+  /// In en, this message translates to:
+  /// **'CTRIM'**
+  String get startupTitle;
+
+  /// Status shown when the app first opens, before a load step finishes
+  ///
+  /// In en, this message translates to:
+  /// **'Opening CTRIM…'**
+  String get startupOpening;
+
+  /// Startup progress after churches, groups, and related catalogues finish loading
+  ///
+  /// In en, this message translates to:
+  /// **'Loading churches and groups…'**
+  String get startupCatalogs;
+
+  /// Startup progress after bulletin posts finish loading
+  ///
+  /// In en, this message translates to:
+  /// **'Loading the bulletin…'**
+  String get startupPosts;
+
+  /// Startup progress after the people directory finishes loading
+  ///
+  /// In en, this message translates to:
+  /// **'Loading people…'**
+  String get startupPeople;
+
+  /// Startup progress while stored credentials sign the user in
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in…'**
+  String get startupSigningIn;
+
   /// Title for the people directory when showing all locations
   ///
   /// In en, this message translates to:
@@ -124,7 +160,7 @@ abstract class AppLocalizations {
   /// **'Serving'**
   String get volunteersFilterServing;
 
-  /// Active filter summary when the serving-only toggle is off
+  /// Show chip for the full Who's Who list. Selecting it turns Serving and Placeholders off.
   ///
   /// In en, this message translates to:
   /// **'Everyone'**
@@ -187,7 +223,7 @@ abstract class AppLocalizations {
   /// Personal home menu item for the people directory
   ///
   /// In en, this message translates to:
-  /// **'Who\'s who'**
+  /// **'Who\'s Who'**
   String get volunteersMenuTitle;
 
   /// Personal home menu subtitle for the people directory
@@ -196,10 +232,10 @@ abstract class AppLocalizations {
   /// **'Leaders, ministries, and members'**
   String get volunteersMenuSubtitle;
 
-  /// Personal home section for Who's who, team rota, and ministries
+  /// Personal home section for Who's Who, team rota, and ministries
   ///
   /// In en, this message translates to:
-  /// **'People & teams'**
+  /// **'People & Teams'**
   String get peopleAndTeamsSectionTitle;
 
   /// Personal home menu item for the current user's schedule
@@ -223,19 +259,49 @@ abstract class AppLocalizations {
   /// Opens the full schedule page from Personal home
   ///
   /// In en, this message translates to:
-  /// **'View full schedule'**
+  /// **'View Full Schedule'**
   String get personalScheduleViewFull;
 
   /// Opens full schedule when more than three upcoming posts
   ///
   /// In en, this message translates to:
-  /// **'View all {count} upcoming'**
+  /// **'View All {count} Upcoming'**
   String personalScheduleViewAll(int count);
+
+  /// Opens the full Ministry Schedule from the Personal dashboard card
+  ///
+  /// In en, this message translates to:
+  /// **'View ministry schedule'**
+  String get personalMinistryScheduleView;
+
+  /// Personal Ministry Schedule card when the next services have no slots for the person's ministries
+  ///
+  /// In en, this message translates to:
+  /// **'No ministry slots coming up.'**
+  String get personalMinistryScheduleEmpty;
+
+  /// A ministry square whose slots all have someone, and the viewer is not on it
+  ///
+  /// In en, this message translates to:
+  /// **'Covered'**
+  String get personalMinistryScheduleCovered;
+
+  /// A ministry square with no slots in the Personal home lookahead
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing soon'**
+  String get personalMinistryScheduleQuiet;
+
+  /// Retries loading the Personal Ministry Schedule card
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get personalMinistryScheduleRetry;
 
   /// Title for Personal home cell groups dashboard card
   ///
   /// In en, this message translates to:
-  /// **'Cell groups'**
+  /// **'Cell Groups'**
   String get personalCellGroupsTitle;
 
   /// Subtitle for Personal home cell groups dashboard card
@@ -253,7 +319,7 @@ abstract class AppLocalizations {
   /// CTA on Personal home to open the Cell Groups section
   ///
   /// In en, this message translates to:
-  /// **'Browse cell groups'**
+  /// **'Browse Cell Groups'**
   String get personalCellGroupsBrowse;
 
   /// Message when member has groups but no upcoming CG meetings
@@ -301,7 +367,7 @@ abstract class AppLocalizations {
   /// Personal home item and page title for the team serving rota
   ///
   /// In en, this message translates to:
-  /// **'Team rota'**
+  /// **'Ministry Schedule'**
   String get teamRota;
 
   /// Personal home subtitle for the team rota page
@@ -331,7 +397,7 @@ abstract class AppLocalizations {
   /// Error title when the team rota fetch fails
   ///
   /// In en, this message translates to:
-  /// **'Could not load team rota'**
+  /// **'Could not load ministry schedule'**
   String get teamRotaCouldNotLoad;
 
   /// Empty state title when filters yield no tagged programme roles
@@ -343,7 +409,7 @@ abstract class AppLocalizations {
   /// Empty state body when the team rota has no matching slots
   ///
   /// In en, this message translates to:
-  /// **'Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Open a post to edit.'**
+  /// **'Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Tap a slot to see who is on it.'**
   String get teamRotaEmptyBody;
 
   /// Label when a team rota slot has no people yet
@@ -363,6 +429,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ministry'**
   String get teamRotaFilterTeams;
+
+  /// App bar button that opens the team rota location and ministry sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get teamRotaFilterTooltip;
+
+  /// Title of the team rota filter bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Filter schedule'**
+  String get teamRotaFilterSheetTitle;
+
+  /// Subtitle of the team rota filter bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a location and ministries'**
+  String get teamRotaFilterSheetSubtitle;
+
+  /// Clears every selected ministry on the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'Clear ministries'**
+  String get teamRotaClearMinistries;
+
+  /// Empty-state button that opens the team rota filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Change filter'**
+  String get teamRotaChangeFilter;
+
+  /// Opens every programme line for one ministry-schedule event
+  ///
+  /// In en, this message translates to:
+  /// **'View schedule'**
+  String get teamRotaViewSchedule;
+
+  /// App bar action on the event schedule page that opens the post
+  ///
+  /// In en, this message translates to:
+  /// **'Open post'**
+  String get teamRotaOpenPost;
+
+  /// Muted label on a schedule line that is outside the ministry filter and has no people
+  ///
+  /// In en, this message translates to:
+  /// **'No one assigned'**
+  String get teamRotaNoOneAssigned;
+
+  /// Section label in the team rota filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get teamRotaFilterShow;
+
+  /// Filter that keeps only empty programme slots on the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'Needs people'**
+  String get teamRotaNeedsPeople;
+
+  /// Explains the Needs people filter on the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'Only slots that still need someone'**
+  String get teamRotaNeedsPeopleSubtitle;
+
+  /// Filter that includes ministry slots which do not need a named person
+  ///
+  /// In en, this message translates to:
+  /// **'Shared responsibilities'**
+  String get teamRotaSharedResponsibilities;
+
+  /// Explains the Shared responsibilities filter on Ministry Schedule
+  ///
+  /// In en, this message translates to:
+  /// **'Ministry slots that do not need a named person'**
+  String get teamRotaSharedResponsibilitiesSubtitle;
+
+  /// Quiet label on an empty ministry slot that does not need a named person
+  ///
+  /// In en, this message translates to:
+  /// **'Shared responsibility'**
+  String get teamRotaSharedResponsibility;
+
+  /// Schedule editor switch, on when the slot is a vacancy until someone is named
+  ///
+  /// In en, this message translates to:
+  /// **'Needs a named person'**
+  String get scheduleNeedsNamedPerson;
+
+  /// Explains the Needs a named person switch on a schedule item
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off when Ministry Schedule should not ask anyone to fill this slot'**
+  String get scheduleNeedsNamedPersonHint;
+
+  /// Marks a team rota slot the signed-in person is assigned to
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get teamRotaYou;
+
+  /// How many empty slots one ministry-schedule event still has
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 needs people} other{{count} need people}}'**
+  String teamRotaCardGaps(int count);
+
+  /// Marks a ministry-schedule event the signed-in person is on
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re serving'**
+  String get teamRotaYoureServing;
+
+  /// Names the one schedule slot the signed-in person is on
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on {role}'**
+  String teamRotaYoureOnOne(String role);
+
+  /// Names the two schedule slots the signed-in person is on
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on {first} and {second}'**
+  String teamRotaYoureOnTwo(String first, String second);
+
+  /// Names the three schedule slots the signed-in person is on
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on {first}, {second}, and {third}'**
+  String teamRotaYoureOnThree(String first, String second, String third);
+
+  /// Names the first two schedule slots and how many more the signed-in person is on
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on {first}, {second}, and {extra} more'**
+  String teamRotaYoureOnMore(String first, String second, int extra);
+
+  /// Heading for people covering a stretch of the event on the whole-schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'On duty'**
+  String get teamRotaOnDuty;
+
+  /// Heading for the timed sequence on the whole-schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'Running order'**
+  String get teamRotaRunningOrder;
+
+  /// A running-order slot uses the same people as an on-duty role
+  ///
+  /// In en, this message translates to:
+  /// **'Same as {title}'**
+  String teamRotaSameAs(String title);
+
+  /// How many people are on a schedule slot when the faces are abbreviated
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person} other{{count} people}}'**
+  String teamRotaPeopleCount(int count);
+
+  /// Needs people card when the current ministry-schedule filters have no empty slots
+  ///
+  /// In en, this message translates to:
+  /// **'Every slot in this view has someone'**
+  String get teamRotaGapsCovered;
+
+  /// Restores the ministry schedule to the signed-in person's ministries
+  ///
+  /// In en, this message translates to:
+  /// **'Mine'**
+  String get teamRotaMine;
+
+  /// Clears the ministry filter so every tagged slot at the current location shows
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get teamRotaAll;
+
+  /// Adds the signed-in person to a ministry-schedule slot they belong to
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll do this'**
+  String get teamRotaClaim;
+
+  /// Removes the signed-in person from a ministry-schedule slot
+  ///
+  /// In en, this message translates to:
+  /// **'Take me off'**
+  String get teamRotaRelease;
+
+  /// Opens the people picker for one team rota slot
+  ///
+  /// In en, this message translates to:
+  /// **'Assign people'**
+  String get teamRotaAssignPeople;
+
+  /// Confirms before editing people on a slot tagged for more than one ministry
+  ///
+  /// In en, this message translates to:
+  /// **'This slot is shared'**
+  String get teamRotaSharedSlotTitle;
+
+  /// Names the ministries that share one programme slot
+  ///
+  /// In en, this message translates to:
+  /// **'This slot is tagged for {ministries}. Saving updates the people for every ministry on it.'**
+  String teamRotaSharedSlotBody(String ministries);
+
+  /// Shared-slot confirmation when ministry names are unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'This slot belongs to more than one ministry. Saving updates the people for every ministry on it.'**
+  String get teamRotaSharedSlotBodyGeneric;
+
+  /// Progress title while team rota assignments are saved
+  ///
+  /// In en, this message translates to:
+  /// **'Saving lineup'**
+  String get teamRotaSavingAssignees;
+
+  /// Error title when a team rota assignment fails to save
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the lineup'**
+  String get teamRotaCouldNotSave;
+
+  /// Shown when the programme role disappeared before the lineup was saved
+  ///
+  /// In en, this message translates to:
+  /// **'That slot is no longer on the post.'**
+  String get teamRotaRoleMissing;
+
+  /// Heading for the people who lead the one ministry selected on the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'{ministry} heads'**
+  String teamRotaMinistryHeads(String ministry);
 
   /// Badge shown when a volunteer can create events
   ///
@@ -544,12 +850,6 @@ abstract class AppLocalizations {
   /// **'Only area admins can view the full activity log.'**
   String get userActivityDenied;
 
-  /// Subtitle showing the Firestore document ID for paper trailing
-  ///
-  /// In en, this message translates to:
-  /// **'Record {id}'**
-  String userActivityDocumentId(String id);
-
   /// Generic cancel button label
   ///
   /// In en, this message translates to:
@@ -583,7 +883,7 @@ abstract class AppLocalizations {
   /// Message when no user tags exist for assignment
   ///
   /// In en, this message translates to:
-  /// **'No ministries yet. Area admins can add them from Ministry.'**
+  /// **'No ministries yet. Area admins can add them from View Ministries.'**
   String get userTagsNoneAvailable;
 
   /// Title for the admin page that manages volunteer tag definitions
@@ -709,7 +1009,7 @@ abstract class AppLocalizations {
   /// Personal home admin menu item for managing tags
   ///
   /// In en, this message translates to:
-  /// **'Ministry'**
+  /// **'View Ministries'**
   String get manageUserTagsMenuTitle;
 
   /// Personal home admin menu subtitle for managing tags
@@ -727,7 +1027,7 @@ abstract class AppLocalizations {
   /// Explains that hiding a ministry only hides the label
   ///
   /// In en, this message translates to:
-  /// **'Turn off to hide this label from guests on profiles, schedule details, and the Ministry page. People and schedule lines still show.'**
+  /// **'Turn off to hide this label from guests on profiles, schedule details, and View Ministries. People and schedule lines still show.'**
   String get manageUserTagsVisibleToGuestsSubtitle;
 
   /// Status on the ministry list when guests do not see the label
@@ -1009,7 +1309,7 @@ abstract class AppLocalizations {
   /// Title for the signed-in page that lists post content tags
   ///
   /// In en, this message translates to:
-  /// **'Post tags'**
+  /// **'Post Tags'**
   String get managePostTagsTitle;
 
   /// Action to create a new post content tag
@@ -1135,14 +1435,26 @@ abstract class AppLocalizations {
   /// Personal home menu item for the post tags page
   ///
   /// In en, this message translates to:
-  /// **'Post tags'**
+  /// **'Post Tags'**
   String get managePostTagsMenuTitle;
 
   /// Personal home menu subtitle for the post tags page
   ///
   /// In en, this message translates to:
-  /// **'Events and attendance by location'**
+  /// **'Attendance and recent posts'**
   String get managePostTagsMenuSubtitle;
+
+  /// Label for the short post tag description
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get managePostTagsDescriptionLabel;
+
+  /// Hint for the short post tag description
+  ///
+  /// In en, this message translates to:
+  /// **'What these posts are for'**
+  String get managePostTagsDescriptionHint;
 
   /// Label for the post tag cover image URL
   ///
@@ -1183,8 +1495,200 @@ abstract class AppLocalizations {
   /// Window shown under post tag location totals
   ///
   /// In en, this message translates to:
-  /// **'Past 2 months and the next 3 weeks'**
+  /// **'Already held, and what\'s still ahead'**
   String get postTagDetailStatsSubtitle;
+
+  /// Placeholder when a post tag has no description
+  ///
+  /// In en, this message translates to:
+  /// **'More about this tag will be added here.'**
+  String get postTagDetailDescriptionEmpty;
+
+  /// Heading above the location chips on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get postTagDetailLocation;
+
+  /// Chip that clears the location filter on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get postTagDetailAllLocations;
+
+  /// Section title for past post tag totals
+  ///
+  /// In en, this message translates to:
+  /// **'So far'**
+  String get postTagDetailProgressTitle;
+
+  /// Window for past post tag totals across every location
+  ///
+  /// In en, this message translates to:
+  /// **'Past 2 months'**
+  String get postTagDetailProgressSubtitle;
+
+  /// Window for past post tag totals at one location
+  ///
+  /// In en, this message translates to:
+  /// **'Past 2 months at {location}'**
+  String postTagDetailProgressSubtitleAt(String location);
+
+  /// Explains that upcoming posts are left out of the past totals
+  ///
+  /// In en, this message translates to:
+  /// **'Today and the next 3 weeks are listed under Coming up, and are not part of these totals.'**
+  String get postTagDetailProgressFootnote;
+
+  /// Stat tile for how many tagged posts have already been held
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get postTagDetailEventsLabel;
+
+  /// Hint under the events stat on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Already held'**
+  String get postTagDetailEventsHint;
+
+  /// Stat tile for attendance on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Attended'**
+  String get postTagDetailAttendedLabel;
+
+  /// Hint under the attendance stat on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Total on these posts'**
+  String get postTagDetailAttendedHint;
+
+  /// Stat tile for average attendance on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get postTagDetailAverageLabel;
+
+  /// Hint under the average attendance stat on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Per event, including none recorded'**
+  String get postTagDetailAverageHint;
+
+  /// Compact average attendance on a location row
+  ///
+  /// In en, this message translates to:
+  /// **'avg {value}'**
+  String postTagDetailAverageShort(String value);
+
+  /// Stat tile for interest on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Interested'**
+  String get postTagDetailInterestedLabel;
+
+  /// Hint under the interested stat on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Total on these posts'**
+  String get postTagDetailInterestedHint;
+
+  /// Upcoming post count on a location row
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 coming up} other{{count} coming up}}'**
+  String postTagDetailComingUp(int count);
+
+  /// Subtitle for the weekly chart on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly posts with this tag'**
+  String get postTagDetailTrendSubtitle;
+
+  /// Caption under the weekly chart on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly · past 2 months'**
+  String get postTagDetailTrendWeeklyHint;
+
+  /// Section title for upcoming posts with this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get postTagDetailUpcomingTitle;
+
+  /// Window for upcoming posts with this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Next 3 weeks'**
+  String get postTagDetailUpcomingSubtitle;
+
+  /// Window for upcoming posts with this tag at one location
+  ///
+  /// In en, this message translates to:
+  /// **'Next 3 weeks at {location}'**
+  String postTagDetailUpcomingSubtitleAt(String location);
+
+  /// Empty state when a post tag has no upcoming posts
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing dated with this tag in the next 3 weeks.'**
+  String get postTagDetailUpcomingEmpty;
+
+  /// Section title for past posts with this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Recent posts'**
+  String get postTagDetailRecentTitle;
+
+  /// Window for recent posts with this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Past 2 months'**
+  String get postTagDetailRecentSubtitle;
+
+  /// Window for recent posts with this tag at one location
+  ///
+  /// In en, this message translates to:
+  /// **'Past 2 months at {location}'**
+  String postTagDetailRecentSubtitleAt(String location);
+
+  /// Empty state when a post tag has no past posts
+  ///
+  /// In en, this message translates to:
+  /// **'No dated posts with this tag in the past 2 months.'**
+  String get postTagDetailRecentEmpty;
+
+  /// How many posts or speakers are hidden below the preview
+  ///
+  /// In en, this message translates to:
+  /// **'And {count} more'**
+  String postTagDetailAndMore(int count);
+
+  /// Section title for people who spoke at posts with this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Speakers'**
+  String get postTagDetailSpeakersTitle;
+
+  /// Window for speakers on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'From the past 2 months'**
+  String get postTagDetailSpeakersSubtitle;
+
+  /// Window for speakers on a post tag at one location
+  ///
+  /// In en, this message translates to:
+  /// **'From the past 2 months at {location}'**
+  String postTagDetailSpeakersSubtitleAt(String location);
+
+  /// How many recent posts a speaker appeared on
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 post} other{{count} posts}}'**
+  String postTagDetailSpeakerPosts(int count);
 
   /// Empty state when a post tag has no dated posts in the activity window
   ///
@@ -1345,7 +1849,7 @@ abstract class AppLocalizations {
   /// Hint under the location photos section
   ///
   /// In en, this message translates to:
-  /// **'Add photos for this place. The cover appears on the locations list and at the top of Who\'s who when this location is selected.'**
+  /// **'Add photos for this place. The cover appears on the locations list and at the top of Who\'s Who when this location is selected.'**
   String get manageUserLocationsPhotosHint;
 
   /// Empty state for a location photo gallery
@@ -1443,6 +1947,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unselect all'**
   String get selectUsersUnselectAll;
+
+  /// Select every visible person who shares this surname on the people picker
+  ///
+  /// In en, this message translates to:
+  /// **'Select {surname}'**
+  String selectUsersSelectSurname(String surname);
+
+  /// Clear every visible person who shares this surname on the people picker
+  ///
+  /// In en, this message translates to:
+  /// **'Unselect {surname}'**
+  String selectUsersUnselectSurname(String surname);
 
   /// Selected count on a catalog tag/group picker page
   ///
@@ -1588,6 +2104,18 @@ abstract class AppLocalizations {
   /// **'Hidden and archived profiles stay out of People and new assignments. Past events still show their name. They cannot sign in.'**
   String get volunteersStatusHelper;
 
+  /// Button that copies the linked account email on edit user
+  ///
+  /// In en, this message translates to:
+  /// **'Copy email'**
+  String get editUserCopyEmail;
+
+  /// Confirmation after copying a user's email on edit user
+  ///
+  /// In en, this message translates to:
+  /// **'Email copied'**
+  String get editUserEmailCopied;
+
   /// Title when an admin sets a volunteer to hidden or archived
   ///
   /// In en, this message translates to:
@@ -1726,11 +2254,35 @@ abstract class AppLocalizations {
   /// **'Location, sort, role, ministry, or who is shown'**
   String get volunteersFilterSheetSubtitle;
 
-  /// Section label for serving / placeholder toggles in people filters
+  /// Section label for Everyone, Serving, and Placeholders chips in people filters
   ///
   /// In en, this message translates to:
   /// **'Show'**
   String get volunteersFilterShowSection;
+
+  /// Hint under Who's Who Show chips when Everyone is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone at this location, including people who only follow updates.'**
+  String get volunteersFilterAudienceHintEveryone;
+
+  /// Hint under Who's Who Show chips when only Placeholders is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Names added before that person has signed in.'**
+  String get volunteersFilterAudienceHintPlaceholders;
+
+  /// Hint under Who's Who Show chips when Serving and Placeholders are both selected
+  ///
+  /// In en, this message translates to:
+  /// **'Serving members and placeholders. People who only follow updates stay off this list.'**
+  String get volunteersFilterAudienceHintBoth;
+
+  /// Empty state when Serving and Placeholders are both on and nobody matches
+  ///
+  /// In en, this message translates to:
+  /// **'No serving members or placeholders to show'**
+  String get volunteersEmptyServingAndPlaceholders;
 
   /// Section label for location chips in the people directory filter sheet
   ///
@@ -3934,11 +4486,83 @@ abstract class AppLocalizations {
   /// **'Could not load post'**
   String get openPostLoadErrorTitle;
 
-  /// Tooltip for the share control on a post body
+  /// Tooltip for the share control on an open post
   ///
   /// In en, this message translates to:
   /// **'Share'**
   String get sharePostTooltip;
+
+  /// Title of the sheet that shares an open post
+  ///
+  /// In en, this message translates to:
+  /// **'Share post'**
+  String get sharePostSheetTitle;
+
+  /// Subtitle of the open-post share sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Send the link, or the write-up'**
+  String get sharePostSheetSubtitle;
+
+  /// Action that shares only the post address
+  ///
+  /// In en, this message translates to:
+  /// **'Share link'**
+  String get sharePostLinkTitle;
+
+  /// Explains that Share link sends the permalink
+  ///
+  /// In en, this message translates to:
+  /// **'The address for this post'**
+  String get sharePostLinkSubtitle;
+
+  /// Action that shares the About text of a post
+  ///
+  /// In en, this message translates to:
+  /// **'Share the write-up'**
+  String get sharePostWriteUpTitle;
+
+  /// Explains what the write-up share includes
+  ///
+  /// In en, this message translates to:
+  /// **'Title, link, and the About text'**
+  String get sharePostWriteUpSubtitle;
+
+  /// Confirmation after the post address is copied
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get sharePostLinkCopied;
+
+  /// Title of the dialog that copies a post write-up
+  ///
+  /// In en, this message translates to:
+  /// **'Share post'**
+  String get sharePostCopyDialogTitle;
+
+  /// Explains the clipboard fallback when sharing a write-up
+  ///
+  /// In en, this message translates to:
+  /// **'Your browser may not support native sharing but you can still copy the content to your clipboard:'**
+  String get sharePostCopyDialogMessage;
+
+  /// Confirmation after a post write-up is copied
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard!'**
+  String get sharePostCopied;
+
+  /// Button that copies the post write-up
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get sharePostCopyAction;
+
+  /// Fallback text when the About body cannot be turned into plain text
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to extract post content'**
+  String get sharePostExtractFailed;
 
   /// App bar title while resolving a person permalink
   ///
@@ -4000,17 +4624,59 @@ abstract class AppLocalizations {
   /// **'Add schedule items from the edit menu and they will appear here on the timeline.'**
   String get scheduleEmptyBodyEditor;
 
-  /// Hint above the schedule timeline for people who can edit the post
-  ///
-  /// In en, this message translates to:
-  /// **'Tap an empty time to add an item'**
-  String get scheduleTapGapToAdd;
-
   /// Empty schedule message for people who cannot edit the post
   ///
   /// In en, this message translates to:
   /// **'The running order for this post has not been shared yet.'**
   String get scheduleEmptyBodyViewer;
+
+  /// A schedule role that covers the post rather than one timed slot. Also the time line when that role has no call time.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole event'**
+  String get scheduleWholeEventLabel;
+
+  /// Explains the Whole event switch on the schedule role editor
+  ///
+  /// In en, this message translates to:
+  /// **'On for this post, not one turn in the running order. Leave both times empty, or set a start and leave the finish empty.'**
+  String get scheduleWholeEventHint;
+
+  /// Optional expected start for a whole-event schedule role
+  ///
+  /// In en, this message translates to:
+  /// **'Call time'**
+  String get scheduleCallTimeLabel;
+
+  /// Optional finish for a whole-event schedule role. Leave empty when the duty runs to the end of the post.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get scheduleCallTimeFinishLabel;
+
+  /// Clears the start or finish on a schedule role
+  ///
+  /// In en, this message translates to:
+  /// **'Clear time'**
+  String get scheduleClearTime;
+
+  /// Empty optional schedule time on a whole-event role
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get scheduleTimeOptional;
+
+  /// Whole-event schedule role that has a start and no finish
+  ///
+  /// In en, this message translates to:
+  /// **'From {time}'**
+  String scheduleStartsAt(String time);
+
+  /// Adds the people already assigned to another schedule line that shares a ministry
+  ///
+  /// In en, this message translates to:
+  /// **'Use {title}'**
+  String scheduleUseAssignees(String title);
 
   /// Heading for roles that run for most of the event rather than a slot in the running order
   ///
@@ -4078,6 +4744,42 @@ abstract class AppLocalizations {
   /// **'Drag items to reorder the running time'**
   String get scheduleArrangeSubtitle;
 
+  /// Edit-post sheet row and page title for schedule actions
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get postEditScheduleTitle;
+
+  /// What the schedule group on the edit-post sheet contains
+  ///
+  /// In en, this message translates to:
+  /// **'Add a slot, reorder, or apply a preset'**
+  String get postEditScheduleSubtitle;
+
+  /// Leader row on the edit-post sheet that opens related-post actions
+  ///
+  /// In en, this message translates to:
+  /// **'Create related posts'**
+  String get postEditRelatedTitle;
+
+  /// Title of the related-posts page inside the edit-post sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Related posts'**
+  String get postEditRelatedPageTitle;
+
+  /// Related-posts group subtitle when this post has no parent
+  ///
+  /// In en, this message translates to:
+  /// **'A child post, or several at once'**
+  String get postEditRelatedSubtitle;
+
+  /// Related-posts group subtitle when this post already has a parent
+  ///
+  /// In en, this message translates to:
+  /// **'A sibling, a child, or several at once'**
+  String get postEditRelatedWithSiblingSubtitle;
+
   /// Keeps the new arrangement and closes the arrange schedule page
   ///
   /// In en, this message translates to:
@@ -4117,7 +4819,7 @@ abstract class AppLocalizations {
   /// Setting that lets people who are not signed in see this person's full surname
   ///
   /// In en, this message translates to:
-  /// **'Full surname for guests'**
+  /// **'Full Surname for Guests'**
   String get showFullSurnameToGuestsTitle;
 
   /// Explains the guest surname setting. Off shows a first name and initial.
@@ -4153,7 +4855,7 @@ abstract class AppLocalizations {
   /// Personal admin menu item for repeating post reminders
   ///
   /// In en, this message translates to:
-  /// **'Scheduled notifications'**
+  /// **'Scheduled Notifications'**
   String get notificationSchedulesMenuTitle;
 
   /// Personal admin menu subtitle for scheduled notifications
@@ -4165,7 +4867,7 @@ abstract class AppLocalizations {
   /// Title of the scheduled notifications hub
   ///
   /// In en, this message translates to:
-  /// **'Scheduled notifications'**
+  /// **'Scheduled Notifications'**
   String get notificationSchedulesTitle;
 
   /// Empty state title on the scheduled notifications hub
@@ -4390,18 +5092,6 @@ abstract class AppLocalizations {
   /// **'Add a location before creating a reminder.'**
   String get notificationSchedulesNeedLocation;
 
-  /// A scheduled notification is enabled
-  ///
-  /// In en, this message translates to:
-  /// **'On'**
-  String get notificationSchedulesOn;
-
-  /// A scheduled notification is paused
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get notificationSchedulesOff;
-
   /// Sends a sample of this reminder to the current device only
   ///
   /// In en, this message translates to:
@@ -4533,6 +5223,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Title is already too long to add names'**
   String get postTitleAddAttendeesTooLong;
+
+  /// Header of the card on the new post Header tab that holds the period parent switch
+  ///
+  /// In en, this message translates to:
+  /// **'Related posts'**
+  String get postPeriodParentSection;
+
+  /// Explanation above the period parent switch when creating a post
+  ///
+  /// In en, this message translates to:
+  /// **'A period parent groups meeting posts for a term or season.'**
+  String get postPeriodParentIntro;
+
+  /// Switch label that marks a post as a period parent
+  ///
+  /// In en, this message translates to:
+  /// **'Period parent'**
+  String get postPeriodParentTitle;
+
+  /// Subtitle under the period parent switch
+  ///
+  /// In en, this message translates to:
+  /// **'Allow other posts to attach under this one'**
+  String get postPeriodParentSubtitle;
+
+  /// App bar control that opens the main section when a shared link is the first page
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get permalinkGoHome;
+
+  /// Title of the donations page and the menu item that opens it
+  ///
+  /// In en, this message translates to:
+  /// **'Donations'**
+  String get donationsTitle;
+
+  /// Subtitle on the Personal and About shortcuts to the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Give by bank transfer'**
+  String get donationsMenuSubtitle;
+
+  /// Button on the About tab that opens the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'How to give'**
+  String get donationsOpen;
+
+  /// Heading on the donations page intro
+  ///
+  /// In en, this message translates to:
+  /// **'Support CTRIM'**
+  String get donationsIntroTitle;
+
+  /// Intro paragraph on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Gifts are made by bank transfer. Use the account details below.'**
+  String get donationsIntroBody;
+
+  /// Title of the verse card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Scripture'**
+  String get donationsVerseTitle;
+
+  /// Bible reference for the verse card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Malachi 3:10 (NIV)'**
+  String get donationsVerseReference;
+
+  /// Verse body for the donations page scripture card
+  ///
+  /// In en, this message translates to:
+  /// **'“Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this,” says the Lord Almighty, “and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it.”'**
+  String get donationsVerseBody;
+
+  /// Heading of the bank-details card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Bank transfer'**
+  String get donationsBankTitle;
+
+  /// Subtitle of the bank-details card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Send a gift from your bank'**
+  String get donationsBankSubtitle;
+
+  /// Shown on the donations page when no account details have been added yet
+  ///
+  /// In en, this message translates to:
+  /// **'Bank transfer details will be listed here.'**
+  String get donationsBankPending;
+
+  /// Label for the donation account name
+  ///
+  /// In en, this message translates to:
+  /// **'Account name'**
+  String get donationsAccountName;
+
+  /// Label for the donation sort code
+  ///
+  /// In en, this message translates to:
+  /// **'Sort code'**
+  String get donationsSortCode;
+
+  /// Label for the donation account number
+  ///
+  /// In en, this message translates to:
+  /// **'Account number'**
+  String get donationsAccountNumber;
+
+  /// Label for the reference a donor should use
+  ///
+  /// In en, this message translates to:
+  /// **'Payment reference'**
+  String get donationsReference;
+
+  /// Tooltip on a button that copies one bank detail
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get donationsCopy;
+
+  /// Button that copies every bank detail
+  ///
+  /// In en, this message translates to:
+  /// **'Copy bank details'**
+  String get donationsCopyAll;
+
+  /// Confirmation after a bank detail is copied
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get donationsCopied;
+
+  /// Heading of the notes card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get donationsNotesTitle;
+
+  /// Subtitle of the notes card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Before you send a gift'**
+  String get donationsNotesSubtitle;
+
+  /// Chip beside a person on their first attendance in this cell group or post tag
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get attendanceVisitNew;
+
+  /// Chip beside a person on their second or third attendance in this cell group or post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Back again'**
+  String get attendanceVisitReturning;
 }
 
 class _AppLocalizationsDelegate

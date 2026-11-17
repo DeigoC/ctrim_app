@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
 import '../../../utility/app_context.dart';
+import '../../../utility/bulk_post_dates.dart';
 import '../../../utility/notifications/broadcast_audience.dart';
 import '../../../utility/dialog_manager.dart';
 import '../../../utility/event_context.dart';
@@ -16,6 +17,7 @@ import '../../../utility/user_activity_messages.dart';
 import '../../../utility/user_activity_recorder.dart';
 import '../../../widgets/common/app_dialog.dart';
 import '../../../widgets/posts/add_header_meta_tab_body.dart';
+import '../../../widgets/posts/expected_attendance_preset_picker.dart';
 import '../../../widgets/posts/schedule_preset_picker.dart';
 import '../../../widgets/posts/template_edit_sheet.dart';
 import '../../../widgets/posts/template_log_dialog.dart';
@@ -46,7 +48,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
   late final TabController _tabController;
   late final TextEditingController _tecTitle, _tecSubtitle;
   late final List<String> _subtitles;
-  int? _defaultDayOfWeek;
+  late List<int> _defaultDaysOfWeek;
   late List<Map<String, dynamic>> _headMediaPool, _bodyMediaPool;
   late PostTemplateCategory _category;
   late final PostTemplateCategory _initialCategory;
@@ -54,13 +56,17 @@ class _EditTemplatePageState extends State<EditTemplatePage>
   late final String _initialPresetSignature;
   int _selectedPresetIndex = 0;
   bool _presetsDirty = false;
+  late List<ExpectedAttendancePreset> _expectedPresets;
+  late final String _initialExpectedPresetSignature;
+  int _selectedExpectedPresetIndex = 0;
+  bool _expectedPresetsDirty = false;
   bool _allowPop = false;
   bool _isSaved = false;
 
   late final String _initialTitle;
   late final String _initialSubtitle;
   late final List<String> _initialSubtitles;
-  late final int? _initialDefaultDayOfWeek;
+  late final List<int> _initialDefaultDaysOfWeek;
   late final List<String> _initialHeadPoolSrcs;
   late final List<String> _initialBodyPoolSrcs;
   late final List<String> _initialTagIDs;
@@ -68,7 +74,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
   late final List<String> _initialExpectedAttendeeUserIDs;
   late final List<String> _initialContributorUIDs;
   late final String _initialLocation;
-  late final String? _initialLeadSpeakerUID;
+  late final List<String> _initialLeadSpeakerUIDs;
   late final bool _initialIsPeriodParent;
   late bool _defaultNotifyLocation;
   late final bool _initialDefaultNotifyLocation;
@@ -92,7 +98,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     _tecSubtitle =
         TextEditingController(text: widget.eventContext.head.subtitle);
     _subtitles = List<String>.from(widget.oldTemplate.subtitles);
-    _defaultDayOfWeek = widget.oldTemplate.defaultDayOfWeek;
+    _defaultDaysOfWeek = List<int>.from(widget.oldTemplate.defaultDaysOfWeek);
     _headMediaPool = widget.oldTemplate.headMediaPool
         .map((e) => Map<String, dynamic>.from(e))
         .toList();
@@ -103,7 +109,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     _initialTitle = _tecTitle.text;
     _initialSubtitle = _tecSubtitle.text;
     _initialSubtitles = List<String>.from(_subtitles);
-    _initialDefaultDayOfWeek = _defaultDayOfWeek;
+    _initialDefaultDaysOfWeek = List<int>.from(_defaultDaysOfWeek);
     _initialHeadPoolSrcs =
         _headMediaPool.map((e) => (e['src'] as String?) ?? '').toList();
     _initialBodyPoolSrcs =
@@ -115,7 +121,8 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     _initialContributorUIDs =
         List<String>.from(widget.oldTemplate.contributors);
     _initialLocation = widget.oldTemplate.location;
-    _initialLeadSpeakerUID = widget.oldTemplate.leadSpeakerUID;
+    _initialLeadSpeakerUIDs =
+        List<String>.from(widget.oldTemplate.leadSpeakerUIDs);
     _initialIsPeriodParent = widget.oldTemplate.isPeriodParent;
     _category = widget.oldTemplate.category;
     _initialCategory = _category;
@@ -128,6 +135,13 @@ class _EditTemplatePageState extends State<EditTemplatePage>
         ? [SchedulePreset.emptyDefault()]
         : widget.oldTemplate.schedulePresets.map((p) => p.copy()).toList();
     _initialPresetSignature = _presetSignature(_presets);
+    _expectedPresets = widget.oldTemplate.expectedAttendancePresets.isEmpty
+        ? [ExpectedAttendancePreset.emptyDefault()]
+        : widget.oldTemplate.expectedAttendancePresets
+            .map((p) => p.copy())
+            .toList();
+    _initialExpectedPresetSignature =
+        _expectedPresetSignature(_expectedPresets);
     super.initState();
   }
 
@@ -135,7 +149,9 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     if (widget.eventContext.canSaveTheEditing) return true;
     if (_tecTitle.text.trim() != _initialTitle.trim()) return true;
     if (_tecSubtitle.text.trim() != _initialSubtitle.trim()) return true;
-    if (_defaultDayOfWeek != _initialDefaultDayOfWeek) return true;
+    if (_defaultDaysOfWeek.join(',') != _initialDefaultDaysOfWeek.join(',')) {
+      return true;
+    }
     if (!_sameStringLists(_subtitles, _initialSubtitles)) return true;
     if (!_sameStringLists(
       _headMediaPool.map((e) => (e['src'] as String?) ?? '').toList(),
@@ -168,19 +184,31 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       return true;
     }
     if (widget.eventContext.head.location != _initialLocation) return true;
-    if (widget.eventContext.metadata.leadSpeakerUID != _initialLeadSpeakerUID)
+    if (!_sameStringLists(
+      widget.eventContext.metadata.leadSpeakerUIDs,
+      _initialLeadSpeakerUIDs,
+    )) {
       return true;
+    }
     if (widget.eventContext.metadata.isPeriodParent != _initialIsPeriodParent)
       return true;
     if (_category != _initialCategory) return true;
     if (_defaultNotifyLocation != _initialDefaultNotifyLocation) return true;
     if (_presetsDirty) return true;
     if (_presetSignature(_presets) != _initialPresetSignature) return true;
+    if (_expectedPresetsDirty) return true;
+    if (_expectedPresetSignature(_expectedPresets) !=
+        _initialExpectedPresetSignature) {
+      return true;
+    }
     return false;
   }
 
   String _presetSignature(List<SchedulePreset> presets) =>
       presets.map((p) => '${p.id}:${p.name}').join('|');
+
+  String _expectedPresetSignature(List<ExpectedAttendancePreset> presets) =>
+      presets.map((p) => '${p.id}:${p.name}:${p.userIds.join(',')}').join('|');
 
   bool _sameStringLists(List<String> a, List<String> b) {
     if (a.length != b.length) return false;
@@ -454,6 +482,11 @@ class _EditTemplatePageState extends State<EditTemplatePage>
           eventContext: widget.eventContext,
           showNotificationControls: false,
           allowSelfAsContributor: true,
+          expectedPresetBar: _buildExpectedAttendancePresetBar(),
+          onExpectedAttendeesChanged: () {
+            _flushSelectedExpectedPreset();
+            setState(() => _expectedPresetsDirty = true);
+          },
         ),
         const Divider(height: 32),
         _buildCategoryCard(),
@@ -466,6 +499,178 @@ class _EditTemplatePageState extends State<EditTemplatePage>
         const SizedBox(height: 16),
       ],
     );
+  }
+
+  ExpectedAttendancePreset get _currentExpectedPreset =>
+      _expectedPresets[_selectedExpectedPresetIndex];
+
+  Widget _buildExpectedAttendancePresetBar() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: ListTile(
+        leading: Icon(Icons.groups_outlined, color: colorScheme.primary),
+        title: Text(
+          _currentExpectedPreset.name,
+          style:
+              theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+            expectedAttendancePresetSubtitle(_currentExpectedPreset)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: 'Duplicate expected preset',
+              icon: const Icon(Icons.copy_outlined),
+              onPressed: _onDuplicateExpectedPreset,
+            ),
+            PopupMenuButton<_ExpectedPresetMenuAction>(
+              tooltip: 'Expected attendance preset actions',
+              onSelected: _onExpectedPresetMenuAction,
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: _ExpectedPresetMenuAction.add,
+                  child: Text('Add empty preset'),
+                ),
+                const PopupMenuItem(
+                  value: _ExpectedPresetMenuAction.rename,
+                  child: Text('Rename'),
+                ),
+                if (_expectedPresets.length > 1)
+                  const PopupMenuItem(
+                    value: _ExpectedPresetMenuAction.delete,
+                    child: Text('Delete'),
+                  ),
+                if (_expectedPresets.length > 1)
+                  const PopupMenuItem(
+                    value: _ExpectedPresetMenuAction.switchPreset,
+                    child: Text('Switch preset'),
+                  ),
+              ],
+            ),
+          ],
+        ),
+        onTap: _expectedPresets.length > 1
+            ? _onSwitchExpectedPreset
+            : _onRenameExpectedPreset,
+      ),
+    );
+  }
+
+  void _flushSelectedExpectedPreset() {
+    _expectedPresets[_selectedExpectedPresetIndex] =
+        PostTemplateMapper.captureExpectedAsPreset(
+      existing: _currentExpectedPreset,
+      eventContext: widget.eventContext,
+    );
+  }
+
+  void _loadExpectedPresetAt(int index) {
+    _selectedExpectedPresetIndex = index;
+    PostTemplateMapper.loadExpectedAttendancePresetForEditing(
+      widget.eventContext,
+      _expectedPresets[index],
+    );
+  }
+
+  Future<void> _onSwitchExpectedPreset() async {
+    _flushSelectedExpectedPreset();
+    final selected = await showExpectedAttendancePresetPicker(
+      context: context,
+      presets: _expectedPresets,
+      selectedId: _currentExpectedPreset.id,
+      title: 'Expected attendance preset',
+      subtitle: 'Edit a different expected-member list on this template',
+    );
+    if (!mounted || selected == null) return;
+    final index = _expectedPresets.indexWhere((p) => p.id == selected.id);
+    if (index < 0 || index == _selectedExpectedPresetIndex) return;
+    setState(() => _loadExpectedPresetAt(index));
+  }
+
+  Future<void> _onDuplicateExpectedPreset() async {
+    _flushSelectedExpectedPreset();
+    final copy = _currentExpectedPreset.copy(
+      id: ExpectedAttendancePreset.newId(),
+      name: 'Copy of ${_currentExpectedPreset.name}',
+    );
+    setState(() {
+      _expectedPresets.insert(_selectedExpectedPresetIndex + 1, copy);
+      _expectedPresetsDirty = true;
+      _loadExpectedPresetAt(_selectedExpectedPresetIndex + 1);
+    });
+  }
+
+  Future<void> _onAddEmptyExpectedPreset() async {
+    _flushSelectedExpectedPreset();
+    final preset = ExpectedAttendancePreset(
+      id: ExpectedAttendancePreset.newId(),
+      name: 'Expected ${_expectedPresets.length + 1}',
+    );
+    setState(() {
+      _expectedPresets.add(preset);
+      _expectedPresetsDirty = true;
+      _loadExpectedPresetAt(_expectedPresets.length - 1);
+    });
+  }
+
+  Future<void> _onRenameExpectedPreset() async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (_) => _SchedulePresetNameDialog(
+        title: 'Rename expected preset',
+        initialName: _currentExpectedPreset.name,
+      ),
+    );
+    if (!mounted || name == null || name.trim().isEmpty) return;
+    setState(() {
+      _currentExpectedPreset.setName(name.trim());
+      _expectedPresetsDirty = true;
+    });
+  }
+
+  Future<void> _onDeleteExpectedPreset() async {
+    if (_expectedPresets.length < 2) return;
+    final confirm = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Delete expected attendance preset?',
+      content:
+          '“${_currentExpectedPreset.name}” will be removed from this template. '
+          'This does not change existing posts.',
+      confirmText: 'Delete',
+      icon: Icons.delete_outline,
+    );
+    if (!confirm || !mounted) return;
+    setState(() {
+      _expectedPresets.removeAt(_selectedExpectedPresetIndex);
+      _expectedPresetsDirty = true;
+      _loadExpectedPresetAt(
+          _selectedExpectedPresetIndex.clamp(0, _expectedPresets.length - 1));
+    });
+  }
+
+  void _onExpectedPresetMenuAction(_ExpectedPresetMenuAction action) {
+    switch (action) {
+      case _ExpectedPresetMenuAction.add:
+        _onAddEmptyExpectedPreset();
+        break;
+      case _ExpectedPresetMenuAction.rename:
+        _onRenameExpectedPreset();
+        break;
+      case _ExpectedPresetMenuAction.delete:
+        _onDeleteExpectedPreset();
+        break;
+      case _ExpectedPresetMenuAction.switchPreset:
+        _onSwitchExpectedPreset();
+        break;
+    }
   }
 
   Widget _buildCategoryCard() {
@@ -594,7 +799,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
                 const Icon(Icons.calendar_today_outlined, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Default Day of Week',
+                  'Default days of week',
                   style: Theme.of(context)
                       .textTheme
                       .titleMedium
@@ -604,20 +809,27 @@ class _EditTemplatePageState extends State<EditTemplatePage>
             ),
             const SizedBox(height: 8),
             Text(
-              'Set which day of the week this template is typically used for. Required for bulk post creation.',
+              _defaultDaysOfWeek.isEmpty
+                  ? 'Choose the days this template is usually used on. Required for bulk post creation.'
+                  : '${everyDaysOfWeekLabel(_defaultDaysOfWeek)}. Bulk creation makes a post on each of these days.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: List.generate(7, (i) {
                 final day = i + 1;
-                final selected = _defaultDayOfWeek == day;
+                final selected = _defaultDaysOfWeek.contains(day);
                 return FilterChip(
                   label: Text(dayNames[i]),
                   selected: selected,
                   onSelected: (_) => setState(() {
-                    _defaultDayOfWeek = selected ? null : day;
+                    _defaultDaysOfWeek = PostTemplate.normalizeDaysOfWeek(
+                      selected
+                          ? _defaultDaysOfWeek.where((d) => d != day).toList()
+                          : [..._defaultDaysOfWeek, day],
+                    );
                   }),
                 );
               }),
@@ -1027,7 +1239,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     ];
   }
 
-  /// Template AppBar preview: fixed head media → cover pool → lead speaker.
+  /// Template AppBar preview: fixed head media → cover pool → first speaker.
   String? _previewKeyGraphicSrc() {
     final fromHead = _firstImageSrc(widget.eventContext.head.media);
     if (fromHead != null) return fromHead;
@@ -1176,9 +1388,11 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     onProgress(completed: 0, total: total, message: 'Preparing template…');
     debugPrint('---- begin converting to post template');
     _flushSelectedPreset();
+    _flushSelectedExpectedPreset();
     final first = _presets.first;
     final startTime = first.startTime?.millisecondsSinceEpoch;
     final finishTime = first.finishTime?.millisecondsSinceEpoch;
+    final firstExpected = _expectedPresets.first;
 
     final Map<String, dynamic> templateData = {
       'Title': _tecTitle.text.trim(),
@@ -1195,9 +1409,12 @@ class _EditTemplatePageState extends State<EditTemplatePage>
           : <String>[],
       'TagIDs': widget.eventContext.head.tagIDs,
       'CellGroupIDs': widget.eventContext.head.cellGroupIDs,
-      'ExpectedAttendeeUserIDs': widget.eventContext.expectedAttendeeUserIDs,
+      'ExpectedAttendeeUserIDs': List<String>.from(firstExpected.userIds),
+      'ExpectedAttendancePresets':
+          _expectedPresets.map((p) => p.toJson()).toList(),
       'Contributors': widget.eventContext.metadata.contributorUIDs,
       'LeadSpeakerUID': widget.eventContext.metadata.leadSpeakerUID,
+      'LeadSpeakerUIDs': widget.eventContext.metadata.leadSpeakerUIDs,
       'IsPeriodParent': widget.eventContext.metadata.isPeriodParent,
       'Subtitles': _subtitles,
       'AllDay': widget.eventContext.program.allDay,
@@ -1212,7 +1429,9 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       'BodyMediaPool': _bodyMediaPool,
       'Roles': SchedulePreset.rolesToJson(true, first.roles),
       'SchedulePresets': _presets.map((p) => p.toJson(true)).toList(),
-      'DefaultDayOfWeek': _defaultDayOfWeek,
+      'DefaultDaysOfWeek': _defaultDaysOfWeek,
+      'DefaultDayOfWeek':
+          _defaultDaysOfWeek.isEmpty ? null : _defaultDaysOfWeek.first,
       'Logs': widget.oldTemplate.toJson(true)['Logs'],
     };
     final PostTemplate updatedTemplate =
@@ -1233,6 +1452,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       actorUserId: _appContext.currentUser.id,
       log: UserActivityMessages.editedPostTemplate,
       documentId: updatedTemplate.id,
+      title: updatedTemplate.title,
     );
 
     // Upsert locally — do not clear the whole box (would wipe other templates).
@@ -1246,6 +1466,8 @@ class _EditTemplatePageState extends State<EditTemplatePage>
 }
 
 enum _PresetMenuAction { add, rename, delete, switchPreset }
+
+enum _ExpectedPresetMenuAction { add, rename, delete, switchPreset }
 
 class _SchedulePresetNameDialog extends StatefulWidget {
   const _SchedulePresetNameDialog({
